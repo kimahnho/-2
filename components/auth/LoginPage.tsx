@@ -195,9 +195,9 @@ const styles: Record<string, React.CSSProperties> = {
         marginBottom: '40px' // 간격 넓힘
     },
     logo: {
-        height: '80px', // 로고 크게
-        width: 'auto',
-        marginBottom: '16px'
+        width: '200px', // 로고 너비 고정 (더 크게)
+        height: 'auto',
+        marginBottom: '24px'
     },
     subtitle: {
         color: '#6b7280',

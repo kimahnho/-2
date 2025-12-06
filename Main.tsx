@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EditorPage } from './components/editor/EditorPage';
 import { Dashboard } from './components/Dashboard';
 import { Landing } from './components/Landing';
 import { storageService } from './services/storageService';
 import { ProjectData, StudentProfile, StudentGroup } from './types';
+import { Header } from './components/layout/Header';
+import { authService, type AuthUser } from './services';
 
 type ViewState = 'landing' | 'dashboard' | 'editor';
 
 export const Main: React.FC = () => {
   const [view, setView] = useState<ViewState>('landing');
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   // Context: Student OR Group
   const [currentStudent, setCurrentStudent] = useState<StudentProfile | null>(null);
@@ -17,6 +20,15 @@ export const Main: React.FC = () => {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [initialData, setInitialData] = useState<ProjectData | undefined>(undefined);
   const [initialTitle, setInitialTitle] = useState<string>('');
+
+  // Load User Info
+  useEffect(() => {
+    authService.getCurrentUser().then(setUser);
+    const { data: { subscription } } = authService.onAuthStateChange((_event, session) => {
+      setUser(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // 1. Landing -> Dashboard (Student)
   const handleSelectStudent = (student: StudentProfile) => {
@@ -111,6 +123,14 @@ export const Main: React.FC = () => {
     setInitialData(undefined);
   };
 
+  // Layout wrapper (excludes Editor)
+  const renderWithLayout = (content: React.ReactNode) => (
+    <div style={{ paddingTop: '64px' }}>
+      <Header user={user} />
+      {content}
+    </div>
+  );
+
   if (view === 'editor' && currentProjectId) {
     return (
       <EditorPage
@@ -123,7 +143,7 @@ export const Main: React.FC = () => {
   }
 
   if (view === 'dashboard') {
-    return (
+    return renderWithLayout(
       <Dashboard
         currentStudent={currentStudent}
         currentGroup={currentGroup}
@@ -137,7 +157,7 @@ export const Main: React.FC = () => {
   }
 
   // Default: Landing Page
-  return (
+  return renderWithLayout(
     <Landing
       onSelectStudent={handleSelectStudent}
       onSelectGroup={handleSelectGroup}
