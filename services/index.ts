@@ -9,6 +9,9 @@ export { groupService } from './groupService';
 export { scheduleService } from './scheduleService';
 export { projectService } from './projectService';
 
+// Auth Service
+export { authService, type AuthUser } from './authService';
+
 // AI Service
 export { generateTherapyImage, generateCharacterEmotion, generateTherapyText } from './geminiService';
 
