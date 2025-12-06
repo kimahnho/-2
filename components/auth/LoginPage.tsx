@@ -178,7 +178,7 @@ const styles: Record<string, React.CSSProperties> = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: '#ffffff', // 배경 완전 흰색
         padding: '20px'
     },
     card: {
@@ -187,14 +187,15 @@ const styles: Record<string, React.CSSProperties> = {
         padding: '48px 40px',
         width: '100%',
         maxWidth: '420px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)', // 부드럽고 깊은 그림자
+        border: '1px solid #f3f4f6' // 흰 배경에서 구분되도록 연한 테두리 추가
     },
     logoSection: {
         textAlign: 'center',
-        marginBottom: '32px'
+        marginBottom: '40px' // 간격 넓힘
     },
     logo: {
-        height: '40px',
+        height: '80px', // 로고 크게
         width: 'auto',
         marginBottom: '16px'
     },
