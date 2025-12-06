@@ -194,10 +194,9 @@ const styles: Record<string, React.CSSProperties> = {
         marginBottom: '32px'
     },
     logo: {
-        fontSize: '32px',
-        fontWeight: 'bold',
-        color: '#5500FF',
-        margin: 0
+        height: '40px',
+        width: 'auto',
+        marginBottom: '16px'
     },
     subtitle: {
         color: '#6b7280',
