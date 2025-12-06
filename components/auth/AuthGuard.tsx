@@ -68,12 +68,43 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, fallback }) => {
         );
     }
 
+    // Debug Overlay (Temporary)
+    const debugInfo = (
+        <div style={{
+            position: 'fixed',
+            bottom: '10px',
+            left: '10px',
+            background: 'rgba(0,0,0,0.8)',
+            color: 'white',
+            padding: '10px',
+            borderRadius: '5px',
+            zIndex: 9999,
+            fontSize: '12px'
+        }}>
+            <p>Configured: {isConfigured ? 'Yes' : 'No'}</p>
+            <p>User: {user ? user.email : 'None'}</p>
+            <button onClick={() => { authService.signOut(); window.location.reload(); }} style={{ marginTop: '5px', color: 'black' }}>
+                Force Sign Out
+            </button>
+        </div>
+    );
+
     // Show login if not configured or not logged in
     if (!isConfigured || !user) {
-        return <LoginPage onLoginSuccess={() => { }} />;
+        return (
+            <>
+                {debugInfo}
+                <LoginPage onLoginSuccess={() => { }} />
+            </>
+        );
     }
 
-    return <>{children}</>;
+    return (
+        <>
+            {debugInfo}
+            {children}
+        </>
+    );
 };
 
 const styles: Record<string, React.CSSProperties> = {
