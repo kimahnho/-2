@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MURU.AI - 선생님들을 위한 학습지 디자인</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Fredoka:wght@300;400;500;600&family=Gaegu&family=Gowun+Dodum&family=Inter:wght@400;500;600&family=Nanum+Pen+Script&display=swap');
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f3f4f6;
+        word-break: keep-all; /* Better Korean word breaking */
+      }
+      
+      /* Fun, friendly font for headers typically used in child education */
+      h1, h2, h3, .friendly-font {
+        font-family: 'Fredoka', sans-serif;
+      }
+
+      /* Print styles for exporting materials */
+      @media print {
+        .no-print {
+          display: none !important;
+        }
+        .print-container {
+          border: none !important;
+          box-shadow: none !important;
+          width: 100% !important;
+          height: 100% !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          margin: 0 !important;
+          overflow: visible !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
