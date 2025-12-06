@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { authService, type AuthUser } from '../../services';
+import { authService, type AuthUser, isSupabaseConfigured } from '../../services';
 import { LoginPage } from './LoginPage';
 
 interface AuthGuardProps {
@@ -16,8 +16,19 @@ interface AuthGuardProps {
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children, fallback }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isConfigured, setIsConfigured] = useState(false);
 
     useEffect(() => {
+        // Check if Supabase is configured
+        const configured = isSupabaseConfigured();
+        setIsConfigured(configured);
+
+        if (!configured) {
+            // Supabase not configured - show login page
+            setLoading(false);
+            return;
+        }
+
         // Check current session
         const checkAuth = async () => {
             try {
@@ -57,7 +68,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, fallback }) => {
         );
     }
 
-    if (!user) {
+    // Show login if not configured or not logged in
+    if (!isConfigured || !user) {
         return <LoginPage onLoginSuccess={() => { }} />;
     }
 
