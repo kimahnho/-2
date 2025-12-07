@@ -208,7 +208,6 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     if (!selectedEl) return;
 
     // A. 문장 구성 영역 선택 시: 카드 추가
-    // A. 문장 구성 영역 선택 시: 카드 추가
     if (selectedEl.metadata?.isAACSentenceArea) {
       addSentenceItem(selectedId, card.emoji || '❓');
       return;
@@ -349,7 +348,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   return (
     <div className={`flex h-screen bg-gray-100 overflow-hidden font-sans select-none ${viewport.isPanning ? 'cursor-grabbing' : ''}`}
       onMouseMove={viewport.handlePanMove} onMouseUp={viewport.endPan} onWheel={viewport.handleWheel}
-      onDoubleClick={handleCanvasDoubleClick}>
+      onDoubleClickCapture={handleCanvasDoubleClick}>
 
       {/* Left Sidebar: Toolbar */}
       <Toolbar

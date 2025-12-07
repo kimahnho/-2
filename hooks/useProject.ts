@@ -27,6 +27,8 @@ export const useProject = (initialData?: ProjectData) => {
       // Ensure we set active page to the first page of loaded project
       if (initialData.pages.length > 0) {
         setActivePageId(initialData.pages[0].id);
+        // Sync ref to prevent auto-jump to last page
+        prevPagesLength.current = initialData.pages.length;
       }
     }
   }, [initialData]);
@@ -38,6 +40,18 @@ export const useProject = (initialData?: ProjectData) => {
   const [activePageId, setActivePageId] = useState<string>('page-1');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Track page count to safe-guard active page switching
+  const prevPagesLength = useRef(projectData.pages.length);
+
+  useEffect(() => {
+    if (pages.length > prevPagesLength.current) {
+      // Page added: safe to switch to new last page
+      const lastPage = pages[pages.length - 1];
+      if (lastPage) setActivePageId(lastPage.id);
+    }
+    prevPagesLength.current = pages.length;
+  }, [pages]);
 
   // References for non-react-cycle access if needed
   const elementsRef = useRef(elements);
@@ -143,7 +157,8 @@ export const useProject = (initialData?: ProjectData) => {
     const newPageId = `page-${generateId()}`;
     const newPages = [...pages, { id: newPageId, orientation: orientation || 'portrait' }];
     commitToHistory({ elements, pages: newPages });
-    setActivePageId(newPageId);
+    // Remove direct setActivePageId to prevent race conditions during render
+    // setActivePageId(newPageId); 
     return newPageId;
   };
 
