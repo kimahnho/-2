@@ -98,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
 
 const styles: Record<string, React.CSSProperties> = {
     header: {
-        height: '64px', // 원래 높이로 복구
+        height: '64px',
         background: 'white',
         borderBottom: '1px solid #e5e7eb',
         position: 'fixed',
@@ -107,9 +107,8 @@ const styles: Record<string, React.CSSProperties> = {
         right: 0,
         zIndex: 100,
         display: 'flex',
-        alignItems: 'center', // 수직 중앙 정렬
-        padding: '0 24px',
-        overflow: 'hidden' // 로고 여백이 튀어나오지 않도록 숨김
+        alignItems: 'center',
+        padding: '0 24px'
     },
     container: {
         width: '100%',
