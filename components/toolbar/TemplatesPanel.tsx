@@ -4,13 +4,12 @@
  */
 
 import React from 'react';
-import { Layout, FileText, Heart, Brain, Users, Star, Sparkles, Grid, MessageSquare } from 'lucide-react';
+import { Layout, Heart, Brain, Users, Star, Grid } from 'lucide-react';
 import { DesignElement } from '../../types';
 import { TEMPLATES } from '../../constants';
 
 interface Props {
     onLoadTemplate: (elements: DesignElement[]) => void;
-    onOpenAACBoard?: () => void;
 }
 
 // 템플릿 카테고리 정의
@@ -19,53 +18,19 @@ const TEMPLATE_CATEGORIES = [
     { id: 'emotion', name: '감정', icon: <Heart className="w-4 h-4" /> },
     { id: 'cognitive', name: '인지', icon: <Brain className="w-4 h-4" /> },
     { id: 'social', name: '사회성', icon: <Users className="w-4 h-4" /> },
+    { id: 'aac', name: 'AAC', icon: <Grid className="w-4 h-4" /> },
 ];
 
-export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onOpenAACBoard }) => {
+export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('all');
 
-    // 향후 카테고리 필터링에 사용
-    const filteredTemplates = TEMPLATES;
+    // 카테고리 필터링
+    const filteredTemplates = selectedCategory === 'all'
+        ? TEMPLATES
+        : TEMPLATES.filter(t => (t as any).category === selectedCategory || selectedCategory === 'all');
 
     return (
         <div className="space-y-6">
-            {/* 자동화 템플릿 섹션 */}
-            <div>
-                <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-[#5500FF]" />
-                    <h3 className="font-bold text-sm text-gray-700">자동화 템플릿</h3>
-                    <span className="px-1.5 py-0.5 bg-[#5500FF] text-white text-[9px] font-bold rounded">NEW</span>
-                </div>
-
-                {/* AAC 의사소통 판 */}
-                <button
-                    onClick={onOpenAACBoard}
-                    className="w-full p-4 bg-gradient-to-r from-[#5500FF]/10 to-[#7733FF]/10 rounded-xl border-2 border-[#5500FF]/20 hover:border-[#5500FF] hover:shadow-lg transition-all text-left group"
-                >
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 bg-[#5500FF] rounded-lg text-white group-hover:scale-110 transition-transform">
-                            <Grid className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-gray-900">AAC 의사소통 판</h4>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                                2×2 ~ 8×8 그리드로 AAC 카드를 배치하고 문장을 구성하세요
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="px-2 py-0.5 bg-white text-[10px] font-medium text-[#5500FF] rounded-full border border-[#5500FF]/30">
-                                    그리드 설정
-                                </span>
-                                <span className="px-2 py-0.5 bg-white text-[10px] font-medium text-[#5500FF] rounded-full border border-[#5500FF]/30">
-                                    문장 구성
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </button>
-            </div>
-
             {/* Category Filter */}
             <div className="flex flex-wrap gap-2">
                 {TEMPLATE_CATEGORIES.map(cat => (
@@ -101,13 +66,20 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onOpenAACBoard
 
                             {/* Preview Icon */}
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-40 transition-opacity">
-                                <Layout className="w-12 h-12 text-gray-600" />
+                                {template.id.startsWith('aac') ? (
+                                    <Grid className="w-12 h-12 text-[#5500FF]" />
+                                ) : (
+                                    <Layout className="w-12 h-12 text-gray-600" />
+                                )}
                             </div>
 
                             {/* Template Info */}
                             <div className="absolute inset-0 p-3 flex flex-col justify-end">
                                 <div className="flex items-center gap-1 mb-1">
                                     <span className="px-1.5 py-0.5 bg-orange-500/90 text-white text-[9px] font-bold rounded">인기</span>
+                                    {template.id.startsWith('aac') && (
+                                        <span className="px-1.5 py-0.5 bg-[#5500FF]/90 text-white text-[9px] font-bold rounded">AAC</span>
+                                    )}
                                 </div>
                                 <h4 className="text-white text-xs font-bold">{template.name}</h4>
                             </div>
@@ -134,11 +106,18 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onOpenAACBoard
 
                             {/* Preview Icon */}
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-40 transition-opacity">
-                                <Layout className="w-12 h-12 text-gray-600" />
+                                {template.id.startsWith('aac') ? (
+                                    <Grid className="w-12 h-12 text-[#5500FF]" />
+                                ) : (
+                                    <Layout className="w-12 h-12 text-gray-600" />
+                                )}
                             </div>
 
                             {/* Template Info */}
                             <div className="absolute inset-0 p-3 flex flex-col justify-end">
+                                {template.id.startsWith('aac') && (
+                                    <span className="px-1.5 py-0.5 bg-[#5500FF]/90 text-white text-[9px] font-bold rounded w-fit mb-1">AAC</span>
+                                )}
                                 <h4 className="text-white text-xs font-bold">{template.name}</h4>
                             </div>
                         </button>
@@ -148,4 +127,3 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onOpenAACBoard
         </div>
     );
 };
-
