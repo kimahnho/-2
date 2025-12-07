@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
+// import { renderToStaticMarkup } from 'react-dom/server'; // Removed to prevent build/runtime errors in CSR
 import { AACCard } from '../toolbar/AACPanel';
 import { Toolbar } from '../Toolbar';
 import { PropertiesPanel } from '../PropertiesPanel';
@@ -66,24 +66,27 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   const [currentAACCardIndex, setCurrentAACCardIndex] = useState<number | undefined>(undefined);
   const [totalAACCards, setTotalAACCards] = useState<number | undefined>(undefined);
 
-  // AAC 카드 선택 감지 및 탭 자동 열기
   useEffect(() => {
     if (project.selectedIds.length === 1) {
       const selectedId = project.selectedIds[0];
       const selectedEl = project.elements.find(el => el.id === selectedId);
 
-      // AAC 카드 선택 시
-      if (selectedEl?.metadata?.isAACCard && selectedEl.type === 'card' && selectedEl.metadata.aacIndex !== undefined) {
+      // AAC 카드 선택 시 (카드, 텍스트, 아이콘 모두)
+      if (selectedEl?.metadata?.isAACCard && selectedEl.metadata.aacIndex !== undefined) {
         if (activeTab !== 'aac') setActiveTab('aac');
 
-        // 현재 페이지의 모든 AAC 카드 계산 (인덱싱)
+        // 현재 페이지의 모든 AAC 카드 계산 (인덱싱, 순수 카드 객체 기준)
         const aacCards = project.elements
           .filter(el => el.pageId === project.activePageId && el.metadata?.isAACCard && el.type === 'card' && el.metadata.aacIndex !== undefined)
           .sort((a, b) => (a.metadata!.aacIndex!) - (b.metadata!.aacIndex!));
 
         setTotalAACCards(aacCards.length);
-        const currentIndex = aacCards.findIndex(el => el.id === selectedId);
-        if (currentIndex !== -1) setCurrentAACCardIndex(currentIndex);
+
+        // 현재 선택된 요소의 인덱스를 기반으로 설정
+        const currentIdx = selectedEl.metadata.aacIndex;
+        // 유효한 인덱스인지 확인
+        const isValid = aacCards.some(c => c.metadata!.aacIndex === currentIdx);
+        if (isValid) setCurrentAACCardIndex(currentIdx);
       }
     }
   }, [project.selectedIds, project.elements, project.activePageId, activeTab]);
@@ -93,101 +96,98 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     const selectedId = project.selectedIds[0];
     const selectedEl = project.elements.find(el => el.id === selectedId);
 
+    // 유효한 AAC 요소 선택 확인
     if (!selectedEl || !selectedEl.metadata?.isAACCard || selectedEl.metadata.aacIndex === undefined) return;
 
-    // 1. 아이콘 SVG를 이미지 Data URL로 변환
-    let dataUrl = '';
-    try {
-      const svgString = renderToStaticMarkup(card.icon as React.ReactElement);
-      // SVG 네임스페이스 추가 (필요 시)
-      const finalSvg = svgString.includes('xmlns')
-        ? svgString
-        : svgString.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    const targetIndex = selectedEl.metadata.aacIndex;
 
-      const encodedSvg = encodeURIComponent(finalSvg);
-      dataUrl = `data:image/svg+xml;utf8,${encodedSvg}`;
-    } catch (e) {
-      console.error('SVG conversion failed', e);
-      return;
-    }
+    // 1. 타겟 카드(배경) 찾기
+    const targetCard = project.elements.find(el =>
+      el.pageId === project.activePageId &&
+      el.type === 'card' &&
+      el.metadata?.isAACCard &&
+      el.metadata?.aacIndex === targetIndex
+    );
 
-    // 2. 카드 요소 업데이트 (배경색)
-    project.updateElement(selectedId, {
+    if (!targetCard) return;
+
+    // 2. 카드 배경색 업데이트
+    project.updateElement(targetCard.id, {
       backgroundColor: card.backgroundColor
     });
 
-    // 3. 텍스트 요소 업데이트
-    const textEl = project.elements.find(el =>
+    // 3. 아이콘 추가 (이모지 텍스트로 대체)
+    // 기존 아이콘(이모지 텍스트) 찾기
+    const existingIcon = project.elements.find(el =>
       el.pageId === project.activePageId &&
       el.type === 'text' &&
       el.metadata?.isAACCard &&
-      el.metadata?.aacIndex === selectedEl.metadata?.aacIndex
+      el.metadata?.aacIndex === targetIndex &&
+      el.metadata?.isAACIcon
     );
 
-    if (textEl) {
-      project.updateElement(textEl.id, {
-        content: card.label,
-        color: '#000000',
-        fontSize: 14,
-        fontWeight: 'bold'
-      });
-    }
-
-    // 4. 아이콘 이미지 추가 또는 업데이트
-    const iconSize = Math.min(selectedEl.width, selectedEl.height) * 0.5;
-    const iconX = selectedEl.x + (selectedEl.width - iconSize) / 2;
-    const iconY = selectedEl.y + (selectedEl.height - iconSize) / 2 - 8;
-
-    const existingIcon = project.elements.find(el =>
-      el.pageId === project.activePageId &&
-      el.type === 'image' &&
-      el.metadata?.isAACCard &&
-      el.metadata?.aacIndex === selectedEl.metadata?.aacIndex
-    );
+    const iconSize = Math.min(targetCard.width, targetCard.height) * 0.45;
+    const iconX = targetCard.x + (targetCard.width - iconSize) / 2;
+    const iconY = targetCard.y + (targetCard.height - iconSize) / 2 - 15;
 
     if (existingIcon) {
       project.updateElement(existingIcon.id, {
-        content: dataUrl,
-        width: iconSize,
-        height: iconSize,
+        content: card.emoji || '❓',
+        fontSize: iconSize,
         x: iconX,
         y: iconY
-      }); // Last update commits history logic in standard usage but here multiple updates might be separate commits
+      });
     } else {
-      const newEl = project.addElement('image', dataUrl);
+      const newEl = project.addElement('text', card.emoji || '❓');
       if (newEl) {
-        // 위치 및 메타데이터 업데이트
         project.updateElement(newEl.id, {
           x: iconX,
           y: iconY,
           width: iconSize,
           height: iconSize,
-          borderRadius: 0,
+          fontSize: iconSize,
+          content: card.emoji || '❓',
+          color: '#000000',
           metadata: {
             isAACCard: true,
-            aacIndex: selectedEl.metadata?.aacIndex,
+            aacIndex: targetIndex,
             isAACIcon: true
           }
         });
       }
     }
 
+    // 4. 라벨 텍스트 업데이트 (isAACIcon이 없는 텍스트)
+    const labelText = project.elements.find(el =>
+      el.pageId === project.activePageId &&
+      el.type === 'text' &&
+      el.metadata?.isAACCard &&
+      el.metadata?.aacIndex === targetIndex &&
+      !el.metadata?.isAACIcon
+    );
+
+    if (labelText) {
+      project.updateElement(labelText.id, {
+        content: card.label,
+        color: '#000000',
+        fontSize: 14
+        // fontWeight: 'bold' // fontWeight 속성이 DesignElement에 없다면 무시됨
+      });
+    }
+
     // 5. 다음 카드로 자동 이동
-    // 현재 페이지 카드 목록 재계산 (혹시 순서 변경 등 고려, 하지만 보통 고정)
     const aacCards = project.elements
       .filter(el => el.pageId === project.activePageId && el.metadata?.isAACCard && el.type === 'card' && el.metadata.aacIndex !== undefined)
       .sort((a, b) => (a.metadata!.aacIndex!) - (b.metadata!.aacIndex!));
 
-    // 현재 인덱스 찾기
-    const listIndex = aacCards.findIndex(el => el.id === selectedId);
+    // 현재 타겟 카드의 배열 내 인덱스 찾기
+    const currentArrayIdx = aacCards.findIndex(el => el.metadata!.aacIndex === targetIndex);
 
-    if (listIndex !== -1 && listIndex < aacCards.length - 1) {
-      // 다음 카드 선택
-      const nextCard = aacCards[listIndex + 1];
-      // addElement가 선택을 변경하므로 약간의 지연 후 선택
+    if (currentArrayIdx !== -1 && currentArrayIdx < aacCards.length - 1) {
+      const nextCard = aacCards[currentArrayIdx + 1];
       setTimeout(() => {
         project.setSelectedIds([nextCard.id]);
-      }, 100);
+      }, 50); // 지연 시간 단축
     }
   };
 

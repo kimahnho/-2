@@ -23,6 +23,7 @@ export interface AACCard {
     category: string;
     icon: React.ReactNode;
     backgroundColor: string;
+    emoji: string;
 }
 
 // AAC 카드 카테고리
@@ -37,44 +38,44 @@ const AAC_CATEGORIES = [
 // AAC 카드 목록 (기본 제공)
 const AAC_CARDS: AACCard[] = [
     // 기본
-    { id: 'yes', label: '예', category: 'basic', icon: <ThumbsUp className="w-8 h-8" />, backgroundColor: '#22C55E' },
-    { id: 'no', label: '아니오', category: 'basic', icon: <ThumbsDown className="w-8 h-8" />, backgroundColor: '#EF4444' },
-    { id: 'help', label: '도와주세요', category: 'basic', icon: <HelpCircle className="w-8 h-8" />, backgroundColor: '#F59E0B' },
-    { id: 'more', label: '더 주세요', category: 'basic', icon: <Gift className="w-8 h-8" />, backgroundColor: '#8B5CF6' },
-    { id: 'stop', label: '그만', category: 'basic', icon: <Pause className="w-8 h-8" />, backgroundColor: '#EF4444' },
-    { id: 'wait', label: '기다려요', category: 'basic', icon: <Clock className="w-8 h-8" />, backgroundColor: '#6366F1' },
+    { id: 'yes', label: '예', category: 'basic', icon: <ThumbsUp className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '👍' },
+    { id: 'no', label: '아니오', category: 'basic', icon: <ThumbsDown className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '👎' },
+    { id: 'help', label: '도와주세요', category: 'basic', icon: <HelpCircle className="w-8 h-8" />, backgroundColor: '#F59E0B', emoji: '🆘' },
+    { id: 'more', label: '더 주세요', category: 'basic', icon: <Gift className="w-8 h-8" />, backgroundColor: '#8B5CF6', emoji: '🎁' },
+    { id: 'stop', label: '그만', category: 'basic', icon: <Pause className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '🛑' },
+    { id: 'wait', label: '기다려요', category: 'basic', icon: <Clock className="w-8 h-8" />, backgroundColor: '#6366F1', emoji: '⏳' },
 
     // 요구
-    { id: 'eat', label: '먹고 싶어요', category: 'needs', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F97316' },
-    { id: 'drink', label: '마시고 싶어요', category: 'needs', icon: <Coffee className="w-8 h-8" />, backgroundColor: '#06B6D4' },
-    { id: 'bathroom', label: '화장실', category: 'needs', icon: <Bath className="w-8 h-8" />, backgroundColor: '#3B82F6' },
-    { id: 'clothes', label: '옷 갈아입기', category: 'needs', icon: <Shirt className="w-8 h-8" />, backgroundColor: '#EC4899' },
-    { id: 'sleep', label: '자고 싶어요', category: 'needs', icon: <Moon className="w-8 h-8" />, backgroundColor: '#6366F1' },
-    { id: 'outside', label: '밖에 나가요', category: 'needs', icon: <Sun className="w-8 h-8" />, backgroundColor: '#FBBF24' },
+    { id: 'eat', label: '먹고 싶어요', category: 'needs', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F97316', emoji: '🍽️' },
+    { id: 'drink', label: '마시고 싶어요', category: 'needs', icon: <Coffee className="w-8 h-8" />, backgroundColor: '#06B6D4', emoji: '🥤' },
+    { id: 'bathroom', label: '화장실', category: 'needs', icon: <Bath className="w-8 h-8" />, backgroundColor: '#3B82F6', emoji: '🚽' },
+    { id: 'clothes', label: '옷 갈아입기', category: 'needs', icon: <Shirt className="w-8 h-8" />, backgroundColor: '#EC4899', emoji: '👕' },
+    { id: 'sleep', label: '자고 싶어요', category: 'needs', icon: <Moon className="w-8 h-8" />, backgroundColor: '#6366F1', emoji: '😴' },
+    { id: 'outside', label: '밖에 나가요', category: 'needs', icon: <Sun className="w-8 h-8" />, backgroundColor: '#FBBF24', emoji: '☀️' },
 
     // 감정
-    { id: 'happy', label: '기뻐요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#F472B6' },
-    { id: 'sad', label: '슬퍼요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#60A5FA' },
-    { id: 'angry', label: '화나요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#EF4444' },
-    { id: 'scared', label: '무서워요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#A78BFA' },
-    { id: 'love', label: '사랑해요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#F43F5E' },
-    { id: 'tired', label: '피곤해요', category: 'feelings', icon: <Moon className="w-8 h-8" />, backgroundColor: '#94A3B8' },
+    { id: 'happy', label: '기뻐요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#F472B6', emoji: '😊' },
+    { id: 'sad', label: '슬퍼요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#60A5FA', emoji: '😢' },
+    { id: 'angry', label: '화나요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '😠' },
+    { id: 'scared', label: '무서워요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#A78BFA', emoji: '😨' },
+    { id: 'love', label: '사랑해요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#F43F5E', emoji: '❤️' },
+    { id: 'tired', label: '피곤해요', category: 'feelings', icon: <Moon className="w-8 h-8" />, backgroundColor: '#94A3B8', emoji: '😫' },
 
     // 행동
-    { id: 'play', label: '놀아요', category: 'actions', icon: <Play className="w-8 h-8" />, backgroundColor: '#22C55E' },
-    { id: 'read', label: '책 읽어요', category: 'actions', icon: <Book className="w-8 h-8" />, backgroundColor: '#8B5CF6' },
-    { id: 'watch', label: 'TV 봐요', category: 'actions', icon: <Tv className="w-8 h-8" />, backgroundColor: '#3B82F6' },
-    { id: 'music', label: '음악 들어요', category: 'actions', icon: <Music className="w-8 h-8" />, backgroundColor: '#EC4899' },
-    { id: 'call', label: '전화해요', category: 'actions', icon: <Phone className="w-8 h-8" />, backgroundColor: '#14B8A6' },
-    { id: 'drive', label: '차 타요', category: 'actions', icon: <Car className="w-8 h-8" />, backgroundColor: '#F59E0B' },
+    { id: 'play', label: '놀아요', category: 'actions', icon: <Play className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '🎾' },
+    { id: 'read', label: '책 읽어요', category: 'actions', icon: <Book className="w-8 h-8" />, backgroundColor: '#8B5CF6', emoji: '📖' },
+    { id: 'watch', label: 'TV 봐요', category: 'actions', icon: <Tv className="w-8 h-8" />, backgroundColor: '#3B82F6', emoji: '📺' },
+    { id: 'music', label: '음악 들어요', category: 'actions', icon: <Music className="w-8 h-8" />, backgroundColor: '#EC4899', emoji: '🎵' },
+    { id: 'call', label: '전화해요', category: 'actions', icon: <Phone className="w-8 h-8" />, backgroundColor: '#14B8A6', emoji: '📞' },
+    { id: 'drive', label: '차 타요', category: 'actions', icon: <Car className="w-8 h-8" />, backgroundColor: '#F59E0B', emoji: '🚗' },
 
     // 장소
-    { id: 'home', label: '집', category: 'places', icon: <Home className="w-8 h-8" />, backgroundColor: '#F97316' },
-    { id: 'school', label: '학교', category: 'places', icon: <Book className="w-8 h-8" />, backgroundColor: '#3B82F6' },
-    { id: 'hospital', label: '병원', category: 'places', icon: <HelpCircle className="w-8 h-8" />, backgroundColor: '#EF4444' },
-    { id: 'store', label: '마트', category: 'places', icon: <Gift className="w-8 h-8" />, backgroundColor: '#22C55E' },
-    { id: 'park', label: '공원', category: 'places', icon: <Sun className="w-8 h-8" />, backgroundColor: '#84CC16' },
-    { id: 'friend', label: '친구 집', category: 'places', icon: <User className="w-8 h-8" />, backgroundColor: '#A855F7' },
+    { id: 'home', label: '집', category: 'places', icon: <Home className="w-8 h-8" />, backgroundColor: '#F97316', emoji: '🏠' },
+    { id: 'school', label: '학교', category: 'places', icon: <Book className="w-8 h-8" />, backgroundColor: '#3B82F6', emoji: '🏫' },
+    { id: 'hospital', label: '병원', category: 'places', icon: <HelpCircle className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '🏥' },
+    { id: 'store', label: '마트', category: 'places', icon: <Gift className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '🏪' },
+    { id: 'park', label: '공원', category: 'places', icon: <Sun className="w-8 h-8" />, backgroundColor: '#84CC16', emoji: '🌳' },
+    { id: 'friend', label: '친구 집', category: 'places', icon: <User className="w-8 h-8" />, backgroundColor: '#A855F7', emoji: '🧑‍🤝‍🧑' },
 ];
 
 export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, totalCards }) => {
@@ -112,8 +113,8 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.id)}
                         className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${selectedCategory === cat.id
-                                ? 'bg-[#5500FF] text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-[#5500FF] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         {cat.icon}
