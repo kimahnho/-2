@@ -85,22 +85,6 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
 
     return (
         <div className="space-y-4">
-            {/* 현재 진행 상태 */}
-            {currentCardIndex !== undefined && totalCards !== undefined && (
-                <div className="bg-[#5500FF]/10 rounded-xl p-3 border border-[#5500FF]/20">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-[#5500FF]">카드 채우기 진행</span>
-                        <span className="text-xs font-bold text-[#5500FF]">{currentCardIndex + 1} / {totalCards}</span>
-                    </div>
-                    <div className="w-full h-2 bg-[#5500FF]/20 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-[#5500FF] transition-all duration-300"
-                            style={{ width: `${((currentCardIndex + 1) / totalCards) * 100}%` }}
-                        />
-                    </div>
-                </div>
-            )}
-
             {/* 안내 메시지 */}
             <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2 text-center">
                 카드를 선택하면 자동으로 다음 칸으로 이동합니다

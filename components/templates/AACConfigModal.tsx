@@ -144,7 +144,11 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
             borderRadius: 12,
             rotation: 0,
             zIndex: 1,
-            pageId: ''
+            pageId: '',
+            metadata: {
+                isAACSentenceArea: true,
+                itemCount: 0
+            }
         } as DesignElement);
 
         elements.push({
