@@ -5,7 +5,7 @@
  */
 
 export type ElementType = 'text' | 'image' | 'shape' | 'card' | 'line' | 'arrow' | 'circle';
-export type TabType = 'design' | 'elements' | 'text' | 'uploads' | 'emotions';
+export type TabType = 'design' | 'templates' | 'elements' | 'text' | 'uploads' | 'emotions';
 
 export interface DesignElement {
     id: string;
