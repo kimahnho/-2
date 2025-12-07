@@ -194,16 +194,16 @@ const styles: Record<string, React.CSSProperties> = {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        marginBottom: '40px'
+        marginBottom: '16px'
     },
     logo: {
         width: '280px',
         height: 'auto',
-        marginBottom: '0px'
+        margin: '-60px 0 -80px 0' // 이미지 내부 여백 상쇄
     },
     subtitle: {
         color: '#6b7280',
-        marginTop: '12px',
+        marginTop: '0px',
         fontSize: '15px'
     },
     socialButtons: {
