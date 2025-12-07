@@ -75,8 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
 
 const styles: Record<string, React.CSSProperties> = {
     header: {
-        height: 'auto',
-        minHeight: '80px',
+        height: '64px', // 원래 높이로 복구
         background: 'white',
         borderBottom: '1px solid #e5e7eb',
         position: 'fixed',
@@ -85,8 +84,9 @@ const styles: Record<string, React.CSSProperties> = {
         right: 0,
         zIndex: 100,
         display: 'flex',
-        alignItems: 'center',
-        padding: '12px 24px'
+        alignItems: 'center', // 수직 중앙 정렬
+        padding: '0 24px',
+        overflow: 'hidden' // 로고 여백이 튀어나오지 않도록 숨김
     },
     container: {
         width: '100%',
@@ -94,15 +94,18 @@ const styles: Record<string, React.CSSProperties> = {
         margin: '0 auto',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        height: '100%' // 컨테이너 높이 꽉 채우기
     },
     logoSection: {
         display: 'flex',
-        alignItems: 'center'
+        alignItems: 'center',
+        height: '100%'
     },
     logo: {
-        height: '100px',
-        width: 'auto'
+        height: '160px', // 여백이 많으므로 시각적 크기를 위해 키움
+        width: 'auto',
+        marginTop: '-5px' // 미세 위치 조정
     },
     profileSection: {
         position: 'relative'
