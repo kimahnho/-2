@@ -199,7 +199,7 @@ const styles: Record<string, React.CSSProperties> = {
     logo: {
         width: '280px',
         height: 'auto',
-        margin: '-60px 0 -80px 0' // 이미지 내부 여백 상쇄
+        margin: '-80px 0 -80px 0' // 상단 마진도 더 줄임
     },
     subtitle: {
         color: '#6b7280',

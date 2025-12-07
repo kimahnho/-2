@@ -103,7 +103,7 @@ const styles: Record<string, React.CSSProperties> = {
         height: '100%'
     },
     logo: {
-        height: '36px',
+        height: '160px', // 로고 이미지 자체가 여백이 많아서 크게 설정
         width: 'auto'
     },
     profileSection: {
