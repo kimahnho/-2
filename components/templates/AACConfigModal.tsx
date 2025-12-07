@@ -11,16 +11,25 @@ import { DesignElement } from '../../types';
 interface Props {
     onClose: () => void;
     onApply: (elements: DesignElement[], orientation: 'portrait' | 'landscape') => void;
+    onOrientationChange?: (orientation: 'portrait' | 'landscape') => void;
 }
 
 // 용지 크기 상수
 const CANVAS_PORTRAIT = { width: 800, height: 1132 }; // 세로
 const CANVAS_LANDSCAPE = { width: 1132, height: 800 }; // 가로
 
-export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
+export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientationChange }) => {
     const [cols, setCols] = useState(4);
     const [rows, setRows] = useState(4);
     const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+
+    // 방향 변경 핸들러 - 즉시 캔버스 방향 동기화
+    const handleOrientationChange = (newOrientation: 'portrait' | 'landscape') => {
+        setOrientation(newOrientation);
+        if (onOrientationChange) {
+            onOrientationChange(newOrientation);
+        }
+    };
 
     // 숫자 입력 핸들러 (1-8 제한)
     const handleColsChange = (value: string) => {
@@ -217,7 +226,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
                         </label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
-                                onClick={() => setOrientation('portrait')}
+                                onClick={() => handleOrientationChange('portrait')}
                                 className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${orientation === 'portrait'
                                     ? 'border-[#5500FF] bg-[#5500FF]/10'
                                     : 'border-gray-200 hover:border-gray-300'
@@ -232,7 +241,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
                             </button>
 
                             <button
-                                onClick={() => setOrientation('landscape')}
+                                onClick={() => handleOrientationChange('landscape')}
                                 className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${orientation === 'landscape'
                                     ? 'border-[#5500FF] bg-[#5500FF]/10'
                                     : 'border-gray-200 hover:border-gray-300'

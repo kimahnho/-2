@@ -176,6 +176,7 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
                 <AACConfigModal
                     onClose={() => setShowAACConfig(false)}
                     onApply={handleAACApply}
+                    onOrientationChange={onUpdatePageOrientation}
                 />
             )}
         </div>
