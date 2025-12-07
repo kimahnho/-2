@@ -108,6 +108,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       <Toolbar
         activeTab={activeTab} onTabChange={setActiveTab}
         onAddElement={project.addElement} onLoadTemplate={project.loadTemplate}
+        onAddPage={project.addPage}
         uploadedAssets={uploadedAssets} onSaveAsset={handleSaveAsset}
         characters={characterManager.characters}
         onAddCharacter={characterManager.addCharacter}

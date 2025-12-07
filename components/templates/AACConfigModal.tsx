@@ -10,7 +10,7 @@ import { DesignElement } from '../../types';
 
 interface Props {
     onClose: () => void;
-    onApply: (elements: DesignElement[]) => void;
+    onApply: (elements: DesignElement[], orientation: 'portrait' | 'landscape') => void;
 }
 
 // 용지 크기 상수
@@ -170,7 +170,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
 
     const handleApply = () => {
         const elements = generateAACElements();
-        onApply(elements);
+        onApply(elements, orientation);
     };
 
     return createPortal(

@@ -20,6 +20,7 @@ interface Props {
     onTabChange: (tab: TabType | null) => void;
     onAddElement: (type: ElementType, content?: string) => void;
     onLoadTemplate: (elements: DesignElement[]) => void;
+    onAddPage?: (orientation?: 'portrait' | 'landscape') => string | void;
     uploadedAssets: string[];
     onSaveAsset: (url: string) => void;
 
@@ -41,6 +42,7 @@ export const Toolbar: React.FC<Props> = ({
     onTabChange,
     onAddElement,
     onLoadTemplate,
+    onAddPage,
     uploadedAssets,
     onSaveAsset,
     characters,
@@ -147,6 +149,7 @@ export const Toolbar: React.FC<Props> = ({
                             {activeTab === 'templates' && (
                                 <TemplatesPanel
                                     onLoadTemplate={onLoadTemplate}
+                                    onAddPage={onAddPage}
                                 />
                             )}
 

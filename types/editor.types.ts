@@ -40,6 +40,7 @@ export interface DesignElement {
 
 export interface Page {
     id: string;
+    orientation?: 'portrait' | 'landscape';
 }
 
 export interface EmotionCard {

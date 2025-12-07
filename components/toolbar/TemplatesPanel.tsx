@@ -11,6 +11,7 @@ import { AACConfigModal } from '../templates/AACConfigModal';
 
 interface Props {
     onLoadTemplate: (elements: DesignElement[]) => void;
+    onAddPage?: (orientation?: 'portrait' | 'landscape') => string | void;
 }
 
 // 템플릿 카테고리 정의
@@ -22,7 +23,7 @@ const TEMPLATE_CATEGORIES = [
     { id: 'aac', name: 'AAC', icon: <Grid className="w-4 h-4" /> },
 ];
 
-export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
+export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onAddPage }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('all');
     const [showAACConfig, setShowAACConfig] = useState(false);
 
@@ -33,7 +34,11 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
             ? [] // AAC는 별도 카드로 처리
             : TEMPLATES.filter(t => (t as any).category === selectedCategory);
 
-    const handleAACApply = (elements: DesignElement[]) => {
+    const handleAACApply = (elements: DesignElement[], orientation: 'portrait' | 'landscape') => {
+        // 가로 방향 선택 시 가로 페이지 생성
+        if (orientation === 'landscape' && onAddPage) {
+            onAddPage('landscape');
+        }
         onLoadTemplate(elements);
         setShowAACConfig(false);
     };
@@ -75,7 +80,7 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
                             <div className="flex-1">
                                 <h4 className="font-bold text-gray-900 text-base">AAC 의사소통 판</h4>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    2×2 ~ 6×6 그리드, 가로/세로 방향 선택
+                                    1~8 그리드, 가로/세로 방향 선택
                                 </p>
                             </div>
                             <div className="px-3 py-1 bg-[#5500FF]/10 text-[#5500FF] text-xs font-bold rounded-full">

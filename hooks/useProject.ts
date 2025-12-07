@@ -139,11 +139,12 @@ export const useProject = (initialData?: ProjectData) => {
 
   // --- Page CRUD ---
 
-  const addPage = () => {
+  const addPage = (orientation?: 'portrait' | 'landscape') => {
     const newPageId = `page-${generateId()}`;
-    const newPages = [...pages, { id: newPageId }];
+    const newPages = [...pages, { id: newPageId, orientation: orientation || 'portrait' }];
     commitToHistory({ elements, pages: newPages });
     setActivePageId(newPageId);
+    return newPageId;
   };
 
   const deletePage = (pageId: string) => {
