@@ -68,6 +68,13 @@ export const PageManager: React.FC<Props> = ({
           const pageElements = elements.filter(el => el.pageId === page.id || (!el.pageId && index === 0 && pages.length === 1));
           const isActive = activePageId === page.id;
 
+          // 페이지 방향에 따른 캔버스 크기 계산
+          const isLandscape = page.orientation === 'landscape';
+          const pageCanvasWidth = isLandscape ? CANVAS_HEIGHT : CANVAS_WIDTH;
+          const pageCanvasHeight = isLandscape ? CANVAS_WIDTH : CANVAS_HEIGHT;
+          const pageThumbWidth = pageCanvasWidth * THUMBNAIL_SCALE;
+          const pageThumbHeight = pageCanvasHeight * THUMBNAIL_SCALE;
+
           return (
             <div
               key={page.id}
@@ -87,19 +94,19 @@ export const PageManager: React.FC<Props> = ({
               {/* Thumbnail Container */}
               <div
                 className={`relative bg-white rounded-md overflow-hidden cursor-pointer transition-all ${isActive
-                    ? 'ring-2 ring-[#5500FF] shadow-md scale-[1.02]'
-                    : 'ring-1 ring-gray-200 hover:ring-[#B0C0ff] hover:shadow-sm'
+                  ? 'ring-2 ring-[#5500FF] shadow-md scale-[1.02]'
+                  : 'ring-1 ring-gray-200 hover:ring-[#B0C0ff] hover:shadow-sm'
                   }`}
                 style={{
-                  width: thumbWidth,
-                  height: thumbHeight,
+                  width: pageThumbWidth,
+                  height: pageThumbHeight,
                 }}
               >
                 {/* Scaled Preview */}
                 <div
                   style={{
-                    width: CANVAS_WIDTH,
-                    height: CANVAS_HEIGHT,
+                    width: pageCanvasWidth,
+                    height: pageCanvasHeight,
                     transform: `scale(${THUMBNAIL_SCALE})`,
                     transformOrigin: 'top left',
                     position: 'absolute',

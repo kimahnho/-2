@@ -40,20 +40,31 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
 
         const padding = 40;
         const gap = 12;
-        const headerHeight = 80;
-        const footerHeight = 100;
+        const headerHeight = 60; // 제목 영역
+        const sentenceAreaHeight = 80; // 문장 구성 영역 높이
+        const sentenceAreaMargin = 20; // 문장 영역 여백
 
+        // 문장 구성 영역은 맨 하단에 고정
+        const sentenceY = canvas.height - padding - sentenceAreaHeight;
+
+        // 그리드가 사용할 수 있는 영역 (제목 ~ 문장 영역 사이)
+        const gridAreaTop = padding + headerHeight;
+        const gridAreaBottom = sentenceY - sentenceAreaMargin;
+        const availableHeight = gridAreaBottom - gridAreaTop;
         const availableWidth = canvas.width - padding * 2;
-        const availableHeight = canvas.height - padding * 2 - headerHeight - footerHeight;
 
+        // 카드 크기 계산 (그리드가 사용 가능한 영역 내에서)
         const cardWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
         const cardHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
-        const cardSize = Math.min(cardWidth, cardHeight, 180); // 최대 180px
+        const cardSize = Math.min(cardWidth, cardHeight, 160); // 최대 160px
 
+        // 그리드 총 크기
         const gridWidth = cardSize * cols + gap * (cols - 1);
         const gridHeight = cardSize * rows + gap * (rows - 1);
-        const startX = padding + (availableWidth - gridWidth) / 2;
-        const startY = padding + headerHeight;
+
+        // 그리드를 사용 가능한 영역의 중앙에 배치
+        const startX = (canvas.width - gridWidth) / 2;
+        const startY = gridAreaTop + (availableHeight - gridHeight) / 2;
 
         // 제목
         elements.push({
@@ -64,7 +75,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
             width: 300,
             height: 50,
             content: 'AAC 의사소통 판',
-            fontSize: 32,
+            fontSize: 28,
             color: '#5500FF',
             rotation: 0,
             zIndex: 1,
@@ -76,12 +87,12 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
         elements.push({
             id: `aac-label-${Date.now()}`,
             type: 'text',
-            x: canvas.width - padding - 100,
-            y: padding + 15,
-            width: 100,
+            x: canvas.width - padding - 80,
+            y: padding + 10,
+            width: 80,
             height: 30,
             content: `${cols}×${rows}`,
-            fontSize: 18,
+            fontSize: 16,
             color: '#9CA3AF',
             rotation: 0,
             zIndex: 1,
@@ -118,11 +129,11 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
                     id: `${cardId}-text`,
                     type: 'text',
                     x: x + 10,
-                    y: y + cardSize / 2 - 12,
+                    y: y + cardSize / 2 - 10,
                     width: cardSize - 20,
-                    height: 24,
+                    height: 20,
                     content: '카드 추가',
-                    fontSize: cardSize > 100 ? 14 : 10,
+                    fontSize: cardSize > 100 ? 12 : 10,
                     color: '#9CA3AF',
                     rotation: 0,
                     zIndex: 100 + row * cols + col,
@@ -132,16 +143,16 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
             }
         }
 
-        // 문장 구성 영역
-        const sentenceY = startY + gridHeight + 20;
+        // 문장 구성 영역 (맨 하단에 고정, 가로 전체 너비)
+        const sentenceWidth = canvas.width - padding * 2;
 
         elements.push({
             id: `aac-sentence-bg-${Date.now()}`,
             type: 'shape',
-            x: startX,
+            x: padding,
             y: sentenceY,
-            width: Math.min(gridWidth, canvas.width - padding * 2),
-            height: 70,
+            width: sentenceWidth,
+            height: sentenceAreaHeight,
             backgroundColor: '#F3E8FF',
             borderRadius: 16,
             rotation: 0,
@@ -152,8 +163,8 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
         elements.push({
             id: `aac-sentence-text-${Date.now()}`,
             type: 'text',
-            x: startX + 20,
-            y: sentenceY + 22,
+            x: padding + 20,
+            y: sentenceY + (sentenceAreaHeight - 26) / 2,
             width: 200,
             height: 26,
             content: '문장 구성 영역',
