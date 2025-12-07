@@ -131,6 +131,6 @@ CREATE INDEX IF NOT EXISTS idx_payment_history_user_id ON payment_history(user_i
 -- ============================================
 INSERT INTO subscription_plans (id, name, original_price, price, template_limit, ai_limit, features)
 VALUES
-  ('basic', '기본', 24900, 15900, 3, 100, '["템플릿 3개 구독", "AI 생성 월 100회", "기본 지원"]'::jsonb),
+  ('basic', '기본', 27900, 15900, 3, 100, '["템플릿 3개 구독", "AI 생성 월 100회", "기본 지원"]'::jsonb),
   ('pro', '프로', 89000, 55000, 10, NULL, '["템플릿 10개 구독", "AI 생성 무제한", "우선 지원", "신규 템플릿 우선 접근"]'::jsonb)
 ON CONFLICT (id) DO NOTHING;

@@ -51,7 +51,7 @@ export const subscriptionService = {
                 {
                     id: 'basic',
                     name: '기본',
-                    originalPrice: 24900,
+                    originalPrice: 27900,
                     price: 15900,
                     templateLimit: 3,
                     aiLimit: 100,
