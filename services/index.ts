@@ -15,6 +15,9 @@ export { authService, type AuthUser } from './authService';
 // AI Service
 export { generateTherapyImage, generateCharacterEmotion, generateTherapyText } from './geminiService';
 
+// Subscription Service
+export { subscriptionService, type SubscriptionPlan, type UserSubscription, type AIUsage } from './subscriptionService';
+
 // Storage Utilities
 export { supabase, isSupabaseConfigured, STORAGE_KEYS } from './storageAdapter';
 

@@ -10,6 +10,7 @@ import { Dashboard } from './components/Dashboard';
 import { Landing } from './components/Landing';
 import { LoginPage } from './components/auth/LoginPage';
 import { Header } from './components/layout/Header';
+import { PricingPage } from './components/pricing/PricingPage';
 import { storageService } from './services/storageService';
 import { authService, type AuthUser } from './services';
 import { ProjectData, StudentProfile, StudentGroup } from './types';
@@ -210,6 +211,16 @@ const EditorRoute: React.FC<{ user: AuthUser | null }> = ({ user }) => {
     );
 };
 
+// Pricing Route
+const PricingRoute: React.FC<{ user: AuthUser | null; onLogin: () => void }> = ({ user, onLogin }) => {
+    console.log('🎯 PricingRoute is rendering!', { user });
+    return (
+        <MainLayout user={user} onLogin={onLogin}>
+            <PricingPage user={user} />
+        </MainLayout>
+    );
+};
+
 // Main App Router
 export const AppRouter: React.FC = () => {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -234,6 +245,7 @@ export const AppRouter: React.FC = () => {
                 <Route path="/login" element={<LoginRoute />} />
                 <Route path="/dashboard" element={<DashboardRoute user={user} onLogin={handleLogin} />} />
                 <Route path="/editor/:projectId" element={<EditorRoute user={user} />} />
+                <Route path="/pricing" element={<PricingRoute user={user} onLogin={handleLogin} />} />
             </Routes>
         </BrowserRouter>
     );

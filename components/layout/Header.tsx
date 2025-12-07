@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService, AuthUser } from '../../services';
+import { SubscriptionBadge } from './SubscriptionBadge';
 
 interface HeaderProps {
     user: AuthUser | null;
@@ -7,6 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
+    const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
 
     const handleSignOut = async () => {
         await authService.signOut();
-        window.location.reload(); // 강제 리로드로 상태 초기화
+        window.location.reload();
     };
 
     const getInitials = (email: string) => {
@@ -35,38 +38,58 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
             <div style={styles.container}>
                 {/* Logo */}
                 <div style={styles.logoSection}>
-                    <img src="/logo.png" alt="MURU.AI" style={styles.logo} />
+                    <a href="/" style={{ display: 'flex', alignItems: 'center' }}>
+                        <img src="/logo.png" alt="MURU.AI" style={styles.logo} />
+                    </a>
                 </div>
+
+                {/* Navigation */}
+                <nav style={styles.navSection}>
+                    <button
+                        onClick={() => navigate('/pricing')}
+                        style={styles.navLink}
+                    >
+                        가격
+                    </button>
+                </nav>
 
                 {/* User Profile or Login Button */}
                 {user ? (
-                    <div style={styles.profileSection} ref={dropdownRef}>
-                        <button
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            style={styles.avatarButton}
-                        >
-                            <div style={styles.avatar}>
-                                {getInitials(user.email || '')}
-                            </div>
-                        </button>
+                    <div style={styles.rightSection}>
+                        {/* Subscription Badge */}
+                        <SubscriptionBadge userId={user.id} />
 
-                        {/* Dropdown Menu */}
-                        {isDropdownOpen && (
-                            <div style={styles.dropdown}>
-                                <div style={styles.userInfo}>
-                                    <p style={styles.userEmail}>{user.email}</p>
+                        {/* Profile Dropdown */}
+                        <div style={styles.profileSection} ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                style={styles.avatarButton}
+                            >
+                                <div style={styles.avatar}>
+                                    {getInitials(user.email || '')}
                                 </div>
-                                <div style={styles.divider} />
-                                <button onClick={handleSignOut} style={styles.menuItem}>
-                                    로그아웃
-                                </button>
-                            </div>
-                        )}
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isDropdownOpen && (
+                                <div style={styles.dropdown}>
+                                    <div style={styles.userInfo}>
+                                        <p style={styles.userEmail}>{user.email}</p>
+                                    </div>
+                                    <div style={styles.divider} />
+                                    <button onClick={handleSignOut} style={styles.menuItem}>
+                                        로그아웃
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ) : (
-                    <button onClick={onLogin} style={styles.loginButton}>
-                        로그인
-                    </button>
+                    <div style={styles.rightSection}>
+                        <button onClick={onLogin} style={styles.loginButton}>
+                            로그인
+                        </button>
+                    </div>
                 )}
             </div>
         </header>
@@ -105,6 +128,28 @@ const styles: Record<string, React.CSSProperties> = {
     logo: {
         height: '160px', // 로고 이미지 자체가 여백이 많아서 크게 설정
         width: 'auto'
+    },
+    navSection: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '24px',
+        marginLeft: '32px'
+    },
+    navLink: {
+        background: 'none',
+        border: 'none',
+        fontSize: '15px',
+        fontWeight: '500',
+        color: '#374151',
+        cursor: 'pointer',
+        padding: '8px 16px',
+        borderRadius: '8px',
+        transition: 'all 0.2s'
+    },
+    rightSection: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px'
     },
     profileSection: {
         position: 'relative'
