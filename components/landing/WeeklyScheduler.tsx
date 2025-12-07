@@ -10,10 +10,13 @@ import { DeleteConfirmationModal } from './scheduler/modals/DeleteConfirmationMo
 
 interface WeeklySchedulerProps {
     lastUpdate?: number;
+    isGuest?: boolean;
+    onRequireLogin?: () => void;
 }
 
 // --- Main Container: WeeklyScheduler ---
-export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ lastUpdate = 0 }) => {
+export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ lastUpdate = 0, isGuest, onRequireLogin }) => {
+    // ... (existing state)
     const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
     const [students, setStudents] = useState<StudentProfile[]>([]);
     const [groups, setGroups] = useState<StudentGroup[]>([]);
@@ -60,6 +63,10 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ lastUpdate = 0
     const goToToday = () => setCurrentDate(new Date());
 
     const handleDeleteRequest = (id: string) => {
+        if (isGuest) {
+            onRequireLogin?.();
+            return;
+        }
         setItemToDelete(id); // Open delete modal
     };
 
@@ -72,6 +79,10 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ lastUpdate = 0
     };
 
     const handleOpenAdd = (day?: DayKey, dateStr?: string, time?: string) => {
+        if (isGuest) {
+            onRequireLogin?.();
+            return;
+        }
         setEditingItem(null);
         setFormData({
             targetType: 'student',
@@ -86,6 +97,10 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ lastUpdate = 0
     };
 
     const handleOpenEdit = (item: ScheduleItem) => {
+        if (isGuest) {
+            onRequireLogin?.();
+            return;
+        }
         setEditingItem(item);
         let specificDate = new Date().toISOString().split('T')[0];
         let isRecurring = true;
@@ -106,6 +121,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ lastUpdate = 0
     };
 
     const handleDragStart = (e: React.DragEvent, id: string) => {
+        if (isGuest) return; // Disable drag for guest
         setDraggedItemId(id);
         e.dataTransfer.effectAllowed = 'move';
         const img = new Image();

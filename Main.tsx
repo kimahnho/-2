@@ -221,6 +221,8 @@ export const Main: React.FC = () => {
       onSelectGroup={handleSelectGroup}
       onQuickStart={handleQuickStart}
       onOpenStorage={handleOpenStorage}
+      isGuest={!user}
+      onRequireLogin={() => setShowLoginModal(true)}
     />
   );
 };

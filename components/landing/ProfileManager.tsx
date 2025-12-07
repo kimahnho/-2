@@ -9,14 +9,17 @@ interface Props {
     onSelectStudent: (student: StudentProfile) => void;
     onSelectGroup: (group: StudentGroup) => void;
     onDataChange?: () => void;
+    isGuest?: boolean; // Added
+    onRequireLogin?: () => void; // Added
 }
 
-export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup, onDataChange }) => {
+export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup, onDataChange, isGuest, onRequireLogin }) => {
     const [activeTab, setActiveTab] = useState<'students' | 'groups'>('students');
     const [students, setStudents] = useState<StudentProfile[]>([]);
     const [groups, setGroups] = useState<StudentGroup[]>([]);
     const [isAdding, setIsAdding] = useState(false);
 
+    // ... (existing state)
     // Delete State
     const [deleteTarget, setDeleteTarget] = useState<{ type: 'student' | 'group', id: string } | null>(null);
     const timerRef = useRef<any>(null);
@@ -100,6 +103,7 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
 
     // Long Press Handlers
     const startPress = (type: 'student' | 'group', id: string) => {
+        if (isGuest) return; // Disable delete for guest
         isLongPress.current = false;
         timerRef.current = setTimeout(() => {
             isLongPress.current = true;
@@ -116,12 +120,24 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
     };
 
     const handleCardClick = (type: 'student' | 'group', data: any) => {
+        if (isGuest) {
+            onRequireLogin?.();
+            return;
+        }
         if (isLongPress.current) {
             isLongPress.current = false;
             return;
         }
         if (type === 'student') onSelectStudent(data);
         else onSelectGroup(data);
+    };
+
+    const handleAddClick = () => {
+        if (isGuest) {
+            onRequireLogin?.();
+            return;
+        }
+        setIsAdding(true);
     };
 
     return (
@@ -177,7 +193,7 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
                         </form>
                     ) : (
                         <button
-                            onClick={() => setIsAdding(true)}
+                            onClick={handleAddClick}
                             className="bg-white rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#5500FF] hover:bg-[#5500FF]/5 flex flex-col items-center justify-center gap-4 h-[240px] transition-all group"
                         >
                             <div className="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-gray-400 group-hover:text-[#5500FF] group-hover:shadow-md transition-all">
@@ -268,8 +284,8 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
                                                         key={s.id}
                                                         onClick={() => toggleStudentSelection(s.id)}
                                                         className={`cursor-pointer p-3 rounded-xl border transition-all flex items-start gap-3 ${isSelected
-                                                                ? 'bg-[#5500FF]/5 border-[#5500FF] ring-1 ring-[#5500FF]'
-                                                                : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                            ? 'bg-[#5500FF]/5 border-[#5500FF] ring-1 ring-[#5500FF]'
+                                                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                             }`}
                                                     >
                                                         {/* Avatar */}
@@ -317,7 +333,7 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
                         </form>
                     ) : (
                         <button
-                            onClick={() => setIsAdding(true)}
+                            onClick={handleAddClick}
                             className="bg-white rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#5500FF] hover:bg-[#5500FF]/5 flex flex-col items-center justify-center gap-4 h-[240px] transition-all group"
                         >
                             <div className="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-gray-400 group-hover:text-[#5500FF] group-hover:shadow-md transition-all">
