@@ -38,44 +38,46 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
         const elements: DesignElement[] = [];
         const canvas = orientation === 'portrait' ? CANVAS_PORTRAIT : CANVAS_LANDSCAPE;
 
-        const padding = 40;
-        const gap = 12;
-        const headerHeight = 60; // 제목 영역
-        const sentenceAreaHeight = 80; // 문장 구성 영역 높이
-        const sentenceAreaMargin = 20; // 문장 영역 여백
+        // 기본 여백 설정
+        const PADDING = 40;
+        const GAP = 12;
+        const HEADER_HEIGHT = 60;
+        const SENTENCE_HEIGHT = 80;
+        const SENTENCE_MARGIN = 30;
 
-        // 문장 구성 영역은 맨 하단에 고정
-        const sentenceY = canvas.height - padding - sentenceAreaHeight;
+        // 레이아웃 계산
+        // 문장 영역: 캔버스 하단에 고정
+        const sentenceY = canvas.height - PADDING - SENTENCE_HEIGHT;
 
-        // 그리드가 사용할 수 있는 영역 (제목 ~ 문장 영역 사이)
-        const gridAreaTop = padding + headerHeight;
-        const gridAreaBottom = sentenceY - sentenceAreaMargin;
-        const availableHeight = gridAreaBottom - gridAreaTop;
-        const availableWidth = canvas.width - padding * 2;
+        // 그리드 영역: 헤더 아래 ~ 문장 영역 위
+        const gridTop = PADDING + HEADER_HEIGHT;
+        const gridBottom = sentenceY - SENTENCE_MARGIN;
+        const gridAreaHeight = gridBottom - gridTop;
+        const gridAreaWidth = canvas.width - PADDING * 2;
 
-        // 카드 크기 계산 (그리드가 사용 가능한 영역 내에서)
-        const cardWidth = Math.floor((availableWidth - gap * (cols - 1)) / cols);
-        const cardHeight = Math.floor((availableHeight - gap * (rows - 1)) / rows);
-        const cardSize = Math.min(cardWidth, cardHeight, 160); // 최대 160px
+        // 카드 크기 계산 (영역에 맞게 + 최대 크기 제한)
+        const maxCardW = Math.floor((gridAreaWidth - GAP * (cols - 1)) / cols);
+        const maxCardH = Math.floor((gridAreaHeight - GAP * (rows - 1)) / rows);
+        const cardSize = Math.min(maxCardW, maxCardH, 150);
 
-        // 그리드 총 크기
-        const gridWidth = cardSize * cols + gap * (cols - 1);
-        const gridHeight = cardSize * rows + gap * (rows - 1);
+        // 실제 그리드 크기
+        const totalGridWidth = cardSize * cols + GAP * (cols - 1);
+        const totalGridHeight = cardSize * rows + GAP * (rows - 1);
 
-        // 그리드를 사용 가능한 영역의 중앙에 배치
-        const startX = (canvas.width - gridWidth) / 2;
-        const startY = gridAreaTop + (availableHeight - gridHeight) / 2;
+        // 그리드 시작점 (캔버스 중앙 정렬)
+        const gridStartX = (canvas.width - totalGridWidth) / 2;
+        const gridStartY = gridTop + (gridAreaHeight - totalGridHeight) / 2;
 
-        // 제목
+        // === 1. 제목 ===
         elements.push({
             id: `aac-title-${Date.now()}`,
             type: 'text',
-            x: padding,
-            y: padding,
-            width: 300,
-            height: 50,
+            x: PADDING,
+            y: PADDING,
+            width: 280,
+            height: 40,
             content: 'AAC 의사소통 판',
-            fontSize: 28,
+            fontSize: 26,
             color: '#5500FF',
             rotation: 0,
             zIndex: 1,
@@ -83,16 +85,16 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
             fontFamily: "'Gowun Dodum', sans-serif"
         } as DesignElement);
 
-        // 그리드 크기 라벨
+        // === 2. 그리드 크기 라벨 ===
         elements.push({
             id: `aac-label-${Date.now()}`,
             type: 'text',
-            x: canvas.width - padding - 80,
-            y: padding + 10,
-            width: 80,
-            height: 30,
+            x: canvas.width - PADDING - 60,
+            y: PADDING + 8,
+            width: 60,
+            height: 24,
             content: `${cols}×${rows}`,
-            fontSize: 16,
+            fontSize: 14,
             color: '#9CA3AF',
             rotation: 0,
             zIndex: 1,
@@ -100,75 +102,74 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
             fontFamily: "'Gowun Dodum', sans-serif"
         } as DesignElement);
 
-        // 카드 그리드 생성
-        for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-                const x = startX + col * (cardSize + gap);
-                const y = startY + row * (cardSize + gap);
-                const cardId = `aac-card-${row}-${col}-${Date.now()}`;
+        // === 3. 카드 그리드 ===
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cardX = gridStartX + c * (cardSize + GAP);
+                const cardY = gridStartY + r * (cardSize + GAP);
+                const cardId = `aac-card-${r}-${c}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
 
                 // 카드 배경
                 elements.push({
                     id: cardId,
                     type: 'card',
-                    x, y,
+                    x: cardX,
+                    y: cardY,
                     width: cardSize,
                     height: cardSize,
                     backgroundColor: '#ffffff',
-                    borderRadius: 16,
-                    borderWidth: 3,
+                    borderRadius: 12,
+                    borderWidth: 2,
                     borderColor: '#E5E7EB',
                     borderStyle: 'solid',
                     rotation: 0,
-                    zIndex: 2 + row * cols + col,
+                    zIndex: 10 + r * cols + c,
                     pageId: ''
                 } as DesignElement);
 
                 // 플레이스홀더 텍스트
                 elements.push({
-                    id: `${cardId}-text`,
+                    id: `${cardId}-txt`,
                     type: 'text',
-                    x: x + 10,
-                    y: y + cardSize / 2 - 10,
-                    width: cardSize - 20,
-                    height: 20,
+                    x: cardX + 8,
+                    y: cardY + cardSize / 2 - 8,
+                    width: cardSize - 16,
+                    height: 16,
                     content: '카드 추가',
-                    fontSize: cardSize > 100 ? 12 : 10,
-                    color: '#9CA3AF',
+                    fontSize: 11,
+                    color: '#BCBCBC',
                     rotation: 0,
-                    zIndex: 100 + row * cols + col,
+                    zIndex: 100 + r * cols + c,
                     pageId: '',
                     fontFamily: "'Gowun Dodum', sans-serif"
                 } as DesignElement);
             }
         }
 
-        // 문장 구성 영역 (맨 하단에 고정, 가로 전체 너비)
-        const sentenceWidth = canvas.width - padding * 2;
-
+        // === 4. 문장 구성 영역 (하단 고정) ===
         elements.push({
             id: `aac-sentence-bg-${Date.now()}`,
             type: 'shape',
-            x: padding,
+            x: PADDING,
             y: sentenceY,
-            width: sentenceWidth,
-            height: sentenceAreaHeight,
+            width: canvas.width - PADDING * 2,
+            height: SENTENCE_HEIGHT,
             backgroundColor: '#F3E8FF',
-            borderRadius: 16,
+            borderRadius: 12,
             rotation: 0,
             zIndex: 1,
             pageId: ''
         } as DesignElement);
 
         elements.push({
-            id: `aac-sentence-text-${Date.now()}`,
+            id: `aac-sentence-txt-${Date.now()}`,
             type: 'text',
-            x: padding + 20,
-            y: sentenceY + (sentenceAreaHeight - 26) / 2,
-            width: 200,
-            height: 26,
+            x: PADDING + 16,
+            y: sentenceY + (SENTENCE_HEIGHT - 22) / 2,
+            width: 160,
+            height: 22,
             content: '문장 구성 영역',
-            fontSize: 18,
+            fontSize: 16,
             color: '#7C3AED',
             rotation: 0,
             zIndex: 2,
