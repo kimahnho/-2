@@ -20,6 +20,9 @@ export const useProject = (initialData?: ProjectData) => {
     pages: [{ id: 'page-1' }]
   });
 
+  // Track page count to safe-guard active page switching (declared early for useEffect access)
+  const prevPagesLength = useRef(projectData.pages.length);
+
   // Effect to reset history when initialData changes (e.g., loading a different project)
   useEffect(() => {
     if (initialData) {
@@ -40,9 +43,6 @@ export const useProject = (initialData?: ProjectData) => {
   const [activePageId, setActivePageId] = useState<string>('page-1');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  // Track page count to safe-guard active page switching
-  const prevPagesLength = useRef(projectData.pages.length);
 
   useEffect(() => {
     if (pages.length > prevPagesLength.current) {

@@ -129,6 +129,11 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       if (isAACCard || isSentenceArea) {
         if (activeTab !== 'aac') setActiveTab('aac');
 
+        // 문장 영역 선택 시 자동으로 빌더 모드 활성화
+        if (isSentenceArea) {
+          setSentenceBuilderId(selectedId);
+        }
+
         // 카드 선택 시 진행도 표시 (문장 영역 선택 시에는 표시 안함)
         if (isAACCard) {
           // 현재 페이지의 모든 AAC 카드 계산 (인덱싱, 순수 카드 객체 기준)
