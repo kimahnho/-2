@@ -75,7 +75,8 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
 
 const styles: Record<string, React.CSSProperties> = {
     header: {
-        height: '64px',
+        height: 'auto',
+        minHeight: '80px',
         background: 'white',
         borderBottom: '1px solid #e5e7eb',
         position: 'fixed',
@@ -85,7 +86,7 @@ const styles: Record<string, React.CSSProperties> = {
         zIndex: 100,
         display: 'flex',
         alignItems: 'center',
-        padding: '0 24px'
+        padding: '12px 24px'
     },
     container: {
         width: '100%',
@@ -100,7 +101,7 @@ const styles: Record<string, React.CSSProperties> = {
         alignItems: 'center'
     },
     logo: {
-        height: '32px',
+        height: '100px',
         width: 'auto'
     },
     profileSection: {
