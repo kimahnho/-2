@@ -70,7 +70,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <div style={styles.card}>
                 {/* Logo */}
                 <div style={styles.logoSection}>
-                    <img src="/logo.png" alt="MURU.AI" style={styles.logo} />
+                    <img src="/logo.svg" alt="MURU.AI" style={styles.logo} />
                     <p style={styles.subtitle}>언어치료사를 위한 학습지 디자인 도구</p>
                 </div>
 
