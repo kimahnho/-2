@@ -191,18 +191,21 @@ const styles: Record<string, React.CSSProperties> = {
         border: '1px solid #f3f4f6' // 흰 배경에서 구분되도록 연한 테두리 추가
     },
     logoSection: {
-        textAlign: 'center',
-        marginBottom: '40px' // 간격 넓힘
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginBottom: '24px' // 40px -> 24px 축소
     },
     logo: {
-        width: '200px', // 로고 너비 고정 (더 크게)
+        width: '400px', // 300px -> 400px 확대
         height: 'auto',
-        marginBottom: '24px'
+        margin: '-40px 0', // 위아래 투명 여백 상쇄 (음수 마진)
+        marginBottom: '-30px' // 아래쪽 여백 추가 보정
     },
     subtitle: {
         color: '#6b7280',
-        marginTop: '8px',
-        fontSize: '14px'
+        marginTop: '0px', // 8px -> 0px (로고 여백 조정으로 인해 붙임)
+        fontSize: '15px' // 가독성 위해 약간 키움
     },
     socialButtons: {
         display: 'flex',
