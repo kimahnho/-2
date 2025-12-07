@@ -183,7 +183,8 @@ const styles: Record<string, React.CSSProperties> = {
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         border: '1px solid #e5e7eb',
         padding: '8px 0',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        zIndex: 1000
     },
     userInfo: {
         padding: '12px 16px',
