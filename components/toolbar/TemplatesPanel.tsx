@@ -11,7 +11,7 @@ import { AACConfigModal } from '../templates/AACConfigModal';
 
 interface Props {
     onLoadTemplate: (elements: DesignElement[]) => void;
-    onAddPage?: (orientation?: 'portrait' | 'landscape') => string | void;
+    onUpdatePageOrientation?: (orientation: 'portrait' | 'landscape') => void;
 }
 
 // 템플릿 카테고리 정의
@@ -23,7 +23,7 @@ const TEMPLATE_CATEGORIES = [
     { id: 'aac', name: 'AAC', icon: <Grid className="w-4 h-4" /> },
 ];
 
-export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onAddPage }) => {
+export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOrientation }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('all');
     const [showAACConfig, setShowAACConfig] = useState(false);
 
@@ -35,9 +35,9 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onAddPage }) =
             : TEMPLATES.filter(t => (t as any).category === selectedCategory);
 
     const handleAACApply = (elements: DesignElement[], orientation: 'portrait' | 'landscape') => {
-        // 가로 방향 선택 시 가로 페이지 생성
-        if (orientation === 'landscape' && onAddPage) {
-            onAddPage('landscape');
+        // 선택한 방향으로 현재 페이지 방향 변경
+        if (onUpdatePageOrientation) {
+            onUpdatePageOrientation(orientation);
         }
         onLoadTemplate(elements);
         setShowAACConfig(false);

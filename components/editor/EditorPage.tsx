@@ -5,7 +5,7 @@ import { PropertiesPanel } from '../PropertiesPanel';
 import { PageManager } from '../PageManager';
 import { CanvasArea } from '../CanvasArea';
 import { TabType, ProjectData } from '../../types';
-import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save } from 'lucide-react';
+import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save, Smartphone, Monitor } from 'lucide-react';
 import { printCanvas } from '../../utils/exportUtils';
 import { storageService } from '../../services/storageService';
 
@@ -108,7 +108,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       <Toolbar
         activeTab={activeTab} onTabChange={setActiveTab}
         onAddElement={project.addElement} onLoadTemplate={project.loadTemplate}
-        onAddPage={project.addPage}
+        onUpdatePageOrientation={(orientation) => project.updatePageOrientation(project.activePageId, orientation)}
         uploadedAssets={uploadedAssets} onSaveAsset={handleSaveAsset}
         characters={characterManager.characters}
         onAddCharacter={characterManager.addCharacter}
@@ -143,6 +143,32 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
             <div className="flex gap-1">
               <button onClick={project.undo} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600" title="실행 취소 (Ctrl+Z)"><Undo2 className="w-4 h-4" /></button>
               <button onClick={project.redo} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600" title="다시 실행 (Ctrl+Shift+Z)"><Redo2 className="w-4 h-4" /></button>
+            </div>
+            <div className="h-6 w-px bg-gray-200"></div>
+            {/* 페이지 방향 토글 */}
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => project.updatePageOrientation(project.activePageId, 'portrait')}
+                className={`p-1.5 rounded-md transition-all flex items-center gap-1.5 text-xs font-medium ${project.getActivePageOrientation() === 'portrait'
+                  ? 'bg-white text-[#5500FF] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                title="세로 방향"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span className="hidden lg:inline">세로</span>
+              </button>
+              <button
+                onClick={() => project.updatePageOrientation(project.activePageId, 'landscape')}
+                className={`p-1.5 rounded-md transition-all flex items-center gap-1.5 text-xs font-medium ${project.getActivePageOrientation() === 'landscape'
+                  ? 'bg-white text-[#5500FF] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                title="가로 방향"
+              >
+                <Monitor className="w-4 h-4" />
+                <span className="hidden lg:inline">가로</span>
+              </button>
             </div>
           </div>
           <div className="flex gap-2">

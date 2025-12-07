@@ -226,6 +226,19 @@ export const useProject = (initialData?: ProjectData) => {
     updateElements([...otherPageElements, ...newPageElements]);
   };
 
+  // --- Page Orientation ---
+  const updatePageOrientation = (pageId: string, orientation: 'portrait' | 'landscape') => {
+    const newPages = pages.map(p =>
+      p.id === pageId ? { ...p, orientation } : p
+    );
+    commitToHistory({ elements, pages: newPages });
+  };
+
+  const getActivePageOrientation = (): 'portrait' | 'landscape' => {
+    const activePage = pages.find(p => p.id === activePageId);
+    return activePage?.orientation || 'portrait';
+  };
+
   return {
     elements,
     pages,
@@ -254,6 +267,8 @@ export const useProject = (initialData?: ProjectData) => {
     bringToFront,
     sendToBack,
     loadTemplate,
+    updatePageOrientation,
+    getActivePageOrientation,
     undo,
     redo
   };
