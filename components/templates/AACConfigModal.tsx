@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Grid, Smartphone, Monitor } from 'lucide-react';
 import { DesignElement } from '../../types';
 
@@ -172,9 +173,10 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
         onApply(elements);
     };
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center"
+            style={{ zIndex: 99999 }}
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
             <div className="bg-white rounded-2xl shadow-2xl w-[400px] overflow-hidden">
@@ -240,8 +242,8 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
                             <button
                                 onClick={() => setOrientation('portrait')}
                                 className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${orientation === 'portrait'
-                                        ? 'border-[#5500FF] bg-[#5500FF]/10'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#5500FF] bg-[#5500FF]/10'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <Smartphone className={`w-5 h-5 ${orientation === 'portrait' ? 'text-[#5500FF]' : 'text-gray-400'}`} />
@@ -255,8 +257,8 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
                             <button
                                 onClick={() => setOrientation('landscape')}
                                 className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${orientation === 'landscape'
-                                        ? 'border-[#5500FF] bg-[#5500FF]/10'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#5500FF] bg-[#5500FF]/10'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <Monitor className={`w-5 h-5 ${orientation === 'landscape' ? 'text-[#5500FF]' : 'text-gray-400'}`} />
@@ -313,6 +315,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
