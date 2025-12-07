@@ -35,11 +35,14 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
             : TEMPLATES.filter(t => (t as any).category === selectedCategory);
 
     const handleAACApply = (elements: DesignElement[], orientation: 'portrait' | 'landscape') => {
-        // 선택한 방향으로 현재 페이지 방향 변경
+        // 1. 먼저 페이지 방향 변경
         if (onUpdatePageOrientation) {
             onUpdatePageOrientation(orientation);
         }
-        onLoadTemplate(elements);
+        // 2. 방향 변경 후 템플릿 요소 로드 (약간의 지연으로 상태 업데이트 보장)
+        setTimeout(() => {
+            onLoadTemplate(elements);
+        }, 50);
         setShowAACConfig(false);
     };
 
