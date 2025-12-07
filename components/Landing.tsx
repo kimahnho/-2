@@ -25,13 +25,8 @@ export const Landing: React.FC<Props> = ({ onSelectStudent, onSelectGroup, onQui
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start p-8 font-sans overflow-y-auto">
       <div className="max-w-5xl w-full space-y-8 mb-20">
         {/* Header */}
-        <div className="text-center space-y-2 mt-8">
-          <img
-            src="/logo.png"
-            alt="MURU.AI"
-            className="w-48 mx-auto mb-6 drop-shadow-lg"
-          />
-          <h1 className="text-3xl font-bold text-gray-900">수업 준비를 시작해볼까요?</h1>
+        <div className="text-center space-y-2 mt-0">
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">수업 준비를 시작해볼까요?</h1>
           <p className="text-gray-500">개별 학습자 또는 그룹 수업을 선택하여 맞춤형 자료를 만들어보세요.</p>
 
           <div className="pt-6 flex justify-center gap-4">
