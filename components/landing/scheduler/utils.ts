@@ -34,6 +34,16 @@ export const formatDateShort = (d: Date) => {
 };
 
 export const formatDateRange = (start: Date) => {
-    const end = addDays(start, 5);
-    return `${start.getFullYear()}.${String(start.getMonth() + 1).padStart(2, '0')}.${String(start.getDate()).padStart(2, '0')}.${String(end.getDate()).padStart(2, '0')}`;
+    const end = addDays(start, 6); // 월요일 ~ 일요일 (7일)
+    const startMonth = String(start.getMonth() + 1).padStart(2, '0');
+    const startDay = String(start.getDate()).padStart(2, '0');
+    const endMonth = String(end.getMonth() + 1).padStart(2, '0');
+    const endDay = String(end.getDate()).padStart(2, '0');
+
+    // 같은 월이면 월 생략, 다른 월이면 표시
+    if (start.getMonth() === end.getMonth()) {
+        return `${start.getFullYear()}.${startMonth}.${startDay}(월) ~ ${endDay}(일)`;
+    } else {
+        return `${start.getFullYear()}.${startMonth}.${startDay}(월) ~ ${endMonth}.${endDay}(일)`;
+    }
 };
