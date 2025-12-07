@@ -194,18 +194,17 @@ const styles: Record<string, React.CSSProperties> = {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        marginBottom: '24px' // 40px -> 24px 축소
+        marginBottom: '40px'
     },
     logo: {
-        width: '400px', // 300px -> 400px 확대
+        width: '280px',
         height: 'auto',
-        margin: '-40px 0', // 위아래 투명 여백 상쇄 (음수 마진)
-        marginBottom: '-30px' // 아래쪽 여백 추가 보정
+        marginBottom: '0px'
     },
     subtitle: {
         color: '#6b7280',
-        marginTop: '0px', // 8px -> 0px (로고 여백 조정으로 인해 붙임)
-        fontSize: '15px' // 가독성 위해 약간 키움
+        marginTop: '12px',
+        fontSize: '15px'
     },
     socialButtons: {
         display: 'flex',

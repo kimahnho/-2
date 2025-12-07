@@ -103,9 +103,8 @@ const styles: Record<string, React.CSSProperties> = {
         height: '100%'
     },
     logo: {
-        height: '160px', // 여백이 많으므로 시각적 크기를 위해 키움
-        width: 'auto',
-        marginTop: '-5px' // 미세 위치 조정
+        height: '36px',
+        width: 'auto'
     },
     profileSection: {
         position: 'relative'
