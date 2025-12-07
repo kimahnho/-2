@@ -33,81 +33,40 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
         setRows(Math.min(8, Math.max(1, num)));
     };
 
-    // AAC 그리드 요소 생성 - 모든 크기/방향에서 중앙 정렬
+    // AAC 그리드 요소 생성 - 제목 없이 전체 영역 활용
     const generateAACElements = (): DesignElement[] => {
         const elements: DesignElement[] = [];
 
-        // 용지 방향에 따른 캔버스 크기
+        // 용지 방향에 따른 캔버스 크기 (A4 기준: 794x1123)
         const canvasW = orientation === 'portrait' ? CANVAS_PORTRAIT.width : CANVAS_LANDSCAPE.width;
         const canvasH = orientation === 'portrait' ? CANVAS_PORTRAIT.height : CANVAS_LANDSCAPE.height;
 
-        // === 상수 정의 (가로/세로 모두 적절하도록 조정) ===
-        const MARGIN = 30;                    // 캔버스 여백
-        const HEADER_H = 45;                  // 제목 영역 높이
+        // === 레이아웃 상수 ===
+        const MARGIN = 24;                    // 캔버스 여백
         const SENTENCE_H = 60;                // 문장 구성 영역 높이
-        const GAP = 8;                        // 카드 간격
+        const GAP = 10;                       // 카드 간격
 
-        // === 레이아웃 영역 계산 ===
-        const headerY = MARGIN;
+        // === 영역 계산 ===
+        // 그리드: 상단 여백 ~ 문장 영역 바로 위까지 전체 사용
+        const gridAreaY = MARGIN;
         const sentenceY = canvasH - MARGIN - SENTENCE_H;
-
-        // 그리드 사용 가능 영역
-        const gridAreaY = headerY + HEADER_H + 15;
-        const gridAreaH = sentenceY - gridAreaY - 15;
+        const gridAreaH = sentenceY - gridAreaY - 15;  // 문장 위 약간의 여백
         const gridAreaW = canvasW - MARGIN * 2;
 
-        // === 카드 크기 계산 ===
-        // 가로/세로 각각 맞춰서 작은 쪽 선택 (최대 크기도 방향에 따라 조정)
-        const maxCardSize = orientation === 'portrait' ? 130 : 110;
+        // === 카드 크기 계산 (영역 최대 활용) ===
         const maxCardByWidth = Math.floor((gridAreaW - GAP * (cols - 1)) / cols);
         const maxCardByHeight = Math.floor((gridAreaH - GAP * (rows - 1)) / rows);
-        const cardSize = Math.max(40, Math.min(maxCardByWidth, maxCardByHeight, maxCardSize));
+        const cardSize = Math.max(50, Math.min(maxCardByWidth, maxCardByHeight));
 
         // === 실제 그리드 총 크기 ===
         const gridTotalW = cardSize * cols + GAP * (cols - 1);
         const gridTotalH = cardSize * rows + GAP * (rows - 1);
 
-        // === 그리드 시작점 (캔버스 가로 중앙, 그리드 영역 세로 중앙) ===
+        // === 그리드 시작점 (캔버스 중앙 정렬) ===
         const gridStartX = Math.round((canvasW - gridTotalW) / 2);
         const gridStartY = Math.round(gridAreaY + (gridAreaH - gridTotalH) / 2);
 
-        // ========== 요소 생성 ==========
-
-        // 1. 제목 (좌상단)
-        elements.push({
-            id: `aac-title-${Date.now()}`,
-            type: 'text',
-            x: MARGIN,
-            y: headerY,
-            width: 250,
-            height: HEADER_H,
-            content: 'AAC 의사소통 판',
-            fontSize: 24,
-            color: '#5500FF',
-            rotation: 0,
-            zIndex: 1,
-            pageId: '',
-            fontFamily: "'Gowun Dodum', sans-serif"
-        } as DesignElement);
-
-        // 2. 그리드 크기 라벨 (우상단)
-        elements.push({
-            id: `aac-size-${Date.now()}`,
-            type: 'text',
-            x: canvasW - MARGIN - 50,
-            y: headerY + 12,
-            width: 50,
-            height: 30,
-            content: `${cols}×${rows}`,
-            fontSize: 14,
-            color: '#9CA3AF',
-            rotation: 0,
-            zIndex: 1,
-            pageId: '',
-            fontFamily: "'Gowun Dodum', sans-serif"
-        } as DesignElement);
-
-        // 3. 카드 그리드 (중앙 정렬)
+        // ========== 카드 그리드 생성 ==========
         for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
                 const x = gridStartX + col * (cardSize + GAP);
@@ -132,17 +91,18 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
                     pageId: ''
                 } as DesignElement);
 
-                // 카드 텍스트
+                // 카드 플레이스홀더 텍스트
+                const fontSize = cardSize > 80 ? 12 : 10;
                 elements.push({
                     id: `txt-${uid}`,
                     type: 'text',
-                    x: x + 6,
+                    x: x + 8,
                     y: y + cardSize / 2 - 8,
-                    width: cardSize - 12,
+                    width: cardSize - 16,
                     height: 16,
                     content: '카드 추가',
-                    fontSize: 10,
-                    color: '#C0C0C0',
+                    fontSize: fontSize,
+                    color: '#BCBCBC',
                     rotation: 0,
                     zIndex: 100 + row * cols + col,
                     pageId: '',
@@ -151,7 +111,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
             }
         }
 
-        // 4. 문장 구성 영역 (하단 고정, 전체 너비)
+        // ========== 문장 구성 영역 (하단 고정) ==========
         elements.push({
             id: `sentence-bg-${Date.now()}`,
             type: 'shape',
@@ -170,9 +130,9 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
             id: `sentence-txt-${Date.now()}`,
             type: 'text',
             x: MARGIN + 16,
-            y: sentenceY + (SENTENCE_H - 20) / 2,
+            y: sentenceY + (SENTENCE_H - 18) / 2,
             width: 140,
-            height: 20,
+            height: 18,
             content: '문장 구성 영역',
             fontSize: 14,
             color: '#7C3AED',
