@@ -68,11 +68,12 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, fallback }) => {
         );
     }
 
-    // Show login if not configured or not logged in
-    if (!isConfigured || !user) {
+    // Show login if not configured
+    if (!isConfigured) {
         return <LoginPage onLoginSuccess={() => { }} />;
     }
 
+    // Always render children (Main controls auth-gating)
     return <>{children}</>;
 };
 

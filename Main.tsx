@@ -6,12 +6,14 @@ import { storageService } from './services/storageService';
 import { ProjectData, StudentProfile, StudentGroup } from './types';
 import { Header } from './components/layout/Header';
 import { authService, type AuthUser } from './services';
+import { LoginPage } from './components/auth/LoginPage';
 
 type ViewState = 'landing' | 'dashboard' | 'editor';
 
 export const Main: React.FC = () => {
   const [view, setView] = useState<ViewState>('landing');
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Context: Student OR Group
   const [currentStudent, setCurrentStudent] = useState<StudentProfile | null>(null);
@@ -23,9 +25,14 @@ export const Main: React.FC = () => {
 
   // Load User Info
   useEffect(() => {
-    authService.getCurrentUser().then(setUser);
+    authService.getCurrentUser().then((session) => {
+      setUser(session);
+      // If logged in, maybe redirect to dashboard if on landing?
+      // But user might want to see landing still? let's keep default behavior.
+    });
     const { data: { subscription } } = authService.onAuthStateChange((_event, session) => {
       setUser(session);
+      if (session) setShowLoginModal(false);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -92,10 +99,28 @@ export const Main: React.FC = () => {
     }
   };
 
-  // 5. Landing -> Editor (Quick Start without Profile)
+  // 5. Landing -> Editor (Quick Start)
   const handleQuickStart = async () => {
-    const newId = await storageService.createProject('제목 없는 디자인');
+    // Guest Mode Check
+    if (!user) {
+      // Create in-memory project for guest
+      const guestData: ProjectData = {
+        elements: [],
+        pages: [{ id: 'page-1', elements: [], background: '#ffffff', width: 794, height: 1123 }]
+      };
+      setInitialData(guestData);
+      setCurrentProjectId('guest-session'); // Special ID for guest
+      setInitialTitle('게스트 프로젝트');
+      setInitialTitle('제목 없는 디자인');
 
+      setCurrentStudent(null);
+      setCurrentGroup(null);
+      setView('editor');
+      return;
+    }
+
+    // Logged-in User Logic
+    const newId = await storageService.createProject('제목 없는 디자인');
     const allProjects = await storageService.getAllProjects();
     const meta = allProjects.find(p => p.id === newId);
     const data = await storageService.getProject(newId);
@@ -112,12 +137,25 @@ export const Main: React.FC = () => {
 
   // 6. Landing -> Dashboard (Open Storage)
   const handleOpenStorage = () => {
+    if (!user) {
+      if (confirm('로그인이 필요한 기능입니다. 로그인하시겠습니까?')) {
+        setShowLoginModal(true);
+      }
+      return;
+    }
     setCurrentStudent(null);
     setCurrentGroup(null);
     setView('dashboard');
   };
 
   const handleBackToDashboard = () => {
+    if (!user) {
+      // Guest goes back to landing
+      setView('landing');
+      setCurrentProjectId(null);
+      setInitialData(undefined);
+      return;
+    }
     setView('dashboard');
     setCurrentProjectId(null);
     setInitialData(undefined);
@@ -126,10 +164,23 @@ export const Main: React.FC = () => {
   // Layout wrapper (excludes Editor)
   const renderWithLayout = (content: React.ReactNode) => (
     <div style={{ paddingTop: '64px' }}>
-      <Header user={user} />
+      <Header user={user} onLogin={() => setShowLoginModal(true)} />
       {content}
     </div>
   );
+
+  // Login Modal Overlay
+  if (showLoginModal) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'white' }}>
+        <button
+          onClick={() => setShowLoginModal(false)}
+          style={{ position: 'absolute', top: 20, right: 20, padding: 10, background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}
+        >✕</button>
+        <LoginPage onLoginSuccess={() => setShowLoginModal(false)} />
+      </div>
+    );
+  }
 
   if (view === 'editor' && currentProjectId) {
     return (
@@ -138,11 +189,18 @@ export const Main: React.FC = () => {
         initialData={initialData}
         initialTitle={initialTitle}
         onBack={handleBackToDashboard}
+        isGuest={!user} // Pass guest flag
       />
     );
   }
 
   if (view === 'dashboard') {
+    // If not logged in, redirect to Landing (Security Check)
+    if (!user) {
+      setView('landing');
+      return null; // Will re-render
+    }
+
     return renderWithLayout(
       <Dashboard
         currentStudent={currentStudent}

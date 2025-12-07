@@ -3,9 +3,10 @@ import { authService, AuthUser } from '../../services';
 
 interface HeaderProps {
     user: AuthUser | null;
+    onLogin: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user }) => {
+export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -37,8 +38,8 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
                     <img src="/logo.png" alt="MURU.AI" style={styles.logo} />
                 </div>
 
-                {/* User Profile */}
-                {user && (
+                {/* User Profile or Login Button */}
+                {user ? (
                     <div style={styles.profileSection} ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -62,6 +63,10 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
                             </div>
                         )}
                     </div>
+                ) : (
+                    <button onClick={onLogin} style={styles.loginButton}>
+                        로그인
+                    </button>
                 )}
             </div>
         </header>
@@ -160,5 +165,16 @@ const styles: Record<string, React.CSSProperties> = {
         color: '#ef4444', // Red for logout
         cursor: 'pointer',
         transition: 'background 0.2s'
+    },
+    loginButton: {
+        padding: '8px 16px',
+        borderRadius: '8px',
+        border: '1px solid #5500FF',
+        background: 'white',
+        color: '#5500FF',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        transition: 'all 0.2s'
     }
 };
