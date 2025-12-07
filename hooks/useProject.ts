@@ -20,9 +20,6 @@ export const useProject = (initialData?: ProjectData) => {
     pages: [{ id: 'page-1' }]
   });
 
-  // Track page count to safe-guard active page switching (declared early for useEffect access)
-  const prevPagesLength = useRef(projectData.pages.length);
-
   // Effect to reset history when initialData changes (e.g., loading a different project)
   useEffect(() => {
     if (initialData) {
@@ -30,8 +27,6 @@ export const useProject = (initialData?: ProjectData) => {
       // Ensure we set active page to the first page of loaded project
       if (initialData.pages.length > 0) {
         setActivePageId(initialData.pages[0].id);
-        // Sync ref to prevent auto-jump to last page
-        prevPagesLength.current = initialData.pages.length;
       }
     }
   }, [initialData]);
@@ -44,14 +39,7 @@ export const useProject = (initialData?: ProjectData) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (pages.length > prevPagesLength.current) {
-      // Page added: safe to switch to new last page
-      const lastPage = pages[pages.length - 1];
-      if (lastPage) setActivePageId(lastPage.id);
-    }
-    prevPagesLength.current = pages.length;
-  }, [pages]);
+  // Note: activePageId is now set via setTimeout in addPage to avoid race conditions
 
   // References for non-react-cycle access if needed
   const elementsRef = useRef(elements);
@@ -157,8 +145,10 @@ export const useProject = (initialData?: ProjectData) => {
     const newPageId = `page-${generateId()}`;
     const newPages = [...pages, { id: newPageId, orientation: orientation || 'portrait' }];
     commitToHistory({ elements, pages: newPages });
-    // Remove direct setActivePageId to prevent race conditions during render
-    // setActivePageId(newPageId); 
+    // Defer setActivePageId to next tick to ensure state is committed
+    setTimeout(() => {
+      setActivePageId(newPageId);
+    }, 0);
     return newPageId;
   };
 
