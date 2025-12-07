@@ -59,25 +59,59 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
                         {/* Subscription Badge */}
                         <SubscriptionBadge userId={user.id} />
 
-                        {/* Profile Dropdown */}
-                        <div style={styles.profileSection} ref={dropdownRef}>
+                        {/* Profile Button */}
+                        <div style={{ position: 'relative' }} ref={dropdownRef}>
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                style={styles.avatarButton}
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    background: '#5500FF',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
                             >
-                                <div style={styles.avatar}>
-                                    {getInitials(user.email || '')}
-                                </div>
+                                {getInitials(user.email || '')}
                             </button>
 
-                            {/* Dropdown Menu */}
+                            {/* Dropdown */}
                             {isDropdownOpen && (
-                                <div style={styles.dropdown}>
-                                    <div style={styles.userInfo}>
-                                        <p style={styles.userEmail}>{user.email}</p>
-                                    </div>
-                                    <div style={styles.divider} />
-                                    <button onClick={handleSignOut} style={styles.menuItem}>
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50px',
+                                    right: 0,
+                                    background: 'white',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                    border: '1px solid #e5e7eb',
+                                    padding: '8px',
+                                    minWidth: '150px',
+                                    zIndex: 9999
+                                }}>
+                                    <button
+                                        onClick={handleSignOut}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            background: 'none',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            color: '#ef4444',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            fontWeight: '500'
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.background = '#fef2f2'}
+                                        onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                                    >
                                         로그아웃
                                     </button>
                                 </div>
