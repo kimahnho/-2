@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { StudentProfile, StudentGroup } from '../types';
 import { ProfileManager } from './landing/ProfileManager';
 import { WeeklyScheduler } from './landing/WeeklyScheduler';
+import { TemplateSection } from './landing/TemplateSection';
 import { Zap, Folder } from 'lucide-react';
 
 interface Props {
@@ -19,6 +20,12 @@ export const Landing: React.FC<Props> = ({ onSelectStudent, onSelectGroup, onQui
 
   const handleDataChange = () => {
     setDataVersion(prev => prev + 1);
+  };
+
+  const handleSelectTemplate = (templateId: string) => {
+    console.log('Selected template:', templateId);
+    // TODO: 템플릿 선택 시 에디터로 이동
+    onQuickStart();
   };
 
   return (
@@ -62,8 +69,11 @@ export const Landing: React.FC<Props> = ({ onSelectStudent, onSelectGroup, onQui
         />
       </div>
 
+      {/* Templates Section */}
+      <TemplateSection onSelectTemplate={handleSelectTemplate} />
+
       {/* Schedule */}
-      <div className="w-full max-w-5xl">
+      <div className="w-full max-w-5xl mt-12">
         <WeeklyScheduler
           lastUpdate={dataVersion}
           isGuest={isGuest}
