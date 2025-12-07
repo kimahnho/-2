@@ -18,16 +18,16 @@ interface DayColumnProps {
     onDrop: (day: DayKey, dateStr: string, time: string) => void;
 }
 
-export const DayColumn: React.FC<DayColumnProps> = ({ 
-    day, date, isToday, dayItems, students, groups, 
-    onEdit, onDeleteRequest, onAdd, onDragStart, onDrop 
+export const DayColumn: React.FC<DayColumnProps> = ({
+    day, date, isToday, dayItems, students, groups,
+    onEdit, onDeleteRequest, onAdd, onDragStart, onDrop
 }) => {
     const dateStr = formatIsoDate(date);
     const todayIso = formatIsoDate(new Date());
     const isPast = dateStr < todayIso;
 
     return (
-        <div className={`flex-1 flex flex-col min-w-[140px] relative`}>
+        <div className={`flex-1 flex flex-col min-w-[120px] relative`}>
             {/* Column Header */}
             <div className={`
                 h-10 flex items-center justify-center gap-2 border-b border-r last:border-r-0 border-gray-200 sticky top-0 z-20 
@@ -43,7 +43,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
                     // Filter items for this hour (e.g. 09:00 and 09:30)
                     const hourItems = dayItems.filter(i => i.time.startsWith(hour));
                     return (
-                        <HourSlot 
+                        <HourSlot
                             key={`${day}-${hour}`}
                             hour={hour}
                             hourItems={hourItems}

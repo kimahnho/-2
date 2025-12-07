@@ -1,14 +1,14 @@
 
-export type DayKey = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat';
+export type DayKey = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 
 export const HOURS = [
     '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'
 ];
 
-export const DAYS: DayKey[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const DAYS: DayKey[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export const DAY_LABELS: Record<DayKey, string> = { 
-    'Mon': '월', 'Tue': '화', 'Wed': '수', 'Thu': '목', 'Fri': '금', 'Sat': '토' 
+export const DAY_LABELS: Record<DayKey, string> = {
+    'Mon': '월', 'Tue': '화', 'Wed': '수', 'Thu': '목', 'Fri': '금', 'Sat': '토', 'Sun': '일'
 };
 
 export const addDays = (d: Date, days: number) => {
@@ -20,7 +20,7 @@ export const addDays = (d: Date, days: number) => {
 export const getMonday = (d: Date) => {
     const date = new Date(d);
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); 
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(date.setDate(diff));
 };
 

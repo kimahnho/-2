@@ -174,8 +174,8 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({ lastUpdate = 0
             finalDate = formData.specificDate;
             const d = new Date(formData.specificDate);
             const dayIndex = d.getDay();
-            if (dayIndex >= 1 && dayIndex <= 6) {
-                const dayMap: { [key: number]: DayKey } = { 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+            if (dayIndex >= 0 && dayIndex <= 6) {
+                const dayMap: { [key: number]: DayKey } = { 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 0: 'Sun' };
                 if (dayMap[dayIndex]) finalDay = dayMap[dayIndex];
             }
         }
