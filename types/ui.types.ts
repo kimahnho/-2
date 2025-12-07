@@ -23,13 +23,16 @@ export interface DragInfo {
 
 export interface ResizeInfo {
     isResizing: boolean;
-    handle: string; // 'nw', 'ne', 'sw', 'se'
+    handle: string; // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
     startX: number;
     startY: number;
     initialWidth: number;
     initialHeight: number;
     initialX: number;
     initialY: number;
+    // 그룹 리사이징을 위한 추가 필드
+    boundingBox?: { x: number; y: number; width: number; height: number };
+    initialElements?: Record<string, { x: number; y: number; width: number; height: number }>;
 }
 
 export interface RotateInfo {

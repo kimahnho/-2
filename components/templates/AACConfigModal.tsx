@@ -33,7 +33,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
         setRows(Math.min(8, Math.max(1, num)));
     };
 
-    // AAC 그리드 요소 생성 - 모든 크기에서 중앙 정렬
+    // AAC 그리드 요소 생성 - 모든 크기/방향에서 중앙 정렬
     const generateAACElements = (): DesignElement[] => {
         const elements: DesignElement[] = [];
 
@@ -41,38 +41,34 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply }) => {
         const canvasW = orientation === 'portrait' ? CANVAS_PORTRAIT.width : CANVAS_LANDSCAPE.width;
         const canvasH = orientation === 'portrait' ? CANVAS_PORTRAIT.height : CANVAS_LANDSCAPE.height;
 
-        // === 상수 정의 ===
-        const MARGIN = 40;                    // 캔버스 여백
-        const HEADER_H = 50;                  // 제목 영역 높이
-        const SENTENCE_H = 70;                // 문장 구성 영역 높이
-        const GAP = 10;                       // 카드 간격
+        // === 상수 정의 (가로/세로 모두 적절하도록 조정) ===
+        const MARGIN = 30;                    // 캔버스 여백
+        const HEADER_H = 45;                  // 제목 영역 높이
+        const SENTENCE_H = 60;                // 문장 구성 영역 높이
+        const GAP = 8;                        // 카드 간격
 
         // === 레이아웃 영역 계산 ===
-        // 헤더: 상단 MARGIN ~ MARGIN + HEADER_H
-        // 그리드: 헤더 아래 ~ 문장 영역 위
-        // 문장: 하단 MARGIN 위로 SENTENCE_H
-
         const headerY = MARGIN;
         const sentenceY = canvasH - MARGIN - SENTENCE_H;
 
         // 그리드 사용 가능 영역
-        const gridAreaX = MARGIN;
-        const gridAreaY = headerY + HEADER_H + 20;  // 헤더 아래 약간의 여백
+        const gridAreaY = headerY + HEADER_H + 15;
+        const gridAreaH = sentenceY - gridAreaY - 15;
         const gridAreaW = canvasW - MARGIN * 2;
-        const gridAreaH = sentenceY - gridAreaY - 20;  // 문장 위 약간의 여백
 
         // === 카드 크기 계산 ===
-        // 가로/세로 각각 맞춰서 작은 쪽 선택
+        // 가로/세로 각각 맞춰서 작은 쪽 선택 (최대 크기도 방향에 따라 조정)
+        const maxCardSize = orientation === 'portrait' ? 130 : 110;
         const maxCardByWidth = Math.floor((gridAreaW - GAP * (cols - 1)) / cols);
         const maxCardByHeight = Math.floor((gridAreaH - GAP * (rows - 1)) / rows);
-        const cardSize = Math.min(maxCardByWidth, maxCardByHeight, 140);  // 최대 140px
+        const cardSize = Math.max(40, Math.min(maxCardByWidth, maxCardByHeight, maxCardSize));
 
         // === 실제 그리드 총 크기 ===
         const gridTotalW = cardSize * cols + GAP * (cols - 1);
         const gridTotalH = cardSize * rows + GAP * (rows - 1);
 
-        // === 그리드 시작점 (중앙 정렬) ===
-        const gridStartX = Math.round(gridAreaX + (gridAreaW - gridTotalW) / 2);
+        // === 그리드 시작점 (캔버스 가로 중앙, 그리드 영역 세로 중앙) ===
+        const gridStartX = Math.round((canvasW - gridTotalW) / 2);
         const gridStartY = Math.round(gridAreaY + (gridAreaH - gridTotalH) / 2);
 
         // ========== 요소 생성 ==========
