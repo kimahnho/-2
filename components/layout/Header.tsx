@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
             <div style={styles.container}>
                 {/* Logo */}
                 <div style={styles.logoSection}>
-                    <img src="/logo.svg" alt="MURU.AI" style={styles.logo} />
+                    <img src="/logo.png" alt="MURU.AI" style={styles.logo} />
                 </div>
 
                 {/* User Profile or Login Button */}
