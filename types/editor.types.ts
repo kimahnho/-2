@@ -5,7 +5,7 @@
  */
 
 export type ElementType = 'text' | 'image' | 'shape' | 'card' | 'line' | 'arrow' | 'circle';
-export type TabType = 'design' | 'templates' | 'elements' | 'text' | 'uploads' | 'emotions';
+export type TabType = 'design' | 'templates' | 'elements' | 'text' | 'uploads' | 'emotions' | 'aac';
 
 export interface DesignElement {
     id: string;
@@ -36,6 +36,13 @@ export interface DesignElement {
     pageId?: string;
     isPassThrough?: boolean;
     isEmotionPlaceholder?: boolean;
+    metadata?: {
+        isAACCard?: boolean;
+        aacRow?: number;
+        aacCol?: number;
+        aacIndex?: number;
+        [key: string]: any;
+    };
 }
 
 export interface Page {

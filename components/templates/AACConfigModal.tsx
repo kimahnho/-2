@@ -97,7 +97,13 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
                     borderStyle: 'solid',
                     rotation: 0,
                     zIndex: 10 + row * cols + col,
-                    pageId: ''
+                    pageId: '',
+                    metadata: {
+                        isAACCard: true,
+                        aacRow: row,
+                        aacCol: col,
+                        aacIndex: row * cols + col
+                    }
                 } as DesignElement);
 
                 // 카드 플레이스홀더 텍스트
@@ -115,7 +121,13 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
                     rotation: 0,
                     zIndex: 100 + row * cols + col,
                     pageId: '',
-                    fontFamily: "'Gowun Dodum', sans-serif"
+                    fontFamily: "'Gowun Dodum', sans-serif",
+                    metadata: {
+                        isAACCard: true,
+                        aacRow: row,
+                        aacCol: col,
+                        aacIndex: row * cols + col
+                    }
                 } as DesignElement);
             }
         }

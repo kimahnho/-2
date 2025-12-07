@@ -8,12 +8,14 @@ import {
     Sparkles,
     ChevronLeft,
     Layout,
+    Grid,
 } from 'lucide-react';
 import { ElementType, DesignElement, CharacterProfile, TabType } from '../types';
 import { DesignPanel } from './toolbar/DesignPanel';
 import { EmotionsPanel } from './toolbar/EmotionsPanel';
 import { ElementsPanel } from './toolbar/ElementsPanel';
 import { TemplatesPanel } from './toolbar/TemplatesPanel';
+import { AACPanel, AACCard } from './toolbar/AACPanel';
 
 interface Props {
     activeTab: TabType | null;
@@ -35,6 +37,10 @@ interface Props {
     onApplyEmotion?: (imageUrl: string, label: string) => void;
     onAddElementWithCaption?: (url: string, caption: string) => void;
     onLogoClick?: () => void;
+    // AAC 카드 관련
+    onSelectAACCard?: (card: AACCard) => void;
+    currentAACCardIndex?: number;
+    totalAACCards?: number;
 }
 
 export const Toolbar: React.FC<Props> = ({
@@ -53,7 +59,10 @@ export const Toolbar: React.FC<Props> = ({
     onUpdateEmotionLabel,
     onApplyEmotion,
     onAddElementWithCaption,
-    onLogoClick
+    onLogoClick,
+    onSelectAACCard,
+    currentAACCardIndex,
+    totalAACCards
 }) => {
 
     const toggleTab = (tab: TabType) => {
@@ -110,6 +119,12 @@ export const Toolbar: React.FC<Props> = ({
                     icon={<Upload />}
                     label="업로드"
                 />
+                <NavButton
+                    active={activeTab === 'aac'}
+                    onClick={() => toggleTab('aac')}
+                    icon={<Grid />}
+                    label="AAC"
+                />
             </div>
 
             {/* Side Panel Drawer */}
@@ -128,6 +143,7 @@ export const Toolbar: React.FC<Props> = ({
                                 {activeTab === 'elements' && '요소'}
                                 {activeTab === 'text' && '텍스트'}
                                 {activeTab === 'uploads' && '내 파일'}
+                                {activeTab === 'aac' && 'AAC 카드'}
                             </h2>
                             <button onClick={() => onTabChange(null)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
                                 <ChevronLeft className="w-5 h-5" />
@@ -150,6 +166,14 @@ export const Toolbar: React.FC<Props> = ({
                                 <TemplatesPanel
                                     onLoadTemplate={onLoadTemplate}
                                     onUpdatePageOrientation={onUpdatePageOrientation}
+                                />
+                            )}
+
+                            {activeTab === 'aac' && onSelectAACCard && (
+                                <AACPanel
+                                    onSelectAACCard={onSelectAACCard}
+                                    currentCardIndex={currentAACCardIndex}
+                                    totalCards={totalAACCards}
                                 />
                             )}
 
