@@ -46,6 +46,12 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
                 {/* Navigation */}
                 <nav style={styles.navSection}>
                     <button
+                        onClick={() => navigate('/templates')}
+                        style={styles.navLink}
+                    >
+                        템플릿
+                    </button>
+                    <button
                         onClick={() => navigate('/pricing')}
                         style={styles.navLink}
                     >
