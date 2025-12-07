@@ -8,11 +8,11 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const useProject = (initialData?: ProjectData) => {
   // Initialize history with provided data or default empty state
-  const { 
-    state: projectData, 
-    pushState: commitToHistory, 
+  const {
+    state: projectData,
+    pushState: commitToHistory,
     updateCurrent: updateWithoutCommit,
-    undo, 
+    undo,
     redo,
     resetHistory
   } = useHistory<ProjectData>(initialData || {
@@ -46,11 +46,11 @@ export const useProject = (initialData?: ProjectData) => {
   // --- Element CRUD ---
 
   const updateElements = useCallback((newElements: DesignElement[], shouldCommit: boolean = true) => {
-      if (shouldCommit) {
-        commitToHistory({ elements: newElements, pages });
-      } else {
-        updateWithoutCommit({ elements: newElements, pages });
-      }
+    if (shouldCommit) {
+      commitToHistory({ elements: newElements, pages });
+    } else {
+      updateWithoutCommit({ elements: newElements, pages });
+    }
   }, [commitToHistory, updateWithoutCommit, pages]);
 
   const addElement = (type: ElementType, content?: string, targetPageId?: string) => {
@@ -73,22 +73,22 @@ export const useProject = (initialData?: ProjectData) => {
         color: '#000000', fontSize: 24, fontFamily: "'Gowun Dodum', sans-serif"
       } as DesignElement;
     } else if (type === 'image') {
-       const width = 200; const height = 200;
-       newEl = { ...baseDefaults, x: 0, y: 0, width, height, content: content, borderRadius: 0 } as DesignElement;
+      const width = 200; const height = 200;
+      newEl = { ...baseDefaults, x: 0, y: 0, width, height, content: content, borderRadius: 0 } as DesignElement;
     } else if (type === 'shape') {
-      newEl = { ...baseDefaults, x: (CANVAS_WIDTH-150)/2, y: (CANVAS_HEIGHT-150)/2, width: 150, height: 150, backgroundColor: '#B0C0ff', borderRadius: 0, borderWidth: 0, borderColor: '#000000', opacity: 1 } as DesignElement;
+      newEl = { ...baseDefaults, x: (CANVAS_WIDTH - 150) / 2, y: (CANVAS_HEIGHT - 150) / 2, width: 150, height: 150, backgroundColor: '#B0C0ff', borderRadius: 0, borderWidth: 0, borderColor: '#000000', opacity: 1 } as DesignElement;
     } else if (type === 'card') {
-      newEl = { ...baseDefaults, x: (CANVAS_WIDTH-200)/2, y: (CANVAS_HEIGHT-300)/2, width: 200, height: 300, backgroundColor: '#ffffff', borderRadius: 12, borderWidth: 2, borderColor: '#e5e7eb', opacity: 1 } as DesignElement;
+      newEl = { ...baseDefaults, x: (CANVAS_WIDTH - 200) / 2, y: (CANVAS_HEIGHT - 300) / 2, width: 200, height: 300, backgroundColor: '#ffffff', borderRadius: 12, borderWidth: 2, borderColor: '#e5e7eb', opacity: 1 } as DesignElement;
     } else if (type === 'circle') {
-      newEl = { ...baseDefaults, x: (CANVAS_WIDTH-150)/2, y: (CANVAS_HEIGHT-150)/2, width: 150, height: 150, backgroundColor: '#B0C0ff', borderRadius: 500, borderWidth: 0, borderColor: '#000000', opacity: 1 } as DesignElement;
+      newEl = { ...baseDefaults, x: (CANVAS_WIDTH - 150) / 2, y: (CANVAS_HEIGHT - 150) / 2, width: 150, height: 150, backgroundColor: '#B0C0ff', borderRadius: 500, borderWidth: 0, borderColor: '#000000', opacity: 1 } as DesignElement;
     } else if (type === 'line' || type === 'arrow') {
-      newEl = { ...baseDefaults, x: (CANVAS_WIDTH-200)/2, y: (CANVAS_HEIGHT-40)/2, width: 200, height: 40, borderColor: '#000000', borderWidth: 4, borderStyle: 'solid', opacity: 1, borderRadius: 0, arrowHeadType: type === 'arrow' ? 'triangle' : undefined } as DesignElement;
+      newEl = { ...baseDefaults, x: (CANVAS_WIDTH - 200) / 2, y: (CANVAS_HEIGHT - 40) / 2, width: 200, height: 40, borderColor: '#000000', borderWidth: 4, borderStyle: 'solid', opacity: 1, borderRadius: 0, arrowHeadType: type === 'arrow' ? 'triangle' : undefined } as DesignElement;
     } else { return; }
 
     updateElements([...elements, newEl]);
     setSelectedIds([id]);
     setEditingId(null);
-    return newEl; 
+    return newEl;
   };
 
   const updateElement = (id: string, updates: Partial<DesignElement>, commit: boolean = true) => {
@@ -118,8 +118,27 @@ export const useProject = (initialData?: ProjectData) => {
     setSelectedIds(newSelectedIds);
   };
 
+  // Add a fully-formed element object directly
+  const addElementDirect = (element: Omit<DesignElement, 'id'> & { id?: string }) => {
+    const id = element.id || generateId();
+    const newElement = { ...element, id, zIndex: elements.length + 1 };
+    updateElements([...elements, newElement as DesignElement]);
+    return newElement;
+  };
+
+  // Add multiple elements at once
+  const addMultipleElements = (newElementsToAdd: Array<Omit<DesignElement, 'id'> & { id?: string }>) => {
+    const addedElements = newElementsToAdd.map((el, i) => ({
+      ...el,
+      id: el.id || generateId(),
+      zIndex: elements.length + i + 1,
+    } as DesignElement));
+    updateElements([...elements, ...addedElements]);
+    return addedElements;
+  };
+
   // --- Page CRUD ---
-  
+
   const addPage = () => {
     const newPageId = `page-${generateId()}`;
     const newPages = [...pages, { id: newPageId }];
@@ -129,64 +148,64 @@ export const useProject = (initialData?: ProjectData) => {
 
   const deletePage = (pageId: string) => {
     if (pages.length <= 1) {
-       const newElements = elements.filter(el => el.pageId !== pageId);
-       commitToHistory({ elements: newElements, pages });
-       return;
+      const newElements = elements.filter(el => el.pageId !== pageId);
+      commitToHistory({ elements: newElements, pages });
+      return;
     }
     const newPages = pages.filter(p => p.id !== pageId);
     const newElements = elements.filter(el => el.pageId !== pageId);
-    
+
     let newActive = activePageId;
     if (activePageId === pageId) {
-        const idx = pages.findIndex(p => p.id === pageId);
-        newActive = (newPages[idx - 1] || newPages[idx] || newPages[0]).id;
+      const idx = pages.findIndex(p => p.id === pageId);
+      newActive = (newPages[idx - 1] || newPages[idx] || newPages[0]).id;
     }
     commitToHistory({ elements: newElements, pages: newPages });
     setActivePageId(newActive);
   };
 
   const duplicatePage = (pageId: string) => {
-      const pageIndex = pages.findIndex(p => p.id === pageId);
-      const newPageId = `page-${generateId()}`;
-      const sourceElements = elements.filter(el => el.pageId === pageId);
-      const clonedElements = sourceElements.map(el => ({ ...el, id: generateId(), pageId: newPageId }));
-      
-      const newPages = [...pages];
-      newPages.splice(pageIndex + 1, 0, { id: newPageId });
-      
-      commitToHistory({ elements: [...elements, ...clonedElements], pages: newPages });
-      setActivePageId(newPageId);
+    const pageIndex = pages.findIndex(p => p.id === pageId);
+    const newPageId = `page-${generateId()}`;
+    const sourceElements = elements.filter(el => el.pageId === pageId);
+    const clonedElements = sourceElements.map(el => ({ ...el, id: generateId(), pageId: newPageId }));
+
+    const newPages = [...pages];
+    newPages.splice(pageIndex + 1, 0, { id: newPageId });
+
+    commitToHistory({ elements: [...elements, ...clonedElements], pages: newPages });
+    setActivePageId(newPageId);
   };
 
   const pastePage = (sourcePageId: string) => {
-      const sourceElements = elements.filter(el => el.pageId === sourcePageId);
-      
-      const activePageIndex = pages.findIndex(p => p.id === activePageId);
-      const insertIndex = activePageIndex !== -1 ? activePageIndex + 1 : pages.length;
+    const sourceElements = elements.filter(el => el.pageId === sourcePageId);
 
-      const newPageId = `page-${generateId()}`;
-      const clonedElements = sourceElements.map(el => ({ ...el, id: generateId(), pageId: newPageId }));
-      
-      const newPages = [...pages];
-      newPages.splice(insertIndex, 0, { id: newPageId });
+    const activePageIndex = pages.findIndex(p => p.id === activePageId);
+    const insertIndex = activePageIndex !== -1 ? activePageIndex + 1 : pages.length;
 
-      commitToHistory({ elements: [...elements, ...clonedElements], pages: newPages });
-      setActivePageId(newPageId);
+    const newPageId = `page-${generateId()}`;
+    const clonedElements = sourceElements.map(el => ({ ...el, id: generateId(), pageId: newPageId }));
+
+    const newPages = [...pages];
+    newPages.splice(insertIndex, 0, { id: newPageId });
+
+    commitToHistory({ elements: [...elements, ...clonedElements], pages: newPages });
+    setActivePageId(newPageId);
   };
 
   const movePage = (fromIndex: number, toIndex: number) => {
-      if (toIndex < 0 || toIndex >= pages.length) return;
-      const newPages = [...pages];
-      const [removed] = newPages.splice(fromIndex, 1);
-      newPages.splice(toIndex, 0, removed);
-      commitToHistory({ elements, pages: newPages });
+    if (toIndex < 0 || toIndex >= pages.length) return;
+    const newPages = [...pages];
+    const [removed] = newPages.splice(fromIndex, 1);
+    newPages.splice(toIndex, 0, removed);
+    commitToHistory({ elements, pages: newPages });
   };
 
   // --- Alignment & Layering ---
 
   const alignSelected = (type: any) => {
-      const newElements = alignElements(elements, selectedIds, type);
-      updateElements(newElements);
+    const newElements = alignElements(elements, selectedIds, type);
+    updateElements(newElements);
   };
 
   const bringForward = (id: string) => updateElements(moveLayer(elements, id, 'forward'));
@@ -196,14 +215,14 @@ export const useProject = (initialData?: ProjectData) => {
 
   // --- External Replacements (Templates) ---
   const loadTemplate = (templateElements: DesignElement[]) => {
-      if (elements.some(el => el.pageId === activePageId)) {
-          if (!window.confirm("현재 페이지를 템플릿으로 교체하시겠습니까?")) return;
-      }
-      const otherPageElements = elements.filter(el => el.pageId !== activePageId);
-      const newPageElements = templateElements.map((el, i) => ({
-          ...el, id: generateId(), pageId: activePageId, zIndex: otherPageElements.length + i + 1
-      }));
-      updateElements([...otherPageElements, ...newPageElements]);
+    if (elements.some(el => el.pageId === activePageId)) {
+      if (!window.confirm("현재 페이지를 템플릿으로 교체하시겠습니까?")) return;
+    }
+    const otherPageElements = elements.filter(el => el.pageId !== activePageId);
+    const newPageElements = templateElements.map((el, i) => ({
+      ...el, id: generateId(), pageId: activePageId, zIndex: otherPageElements.length + i + 1
+    }));
+    updateElements([...otherPageElements, ...newPageElements]);
   };
 
   return {
@@ -217,8 +236,10 @@ export const useProject = (initialData?: ProjectData) => {
     setEditingId,
     // Actions
     addElement,
+    addElementDirect,
+    addMultipleElements,
     updateElement,
-    updateElements, 
+    updateElements,
     deleteElements,
     duplicateElements,
     addPage,

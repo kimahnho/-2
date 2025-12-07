@@ -4,7 +4,8 @@ import { Toolbar } from '../Toolbar';
 import { PropertiesPanel } from '../PropertiesPanel';
 import { PageManager } from '../PageManager';
 import { CanvasArea } from '../CanvasArea';
-import { TabType, ProjectData } from '../../types';
+import { AACBoardTemplate } from '../templates/AACBoardTemplate';
+import { TabType, ProjectData, DesignElement } from '../../types';
 import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save } from 'lucide-react';
 import { printCanvas } from '../../utils/exportUtils';
 import { storageService } from '../../services/storageService';
@@ -35,10 +36,28 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   const [title, setTitle] = useState(initialTitle || '제목 없는 디자인');
   const [uploadedAssets, setUploadedAssets] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAACBoard, setShowAACBoard] = useState(false);
 
   // Simple helper for assets
   const handleSaveAsset = (url: string) => {
     setUploadedAssets(prev => prev.includes(url) ? prev : [url, ...prev]);
+  };
+
+  // AAC Board handlers
+  const handleOpenAACBoard = () => {
+    setShowAACBoard(true);
+  };
+
+  const handleCloseAACBoard = () => {
+    setShowAACBoard(false);
+  };
+
+  const handleAACBoardApply = (elements: DesignElement[]) => {
+    // Add AAC board elements to current page
+    elements.forEach(el => {
+      project.addElementDirect({ ...el, pageId: project.activePageId });
+    });
+    setShowAACBoard(false);
   };
 
   // --- 3. Business Logic (Composite Actions) ---
@@ -47,7 +66,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   const actions = useAppActions(project, title, handleSaveAsset);
 
   // Guest AI Limit Check Wrapper
-  const handleGuestAiGen = async (prompt: string) => {
+  const handleGuestAiGen = async (id: string, prompt: string, style: 'character' | 'realistic' | 'emoji') => {
     if (isGuest) {
       const count = parseInt(localStorage.getItem('guest_ai_count') || '0');
       if (count >= 3) {
@@ -56,11 +75,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       }
       localStorage.setItem('guest_ai_count', (count + 1).toString());
     }
-    // Call original action (Wait, handleAiImageFill might need args or be called directly)
-    // We pass this wrapped function to PropertiesPanel?
-    // Currently PropertiesPanel calls actions.handleAiImageFill directly.
-    // We need to inject logic.
-    await actions.handleAiImageFill(prompt);
+    await actions.handleAiImageFill(id, prompt, style);
   };
 
   // --- 4. Input Handling (Keyboard) ---
@@ -121,6 +136,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         onApplyEmotion={actions.handleApplyEmotion}
         onAddElementWithCaption={actions.handleAddImageWithCaption}
         onLogoClick={onBack}
+        onOpenAACBoard={handleOpenAACBoard}
       />
 
       {/* Main Content Area */}
@@ -206,6 +222,14 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         onBringToFront={project.bringToFront} onSendToBack={project.sendToBack}
         onAlign={project.alignSelected} onGenerateImage={handleGuestAiGen}
       />
+
+      {/* AAC Board Template Modal */}
+      {showAACBoard && (
+        <AACBoardTemplate
+          onClose={handleCloseAACBoard}
+          onApply={handleAACBoardApply}
+        />
+      )}
     </div>
   );
 };

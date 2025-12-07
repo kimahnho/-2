@@ -34,6 +34,7 @@ interface Props {
     onApplyEmotion?: (imageUrl: string, label: string) => void;
     onAddElementWithCaption?: (url: string, caption: string) => void;
     onLogoClick?: () => void;
+    onOpenAACBoard?: () => void;
 }
 
 export const Toolbar: React.FC<Props> = ({
@@ -51,7 +52,8 @@ export const Toolbar: React.FC<Props> = ({
     onUpdateEmotionLabel,
     onApplyEmotion,
     onAddElementWithCaption,
-    onLogoClick
+    onLogoClick,
+    onOpenAACBoard
 }) => {
 
     const toggleTab = (tab: TabType) => {
@@ -147,6 +149,7 @@ export const Toolbar: React.FC<Props> = ({
                             {activeTab === 'templates' && (
                                 <TemplatesPanel
                                     onLoadTemplate={onLoadTemplate}
+                                    onOpenAACBoard={onOpenAACBoard}
                                 />
                             )}
 

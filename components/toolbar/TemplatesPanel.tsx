@@ -4,12 +4,13 @@
  */
 
 import React from 'react';
-import { Layout, FileText, Heart, Brain, Users, Star, Sparkles } from 'lucide-react';
+import { Layout, FileText, Heart, Brain, Users, Star, Sparkles, Grid, MessageSquare } from 'lucide-react';
 import { DesignElement } from '../../types';
 import { TEMPLATES } from '../../constants';
 
 interface Props {
     onLoadTemplate: (elements: DesignElement[]) => void;
+    onOpenAACBoard?: () => void;
 }
 
 // 템플릿 카테고리 정의
@@ -20,7 +21,7 @@ const TEMPLATE_CATEGORIES = [
     { id: 'social', name: '사회성', icon: <Users className="w-4 h-4" /> },
 ];
 
-export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
+export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onOpenAACBoard }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('all');
 
     // 향후 카테고리 필터링에 사용
@@ -28,6 +29,43 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
 
     return (
         <div className="space-y-6">
+            {/* 자동화 템플릿 섹션 */}
+            <div>
+                <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-[#5500FF]" />
+                    <h3 className="font-bold text-sm text-gray-700">자동화 템플릿</h3>
+                    <span className="px-1.5 py-0.5 bg-[#5500FF] text-white text-[9px] font-bold rounded">NEW</span>
+                </div>
+
+                {/* AAC 의사소통 판 */}
+                <button
+                    onClick={onOpenAACBoard}
+                    className="w-full p-4 bg-gradient-to-r from-[#5500FF]/10 to-[#7733FF]/10 rounded-xl border-2 border-[#5500FF]/20 hover:border-[#5500FF] hover:shadow-lg transition-all text-left group"
+                >
+                    <div className="flex items-start gap-3">
+                        <div className="p-2 bg-[#5500FF] rounded-lg text-white group-hover:scale-110 transition-transform">
+                            <Grid className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-gray-900">AAC 의사소통 판</h4>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                2×2 ~ 8×8 그리드로 AAC 카드를 배치하고 문장을 구성하세요
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="px-2 py-0.5 bg-white text-[10px] font-medium text-[#5500FF] rounded-full border border-[#5500FF]/30">
+                                    그리드 설정
+                                </span>
+                                <span className="px-2 py-0.5 bg-white text-[10px] font-medium text-[#5500FF] rounded-full border border-[#5500FF]/30">
+                                    문장 구성
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
             {/* Category Filter */}
             <div className="flex flex-wrap gap-2">
                 {TEMPLATE_CATEGORIES.map(cat => (
@@ -35,8 +73,8 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCategory === cat.id
-                                ? 'bg-[#5500FF] text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-[#5500FF] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         {cat.icon}
@@ -110,3 +148,4 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate }) => {
         </div>
     );
 };
+
