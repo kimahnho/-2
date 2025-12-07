@@ -19,11 +19,33 @@ export const PricingPage: React.FC<Props> = ({ user }) => {
     const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Default plans for fallback
+    const defaultPlans: SubscriptionPlan[] = [
+        {
+            id: 'basic',
+            name: '기본',
+            originalPrice: 27900,
+            price: 15900,
+            templateLimit: 3,
+            aiLimit: 100,
+            features: ['템플릿 3개 구독', 'AI 생성 월 100회', '기본 지원']
+        },
+        {
+            id: 'pro',
+            name: '프로',
+            originalPrice: 89000,
+            price: 55000,
+            templateLimit: 10,
+            aiLimit: null,
+            features: ['템플릿 10개 구독', 'AI 생성 무제한', '우선 지원', '신규 템플릿 우선 접근']
+        }
+    ];
+
     useEffect(() => {
         const loadData = async () => {
             try {
                 const plansData = await subscriptionService.getPlans();
-                setPlans(plansData);
+                setPlans(plansData.length > 0 ? plansData : defaultPlans);
 
                 if (user) {
                     const subscription = await subscriptionService.getUserSubscription(user.id);
@@ -31,6 +53,7 @@ export const PricingPage: React.FC<Props> = ({ user }) => {
                 }
             } catch (error) {
                 console.error('Failed to load plans:', error);
+                setPlans(defaultPlans); // Use default plans on error
             } finally {
                 setLoading(false);
             }
@@ -178,10 +201,10 @@ export const PricingPage: React.FC<Props> = ({ user }) => {
                                     onClick={() => handleSelectPlan(plan.id)}
                                     disabled={isCurrentPlan}
                                     className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${isCurrentPlan
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : isPro
-                                                ? 'bg-[#5500FF] text-white hover:bg-[#4400CC] shadow-lg shadow-[#5500FF]/30'
-                                                : 'bg-gray-900 text-white hover:bg-gray-800'
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : isPro
+                                            ? 'bg-[#5500FF] text-white hover:bg-[#4400CC] shadow-lg shadow-[#5500FF]/30'
+                                            : 'bg-gray-900 text-white hover:bg-gray-800'
                                         }`}
                                 >
                                     {isCurrentPlan ? '현재 플랜' : '시작하기'}
