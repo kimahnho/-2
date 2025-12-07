@@ -64,7 +64,57 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
   // --- AAC Logic ---
   const [currentAACCardIndex, setCurrentAACCardIndex] = useState<number | undefined>(undefined);
+
   const [totalAACCards, setTotalAACCards] = useState<number | undefined>(undefined);
+  const [sentenceBuilderId, setSentenceBuilderId] = useState<string | null>(null);
+
+  // 문장 구성 영역 더블클릭 핸들러
+  const handleCanvasDoubleClick = () => {
+    if (project.selectedIds.length === 1) {
+      const el = project.elements.find(e => e.id === project.selectedIds[0]);
+      if (el?.metadata?.isAACSentenceArea) {
+        setSentenceBuilderId(el.id);
+        // 시각적 피드백이 있으면 좋음 (API상 alert 사용)
+        // alert('문장 구성 모드 시작! 카드를 클릭하여 문장을 만드세요.');
+      }
+    }
+  };
+
+  // 문장 빌더 모드 로직 (캔버스 내 카드 클릭 감지)
+  useEffect(() => {
+    if (!sentenceBuilderId) return;
+
+    // 선택 해제 시 모드 종료 (빈 공간 클릭)
+    if (project.selectedIds.length === 0) {
+      setSentenceBuilderId(null);
+      return;
+    }
+
+    // 자기 자신(문장 영역) 선택 시 유지
+    if (project.selectedIds[0] === sentenceBuilderId) return;
+
+    const selectedEl = project.elements.find(el => el.id === project.selectedIds[0]);
+
+    // AAC 카드 선택 시 아이템 추가
+    if (selectedEl?.metadata?.isAACCard && selectedEl.metadata.aacIndex !== undefined) {
+      const aacIndex = selectedEl.metadata.aacIndex;
+      // 아이콘(이모지) 요소 찾기
+      const iconEl = project.elements.find(e =>
+        e.pageId === project.activePageId &&
+        e.metadata?.isAACCard &&
+        e.metadata.aacIndex === aacIndex &&
+        e.metadata.isAACIcon
+      );
+
+      const emoji = iconEl?.content || '❓';
+      addSentenceItem(sentenceBuilderId, emoji);
+
+      // 모드 유지를 위해 sentenceBuilderId는 null로 만들지 않음
+    } else {
+      // 엉뚱한 요소 클릭 시 모드 종료
+      setSentenceBuilderId(null);
+    }
+  }, [project.selectedIds, sentenceBuilderId /* project.elements 등은 생략, 루프 방지 */]);
 
   // AAC 카드 선택 감지 및 탭 자동 열기
   useEffect(() => {
@@ -102,57 +152,65 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     }
   }, [project.selectedIds, project.elements, project.activePageId, activeTab]);
 
+  // 문장 구성 아이템 추가 헬퍼 함수
+  const addSentenceItem = (areaId: string, emoji: string) => {
+    const areaEl = project.elements.find(el => el.id === areaId);
+    if (!areaEl) return;
+
+    const itemCount = areaEl.metadata?.itemCount || 0;
+    // 아이템 크기: 문장 영역 높이의 70% 정도로 설정 (패딩 고려)
+    const ITEM_SIZE = Math.min(areaEl.height * 0.7, 80);
+    const GAP = 10;
+    const START_PADDING = 20;
+
+    // 위치 계산 (왼쪽 -> 오른쪽)
+    const nextX = areaEl.x + START_PADDING + itemCount * (ITEM_SIZE + GAP);
+    // 수직 중앙 정렬: y + (height - size) / 2
+    const nextY = areaEl.y + (areaEl.height - ITEM_SIZE) / 2;
+
+    // 영역 초과 체크
+    if (nextX + ITEM_SIZE > areaEl.x + areaEl.width) {
+      // 꽉 참
+      return;
+    }
+
+    const newEl = project.addElement('text', emoji);
+    if (newEl) {
+      project.updateElement(newEl.id, {
+        x: nextX,
+        y: nextY,
+        width: ITEM_SIZE,
+        height: ITEM_SIZE,
+        fontSize: ITEM_SIZE * 0.85, // 폰트 크기는 박스보다 약간 작게
+        color: '#000000',
+        metadata: {
+          isAACSentenceItem: true,
+          parentSentenceAreaId: areaId
+        }
+      });
+
+      // 카운트 증가
+      project.updateElement(areaId, {
+        metadata: {
+          ...areaEl.metadata,
+          itemCount: itemCount + 1
+        }
+      });
+    }
+  };
+
   const handleSelectAACCard = (card: AACCard) => {
     if (project.selectedIds.length !== 1) return;
     const selectedId = project.selectedIds[0];
     const selectedEl = project.elements.find(el => el.id === selectedId);
 
+    // 유효한 AAC 요소 선택 확인
     if (!selectedEl) return;
 
-    // A. 문장 구성 영역 선택 시: 카드 추가 (왼쪽부터 차곡차곡)
+    // A. 문장 구성 영역 선택 시: 카드 추가
+    // A. 문장 구성 영역 선택 시: 카드 추가
     if (selectedEl.metadata?.isAACSentenceArea) {
-      const itemCount = selectedEl.metadata.itemCount || 0;
-      const ITEM_SIZE = 50;
-      const GAP = 10;
-      const START_PADDING = 20;
-
-      // 새 아이콘 위치 계산 (왼쪽 -> 오른쪽)
-      const nextX = selectedEl.x + START_PADDING + itemCount * (ITEM_SIZE + GAP);
-      const nextY = selectedEl.y + (selectedEl.height - ITEM_SIZE) / 2;
-
-      // 영역을 벗어나지 않도록 체크 (선택사항)
-      if (nextX + ITEM_SIZE > selectedEl.x + selectedEl.width) {
-        alert('문장 영역이 가득 찼습니다!');
-        return;
-      }
-
-      // 아이콘(이모지) 추가
-      const newEl = project.addElement('text', card.emoji || '❓');
-      if (newEl) {
-        project.updateElement(newEl.id, {
-          x: nextX,
-          y: nextY,
-          width: ITEM_SIZE,
-          height: ITEM_SIZE,
-          fontSize: ITEM_SIZE * 0.8, // 폰트 크기 조절
-          color: '#000000',
-          metadata: {
-            isAACSentenceItem: true,
-            parentSentenceAreaId: selectedId
-          }
-        });
-
-        // 문장 영역의 카운트 업데이트
-        project.updateElement(selectedId, {
-          metadata: {
-            ...selectedEl.metadata,
-            itemCount: itemCount + 1
-          }
-        });
-
-        // 라벨도 추가할지 여부는 선택사항. 지금은 아이콘 위주로 구현.
-        // 필요 시 아래에 작은 텍스트 추가 가능.
-      }
+      addSentenceItem(selectedId, card.emoji || '❓');
       return;
     }
 
@@ -290,7 +348,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
   return (
     <div className={`flex h-screen bg-gray-100 overflow-hidden font-sans select-none ${viewport.isPanning ? 'cursor-grabbing' : ''}`}
-      onMouseMove={viewport.handlePanMove} onMouseUp={viewport.endPan} onWheel={viewport.handleWheel}>
+      onMouseMove={viewport.handlePanMove} onMouseUp={viewport.endPan} onWheel={viewport.handleWheel}
+      onDoubleClick={handleCanvasDoubleClick}>
 
       {/* Left Sidebar: Toolbar */}
       <Toolbar
