@@ -164,6 +164,30 @@ export const PropertiesPanel: React.FC<Props> = ({
           </div>
         )}
 
+        {/* AAC Card Label Editing */}
+        {element.type === 'card' && element.metadata?.isAACCard && element.metadata?.aacData && (
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-gray-500">AAC 카드 라벨</label>
+            <input
+              type="text"
+              value={element.metadata.aacData.label || ''}
+              onChange={(e) => onUpdate(element.id, {
+                metadata: {
+                  ...element.metadata,
+                  aacData: { ...element.metadata.aacData, label: e.target.value }
+                }
+              })}
+              onBlur={(e) => onCommit(element.id, {
+                metadata: {
+                  ...element.metadata,
+                  aacData: { ...element.metadata.aacData, label: e.target.value }
+                }
+              })}
+              className="w-full p-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B0C0ff] focus:border-[#5500FF] transition-all"
+              placeholder="카드 라벨 입력"
+            />
+          </div>
+        )}
         {/* Image Handling for Shapes/Cards */}
         {(element.type === 'shape' || element.type === 'card' || element.type === 'circle') && (
           <div className="space-y-3">
