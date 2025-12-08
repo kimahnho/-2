@@ -171,49 +171,66 @@ export const PropertiesPanel: React.FC<Props> = ({
                   min="8"
                   max="120"
                   value={element.fontSize || 16}
-                  onChange={(e) => onUpdate(element.id, { fontSize: parseInt(e.target.value) })}
-                  onMouseUp={(e) => onCommit(element.id, { fontSize: parseInt((e.target as HTMLInputElement).value) })}
+                  onChange={(e) => {
+                    const newSize = parseInt(e.target.value);
+                    // 폰트 크기에 따라 텍스트 박스 높이 자동 조정
+                    const lineHeight = 1.2;
+                    const lines = (element.content?.split('\n').length || 1);
+                    const newHeight = Math.max(element.height, newSize * lineHeight * lines + 10);
+                    onUpdate(element.id, { fontSize: newSize, height: newHeight });
+                  }}
+                  onMouseUp={(e) => {
+                    const newSize = parseInt((e.target as HTMLInputElement).value);
+                    const lineHeight = 1.2;
+                    const lines = (element.content?.split('\n').length || 1);
+                    const newHeight = Math.max(element.height, newSize * lineHeight * lines + 10);
+                    onCommit(element.id, { fontSize: newSize, height: newHeight });
+                  }}
                   className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5500FF]"
                 />
                 <input
-                  type="number"
-                  min="8"
-                  max="120"
+                  type="text"
                   value={element.fontSize || 16}
                   onChange={(e) => {
-                    onUpdate(element.id, { fontSize: parseInt(e.target.value) || 16 });
-                    onCommit(element.id, { fontSize: parseInt(e.target.value) || 16 });
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val) {
+                      const size = Math.min(120, Math.max(8, parseInt(val)));
+                      const lineHeight = 1.2;
+                      const lines = (element.content?.split('\n').length || 1);
+                      const newHeight = Math.max(element.height, size * lineHeight * lines + 10);
+                      onUpdate(element.id, { fontSize: size, height: newHeight });
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    const size = val ? Math.min(120, Math.max(8, parseInt(val))) : 16;
+                    const lineHeight = 1.2;
+                    const lines = (element.content?.split('\n').length || 1);
+                    const newHeight = Math.max(element.height, size * lineHeight * lines + 10);
+                    onCommit(element.id, { fontSize: size, height: newHeight });
                   }}
                   className="w-16 p-1 text-xs text-center border border-gray-200 rounded-lg"
                 />
               </div>
             </div>
 
-            {/* 글씨 두께 */}
+            {/* 글씨 두께 (Bold 토글) */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-500">글씨 두께</label>
-              <div className="flex gap-1">
-                {[
-                  { value: 300, label: '얇게' },
-                  { value: 400, label: '보통' },
-                  { value: 600, label: '굵게' },
-                  { value: 800, label: '아주굵게' }
-                ].map((weight) => (
-                  <button
-                    key={weight.value}
-                    onClick={() => {
-                      onUpdate(element.id, { fontWeight: weight.value });
-                      onCommit(element.id, { fontWeight: weight.value });
-                    }}
-                    className={`flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all ${(element.fontWeight || 400) === weight.value
-                        ? 'bg-[#5500FF] text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                  >
-                    {weight.label}
-                  </button>
-                ))}
-              </div>
+              <button
+                onClick={() => {
+                  const newWeight = (element.fontWeight || 400) >= 600 ? 400 : 700;
+                  onUpdate(element.id, { fontWeight: newWeight });
+                  onCommit(element.id, { fontWeight: newWeight });
+                }}
+                className={`w-10 h-10 flex items-center justify-center text-lg font-bold rounded-lg border-2 transition-all ${(element.fontWeight || 400) >= 600
+                    ? 'bg-[#5500FF] text-white border-[#5500FF]'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  }`}
+                title="굵게 (Bold)"
+              >
+                B
+              </button>
             </div>
 
             {/* 글씨 색상 */}
@@ -234,6 +251,8 @@ export const PropertiesPanel: React.FC<Props> = ({
                   value={element.color || '#000000'}
                   onChange={(e) => {
                     onUpdate(element.id, { color: e.target.value });
+                  }}
+                  onBlur={(e) => {
                     onCommit(element.id, { color: e.target.value });
                   }}
                   className="flex-1 p-2 text-xs border border-gray-200 rounded-lg uppercase"
