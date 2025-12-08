@@ -177,7 +177,6 @@ const AACCardRenderer: React.FC<{
             {isFilled && (
                 <div
                     className="absolute top-2 left-0 right-0 text-center px-1"
-                    style={{ zIndex: 10 }}
                 >
                     {isEditingLabel ? (
                         <input
