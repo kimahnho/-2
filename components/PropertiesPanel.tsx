@@ -161,6 +161,86 @@ export const PropertiesPanel: React.FC<Props> = ({
                 ))}
               </select>
             </div>
+
+            {/* 글씨 크기 */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500">글씨 크기</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="8"
+                  max="120"
+                  value={element.fontSize || 16}
+                  onChange={(e) => onUpdate(element.id, { fontSize: parseInt(e.target.value) })}
+                  onMouseUp={(e) => onCommit(element.id, { fontSize: parseInt((e.target as HTMLInputElement).value) })}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5500FF]"
+                />
+                <input
+                  type="number"
+                  min="8"
+                  max="120"
+                  value={element.fontSize || 16}
+                  onChange={(e) => {
+                    onUpdate(element.id, { fontSize: parseInt(e.target.value) || 16 });
+                    onCommit(element.id, { fontSize: parseInt(e.target.value) || 16 });
+                  }}
+                  className="w-16 p-1 text-xs text-center border border-gray-200 rounded-lg"
+                />
+              </div>
+            </div>
+
+            {/* 글씨 두께 */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500">글씨 두께</label>
+              <div className="flex gap-1">
+                {[
+                  { value: 300, label: '얇게' },
+                  { value: 400, label: '보통' },
+                  { value: 600, label: '굵게' },
+                  { value: 800, label: '아주굵게' }
+                ].map((weight) => (
+                  <button
+                    key={weight.value}
+                    onClick={() => {
+                      onUpdate(element.id, { fontWeight: weight.value });
+                      onCommit(element.id, { fontWeight: weight.value });
+                    }}
+                    className={`flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all ${(element.fontWeight || 400) === weight.value
+                        ? 'bg-[#5500FF] text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                  >
+                    {weight.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 글씨 색상 */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500">글씨 색상</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={element.color || '#000000'}
+                  onChange={(e) => {
+                    onUpdate(element.id, { color: e.target.value });
+                    onCommit(element.id, { color: e.target.value });
+                  }}
+                  className="w-10 h-10 p-0 border-0 rounded cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={element.color || '#000000'}
+                  onChange={(e) => {
+                    onUpdate(element.id, { color: e.target.value });
+                    onCommit(element.id, { color: e.target.value });
+                  }}
+                  className="flex-1 p-2 text-xs border border-gray-200 rounded-lg uppercase"
+                  maxLength={7}
+                />
+              </div>
+            </div>
           </div>
         )}
 

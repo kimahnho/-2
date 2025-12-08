@@ -25,6 +25,7 @@ const TextRenderer: React.FC<{
 }> = ({ element, isEditing, onUpdate, onBlur, textareaRef }) => {
     const fontStyle = {
         fontFamily: element.fontFamily || "'Gowun Dodum', sans-serif",
+        fontWeight: element.fontWeight || 400,
     };
 
     const commonStyle = {

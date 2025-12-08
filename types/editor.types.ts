@@ -26,6 +26,7 @@ export interface DesignElement {
     color?: string;
     fontSize?: number;
     fontFamily?: string;
+    fontWeight?: number;
     borderRadius?: number;
     borderWidth?: number;
     borderColor?: string;
