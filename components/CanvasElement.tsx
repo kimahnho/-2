@@ -339,7 +339,8 @@ export const CanvasElement: React.FC<Props> = ({
                 width: element.width,
                 height: element.height,
                 transform: `rotate(${element.rotation}deg)`,
-                zIndex: element.zIndex,
+                // 선택된 요소는 항상 맨 앞에 표시
+                zIndex: isSelected ? 9999 : element.zIndex,
                 cursor: isEditing ? (element.type === 'text' ? 'text' : 'default') : (element.isEmotionPlaceholder ? 'pointer' : (isSelected ? 'move' : 'default')),
                 boxSizing: 'border-box',
                 pointerEvents: element.isPassThrough ? 'none' : undefined,
