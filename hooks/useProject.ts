@@ -41,11 +41,13 @@ export const useProject = (initialData?: ProjectData) => {
 
   // Validate activePageId - fallback to last page if current ID doesn't exist in pages
   // Using last page as fallback handles the case when a new page is added
-  const validatedActivePageId = pages.find(p => p.id === activePageId)
+  const foundPage = pages.find(p => p.id === activePageId);
+  const validatedActivePageId = foundPage
     ? activePageId
     : (pages.length > 0 ? pages[pages.length - 1].id : 'page-1');
 
-  // Note: activePageId is now set via setTimeout in addPage to avoid race conditions
+  // Debug log
+  console.log('[useProject] pages:', pages.length, 'activePageId:', activePageId, 'validatedActivePageId:', validatedActivePageId, 'foundPage:', !!foundPage);
 
   // References for non-react-cycle access if needed
   const elementsRef = useRef(elements);
@@ -150,9 +152,11 @@ export const useProject = (initialData?: ProjectData) => {
   const addPage = (orientation?: 'portrait' | 'landscape') => {
     const newPageId = `page-${generateId()}`;
     const newPages = [...pages, { id: newPageId, orientation: orientation || 'portrait' }];
+    console.log('[addPage] Current pages:', pages.length, 'New pages:', newPages.length, 'New page ID:', newPageId);
     commitToHistory({ elements, pages: newPages });
     // Set active page immediately - validatedActivePageId will handle fallback if needed
     setActivePageId(newPageId);
+    console.log('[addPage] Set activePageId to:', newPageId);
     return newPageId;
   };
 
