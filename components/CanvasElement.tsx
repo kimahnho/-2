@@ -79,7 +79,38 @@ const TextRenderer: React.FC<{
 const AACCardRenderer: React.FC<{ element: DesignElement }> = ({ element }) => {
     const aacData = element.metadata?.aacData;
     const isFilled = aacData?.isFilled;
+    const isSentenceItem = element.metadata?.isAACSentenceItem;
+    const size = Math.min(element.width, element.height);
 
+    // 문장 영역 아이템 (작은 크기)
+    if (isSentenceItem) {
+        return (
+            <div
+                className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center"
+                style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: 6,
+                }}
+            >
+                {/* 이모지 (상단) */}
+                <span style={{ fontSize: size * 0.4, lineHeight: 1 }}>
+                    {aacData?.emoji || '❓'}
+                </span>
+                {/* 라벨 (하단) */}
+                {aacData?.label && (
+                    <span
+                        className="text-gray-600 text-center truncate w-full px-1"
+                        style={{ fontSize: Math.max(8, size * 0.15) }}
+                    >
+                        {aacData.label}
+                    </span>
+                )}
+            </div>
+        );
+    }
+
+    // 일반 AAC 카드
     return (
         <div
             className="w-full h-full relative overflow-hidden"
@@ -102,11 +133,11 @@ const AACCardRenderer: React.FC<{ element: DesignElement }> = ({ element }) => {
             {/* 이모지 (중앙) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 {isFilled && aacData?.emoji ? (
-                    <span style={{ fontSize: Math.min(element.width, element.height) * 0.45 }}>
+                    <span style={{ fontSize: size * 0.45 }}>
                         {aacData.emoji}
                     </span>
                 ) : (
-                    <span className="text-gray-300" style={{ fontSize: Math.min(element.width, element.height) * 0.1 }}>
+                    <span className="text-gray-300" style={{ fontSize: size * 0.1 }}>
                         카드 추가
                     </span>
                 )}
@@ -347,14 +378,14 @@ export const CanvasElement: React.FC<Props> = ({
                     />
                 )}
 
-                {/* AAC 카드는 전용 렌더러 사용 */}
-                {element.type === 'card' && element.metadata?.isAACCard && (
+                {/* AAC 카드 및 문장 아이템 카드는 전용 렌더러 사용 */}
+                {element.type === 'card' && (element.metadata?.isAACCard || element.metadata?.isAACSentenceItem) && (
                     <AACCardRenderer element={element} />
                 )}
 
-                {/* 일반 이미지/도형/카드/원형 (AAC 카드 제외) */}
+                {/* 일반 이미지/도형/카드/원형 (AAC 카드 및 문장 아이템 제외) */}
                 {(element.type === 'image' || element.type === 'shape' || element.type === 'circle' ||
-                    (element.type === 'card' && !element.metadata?.isAACCard)) && (
+                    (element.type === 'card' && !element.metadata?.isAACCard && !element.metadata?.isAACSentenceItem)) && (
                         <ImageShapeRenderer
                             element={element}
                             isEditing={isEditing}

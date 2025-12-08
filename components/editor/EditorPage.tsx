@@ -106,8 +106,11 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         e.metadata.isAACIcon
       );
 
-      const emoji = iconEl?.content || '❓';
-      addSentenceItem(sentenceBuilderId, emoji);
+      // 새 구조: aacData에서 이모지와 라벨 가져오기
+      const aacData = selectedEl.metadata?.aacData;
+      const emoji = aacData?.emoji || '❓';
+      const label = aacData?.label || '';
+      addSentenceItem(sentenceBuilderId, emoji, label);
 
       // 모드 유지를 위해 sentenceBuilderId는 null로 만들지 않음
     } else {
@@ -158,47 +161,52 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   }, [project.selectedIds, project.elements, project.activePageId, activeTab]);
 
   // 문장 구성 아이템 추가 헬퍼 함수
-  const addSentenceItem = (areaId: string, emoji: string) => {
+  const addSentenceItem = (areaId: string, emoji: string, label: string) => {
     const areaEl = project.elements.find(el => el.id === areaId);
     if (!areaEl) return;
 
     const itemCount = areaEl.metadata?.itemCount || 0;
 
-    // 아이템 크기: 문장 영역 높이의 70% 정도로 설정 (패딩 고려)
-    const ITEM_SIZE = Math.min(areaEl.height * 0.7, 80);
-    const GAP = 10;
-    const START_PADDING = 20;
+    // 아이템 크기: 문장 영역 높이의 80% 정도로 설정
+    const ITEM_SIZE = Math.min(areaEl.height * 0.8, 50);
+    const GAP = 8;
+    const START_PADDING = 16;
 
     // 위치 계산 (왼쪽 -> 오른쪽)
     const nextX = areaEl.x + START_PADDING + itemCount * (ITEM_SIZE + GAP);
-    // 수직 중앙 정렬: y + (height - size) / 2
     const nextY = areaEl.y + (areaEl.height - ITEM_SIZE) / 2;
 
     // 영역 초과 체크
-    if (nextX + ITEM_SIZE > areaEl.x + areaEl.width) return;
+    if (nextX + ITEM_SIZE > areaEl.x + areaEl.width - START_PADDING) return;
 
-    // 배치 업데이트로 한 번에 처리
-    const newItemId = `sentence-item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    // AAC 카드 형태의 아이템 생성 (흰색 배경 + 이모지 + 라벨)
+    const newItemId = `sentence-card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const newItem = {
       id: newItemId,
-      type: 'text' as const,
+      type: 'card' as const,
       x: nextX,
       y: nextY,
       width: ITEM_SIZE,
       height: ITEM_SIZE,
       rotation: 0,
-      content: emoji,
-      fontSize: ITEM_SIZE * 0.85,
-      color: '#000000',
-      zIndex: 1000 + itemCount,
+      backgroundColor: '#ffffff',
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      zIndex: 100 + itemCount,
       pageId: project.activePageId,
       metadata: {
         isAACSentenceItem: true,
-        parentSentenceAreaId: areaId
+        parentSentenceAreaId: areaId,
+        aacData: {
+          emoji: emoji,
+          label: label,
+          isFilled: true
+        }
       }
     };
 
-    // 영역 카운트 업데이트와 함께 새 아이템 추가
+    // 영역 카운트 업데이트 및 새 아이템 추가
     const updatedElements = project.elements.map(el => {
       if (el.id === areaId) {
         return {
@@ -220,7 +228,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     if (sentenceBuilderId) {
       const sentenceArea = project.elements.find(el => el.id === sentenceBuilderId);
       if (sentenceArea?.metadata?.isAACSentenceArea) {
-        addSentenceItem(sentenceBuilderId, card.emoji || '❓');
+        addSentenceItem(sentenceBuilderId, card.emoji || '❓', card.label || '');
         return;
       }
     }
@@ -234,7 +242,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
     // A. 문장 구성 영역 선택 시: 카드 추가 (더블클릭 없이 직접 선택한 경우)
     if (selectedEl.metadata?.isAACSentenceArea) {
-      addSentenceItem(selectedId, card.emoji || '❓');
+      addSentenceItem(selectedId, card.emoji || '❓', card.label || '');
       return;
     }
 
