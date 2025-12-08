@@ -39,6 +39,18 @@ export const useProject = (initialData?: ProjectData) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Validate activePageId - fallback to first page if current ID doesn't exist in pages
+  const validatedActivePageId = pages.find(p => p.id === activePageId)
+    ? activePageId
+    : (pages[0]?.id || 'page-1');
+
+  // If activePageId is invalid, sync state to valid value
+  useEffect(() => {
+    if (activePageId !== validatedActivePageId) {
+      setActivePageId(validatedActivePageId);
+    }
+  }, [activePageId, validatedActivePageId]);
+
   // Note: activePageId is now set via setTimeout in addPage to avoid race conditions
 
   // References for non-react-cycle access if needed
@@ -240,14 +252,14 @@ export const useProject = (initialData?: ProjectData) => {
   };
 
   const getActivePageOrientation = (): 'portrait' | 'landscape' => {
-    const activePage = pages.find(p => p.id === activePageId);
+    const activePage = pages.find(p => p.id === validatedActivePageId);
     return activePage?.orientation || 'portrait';
   };
 
   return {
     elements,
     pages,
-    activePageId,
+    activePageId: validatedActivePageId,
     selectedIds,
     editingId,
     setActivePageId,
