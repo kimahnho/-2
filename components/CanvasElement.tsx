@@ -467,14 +467,14 @@ export const CanvasElement: React.FC<Props> = ({
                     {/* Selection Border */}
                     <div
                         className="absolute -inset-1 border-2 border-[#5500FF] pointer-events-none rounded-sm"
-                        style={{ zIndex: 100 }}
+                        style={{ zIndex: 10 }}
                     />
 
                     {/* Rotation Handle */}
                     {onRotateStart && (
                         <div
                             className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full shadow-sm cursor-grab active:cursor-grabbing hover:bg-gray-50"
-                            style={{ zIndex: 101 }}
+                            style={{ zIndex: 11 }}
                             onMouseDown={(e) => onRotateStart(e, element.id)}
                         >
                             <RotateCw className="w-4 h-4 text-gray-600" />
@@ -482,16 +482,16 @@ export const CanvasElement: React.FC<Props> = ({
                     )}
 
                     {/* Resize Handles */}
-                    <div style={{ ...handleStyle, top: -5, left: -5, cursor: 'nw-resize', zIndex: 101 }} onMouseDown={(e) => onResizeStart(e, element.id, 'nw')} />
-                    <div style={{ ...handleStyle, top: -5, right: -5, cursor: 'ne-resize', zIndex: 101 }} onMouseDown={(e) => onResizeStart(e, element.id, 'ne')} />
-                    <div style={{ ...handleStyle, bottom: -5, left: -5, cursor: 'sw-resize', zIndex: 101 }} onMouseDown={(e) => onResizeStart(e, element.id, 'sw')} />
-                    <div style={{ ...handleStyle, bottom: -5, right: -5, cursor: 'se-resize', zIndex: 101 }} onMouseDown={(e) => onResizeStart(e, element.id, 'se')} />
+                    <div style={{ ...handleStyle, top: -5, left: -5, cursor: 'nw-resize', zIndex: 11 }} onMouseDown={(e) => onResizeStart(e, element.id, 'nw')} />
+                    <div style={{ ...handleStyle, top: -5, right: -5, cursor: 'ne-resize', zIndex: 11 }} onMouseDown={(e) => onResizeStart(e, element.id, 'ne')} />
+                    <div style={{ ...handleStyle, bottom: -5, left: -5, cursor: 'sw-resize', zIndex: 11 }} onMouseDown={(e) => onResizeStart(e, element.id, 'sw')} />
+                    <div style={{ ...handleStyle, bottom: -5, right: -5, cursor: 'se-resize', zIndex: 11 }} onMouseDown={(e) => onResizeStart(e, element.id, 'se')} />
                 </>
             )}
 
             {/* Editing Border (Subtle dash) */}
             {isEditing && (
-                <div className="absolute -inset-2 border border-dashed border-[#B0C0ff] pointer-events-none rounded-sm" style={{ zIndex: 100 }} />
+                <div className="absolute -inset-2 border border-dashed border-[#B0C0ff] pointer-events-none rounded-sm" style={{ zIndex: 10 }} />
             )}
         </div>
     );
