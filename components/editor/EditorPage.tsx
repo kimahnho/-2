@@ -205,6 +205,15 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   };
 
   const handleSelectAACCard = (card: AACCard) => {
+    // 문장 빌더 모드가 활성화되어 있으면 해당 영역에 카드 추가
+    if (sentenceBuilderId) {
+      const sentenceArea = project.elements.find(el => el.id === sentenceBuilderId);
+      if (sentenceArea?.metadata?.isAACSentenceArea) {
+        addSentenceItem(sentenceBuilderId, card.emoji || '❓');
+        return;
+      }
+    }
+
     if (project.selectedIds.length !== 1) return;
     const selectedId = project.selectedIds[0];
     const selectedEl = project.elements.find(el => el.id === selectedId);
@@ -212,7 +221,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     // 유효한 AAC 요소 선택 확인
     if (!selectedEl) return;
 
-    // A. 문장 구성 영역 선택 시: 카드 추가
+    // A. 문장 구성 영역 선택 시: 카드 추가 (더블클릭 없이 직접 선택한 경우)
     if (selectedEl.metadata?.isAACSentenceArea) {
       addSentenceItem(selectedId, card.emoji || '❓');
       return;
