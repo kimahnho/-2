@@ -334,20 +334,46 @@ export const PropertiesPanel: React.FC<Props> = ({
                     }
                   });
                 }}
-                className={`w-10 h-10 flex items-center justify-center text-lg font-bold rounded-lg border-2 transition-all ${(element.metadata.aacData.fontWeight || 400) >= 600
+                className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${(element.metadata.aacData.fontWeight || 400) >= 600
                     ? 'bg-[#5500FF] text-white border-[#5500FF]'
                     : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
                   }`}
-                title="굵게 (Bold)"
               >
-                B
+                두껍게
               </button>
             </div>
 
             {/* 라벨 글씨 색상 */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-500">라벨 글씨 색상</label>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-6 gap-1.5">
+                {['#000000', '#374151', '#DC2626', '#EA580C', '#16A34A', '#2563EB', '#7C3AED', '#DB2777'].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => {
+                      onUpdate(element.id, {
+                        metadata: {
+                          ...element.metadata,
+                          aacData: { ...element.metadata!.aacData, color }
+                        }
+                      });
+                      onCommit(element.id, {
+                        metadata: {
+                          ...element.metadata,
+                          aacData: { ...element.metadata!.aacData, color }
+                        }
+                      });
+                    }}
+                    className={`w-7 h-7 rounded-md border-2 transition-all ${(element.metadata.aacData.color || '#374151') === color
+                        ? 'border-[#5500FF] scale-110'
+                        : 'border-transparent hover:scale-105'
+                      }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[10px] text-gray-400">사용자 지정:</span>
                 <input
                   type="color"
                   value={element.metadata.aacData.color || '#374151'}
@@ -365,25 +391,7 @@ export const PropertiesPanel: React.FC<Props> = ({
                       }
                     });
                   }}
-                  className="w-10 h-10 p-0 border-0 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={element.metadata.aacData.color || '#374151'}
-                  onChange={(e) => onUpdate(element.id, {
-                    metadata: {
-                      ...element.metadata,
-                      aacData: { ...element.metadata!.aacData, color: e.target.value }
-                    }
-                  })}
-                  onBlur={(e) => onCommit(element.id, {
-                    metadata: {
-                      ...element.metadata,
-                      aacData: { ...element.metadata!.aacData, color: e.target.value }
-                    }
-                  })}
-                  className="flex-1 p-2 text-xs border border-gray-200 rounded-lg uppercase"
-                  maxLength={7}
+                  className="w-7 h-7 p-0 border-0 rounded cursor-pointer"
                 />
               </div>
             </div>
