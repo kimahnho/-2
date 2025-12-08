@@ -159,10 +159,17 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
   // 문장 구성 아이템 추가 헬퍼 함수
   const addSentenceItem = (areaId: string, emoji: string) => {
+    console.log('[addSentenceItem] Called with areaId:', areaId, 'emoji:', emoji);
+
     const areaEl = project.elements.find(el => el.id === areaId);
-    if (!areaEl) return;
+    if (!areaEl) {
+      console.log('[addSentenceItem] Area element not found');
+      return;
+    }
 
     const itemCount = areaEl.metadata?.itemCount || 0;
+    console.log('[addSentenceItem] Current itemCount:', itemCount);
+
     // 아이템 크기: 문장 영역 높이의 70% 정도로 설정 (패딩 고려)
     const ITEM_SIZE = Math.min(areaEl.height * 0.7, 80);
     const GAP = 10;
@@ -175,33 +182,49 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
     // 영역 초과 체크
     if (nextX + ITEM_SIZE > areaEl.x + areaEl.width) {
-      // 꽉 참
+      console.log('[addSentenceItem] Area full, cannot add more items');
       return;
     }
 
-    const newEl = project.addElement('text', emoji);
-    if (newEl) {
-      project.updateElement(newEl.id, {
-        x: nextX,
-        y: nextY,
-        width: ITEM_SIZE,
-        height: ITEM_SIZE,
-        fontSize: ITEM_SIZE * 0.85, // 폰트 크기는 박스보다 약간 작게
-        color: '#000000',
-        metadata: {
-          isAACSentenceItem: true,
-          parentSentenceAreaId: areaId
-        }
-      });
+    console.log('[addSentenceItem] Adding item at:', nextX, nextY);
 
-      // 카운트 증가
-      project.updateElement(areaId, {
-        metadata: {
-          ...areaEl.metadata,
-          itemCount: itemCount + 1
-        }
-      });
-    }
+    // 배치 업데이트로 한 번에 처리
+    const newItemId = `sentence-item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const newItem = {
+      id: newItemId,
+      type: 'text' as const,
+      x: nextX,
+      y: nextY,
+      width: ITEM_SIZE,
+      height: ITEM_SIZE,
+      rotation: 0,
+      content: emoji,
+      fontSize: ITEM_SIZE * 0.85,
+      color: '#000000',
+      zIndex: 1000 + itemCount, // 문장 영역 위에 표시되도록 높은 z-index
+      pageId: project.activePageId,
+      metadata: {
+        isAACSentenceItem: true,
+        parentSentenceAreaId: areaId
+      }
+    };
+
+    // 영역 카운트 업데이트와 함께 새 아이템 추가
+    const updatedElements = project.elements.map(el => {
+      if (el.id === areaId) {
+        return {
+          ...el,
+          metadata: {
+            ...el.metadata,
+            itemCount: itemCount + 1
+          }
+        };
+      }
+      return el;
+    });
+
+    project.updateElements([...updatedElements, newItem as any]);
+    console.log('[addSentenceItem] Item added successfully');
   };
 
   const handleSelectAACCard = (card: AACCard) => {
