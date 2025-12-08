@@ -76,11 +76,62 @@ const TextRenderer: React.FC<{
 };
 
 // Helper: Render AAC Card (통합된 AAC 카드 렌더러)
-const AACCardRenderer: React.FC<{ element: DesignElement }> = ({ element }) => {
+const AACCardRenderer: React.FC<{
+    element: DesignElement;
+    onUpdate?: (update: Partial<DesignElement>) => void;
+    onCommit?: (update: Partial<DesignElement>) => void;
+}> = ({ element, onUpdate, onCommit }) => {
+    const [isEditingLabel, setIsEditingLabel] = React.useState(false);
+    const [labelValue, setLabelValue] = React.useState('');
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
     const aacData = element.metadata?.aacData;
     const isFilled = aacData?.isFilled;
     const isSentenceItem = element.metadata?.isAACSentenceItem;
     const size = Math.min(element.width, element.height);
+
+    React.useEffect(() => {
+        if (isEditingLabel && inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+        }
+    }, [isEditingLabel]);
+
+    const handleLabelClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setLabelValue(aacData?.label || '');
+        setIsEditingLabel(true);
+    };
+
+    const handleLabelBlur = () => {
+        setIsEditingLabel(false);
+        if (onCommit && element.metadata) {
+            onCommit({
+                metadata: {
+                    ...element.metadata,
+                    aacData: { ...aacData, label: labelValue }
+                }
+            });
+        }
+    };
+
+    const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLabelValue(e.target.value);
+        if (onUpdate && element.metadata) {
+            onUpdate({
+                metadata: {
+                    ...element.metadata,
+                    aacData: { ...aacData, label: e.target.value }
+                }
+            });
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleLabelBlur();
+        }
+    };
 
     // 문장 영역 아이템 (작은 크기)
     if (isSentenceItem) {
@@ -122,13 +173,35 @@ const AACCardRenderer: React.FC<{ element: DesignElement }> = ({ element }) => {
                 borderRadius: element.borderRadius || 12,
             }}
         >
-            {/* 라벨 (상단) */}
-            {isFilled && aacData?.label && (
+            {/* 라벨 (상단) - 클릭 시 편집 가능 */}
+            {isFilled && (
                 <div
-                    className="absolute top-2 left-0 right-0 text-center text-gray-700 font-medium pointer-events-none"
-                    style={{ fontSize: 12 }}
+                    className="absolute top-2 left-0 right-0 text-center px-1"
+                    style={{ zIndex: 10 }}
                 >
-                    {aacData.label}
+                    {isEditingLabel ? (
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={labelValue}
+                            onChange={handleLabelChange}
+                            onBlur={handleLabelBlur}
+                            onKeyDown={handleKeyDown}
+                            className="w-full text-center bg-white border border-blue-400 rounded px-1 outline-none"
+                            style={{ fontSize: 12 }}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        <div
+                            className="text-gray-700 font-medium cursor-text hover:bg-blue-50 rounded px-1 transition-colors"
+                            style={{ fontSize: 12 }}
+                            onClick={handleLabelClick}
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            {aacData?.label || '라벨 추가'}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -147,6 +220,7 @@ const AACCardRenderer: React.FC<{ element: DesignElement }> = ({ element }) => {
         </div>
     );
 };
+
 const ImageShapeRenderer: React.FC<{
     element: DesignElement,
     isEditing: boolean,
@@ -362,7 +436,11 @@ export const CanvasElement: React.FC<Props> = ({
 
                 {/* AAC 카드 및 문장 아이템 카드는 전용 렌더러 사용 */}
                 {element.type === 'card' && (element.metadata?.isAACCard || element.metadata?.isAACSentenceItem) && (
-                    <AACCardRenderer element={element} />
+                    <AACCardRenderer
+                        element={element}
+                        onUpdate={(val) => onUpdate?.(val)}
+                        onCommit={(val) => onUpdate?.(val)}
+                    />
                 )}
 
                 {/* 일반 이미지/도형/카드/원형 (AAC 카드 및 문장 아이템 제외) */}
