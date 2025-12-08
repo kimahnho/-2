@@ -188,14 +188,22 @@ const AACCardRenderer: React.FC<{
                             onBlur={handleLabelBlur}
                             onKeyDown={handleKeyDown}
                             className="w-full text-center bg-white border border-blue-400 rounded px-1 outline-none"
-                            style={{ fontSize: 12 }}
+                            style={{
+                                fontSize: aacData?.fontSize || 12,
+                                fontWeight: aacData?.fontWeight || 400,
+                                color: aacData?.color || '#374151'
+                            }}
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
                         />
                     ) : (
                         <div
-                            className="text-gray-700 font-medium cursor-text hover:bg-blue-50 rounded px-1 transition-colors"
-                            style={{ fontSize: 12 }}
+                            className="cursor-text hover:bg-blue-50 rounded px-1 transition-colors"
+                            style={{
+                                fontSize: aacData?.fontSize || 12,
+                                fontWeight: aacData?.fontWeight || 400,
+                                color: aacData?.color || '#374151'
+                            }}
                             onClick={handleLabelClick}
                             onMouseDown={(e) => e.stopPropagation()}
                         >

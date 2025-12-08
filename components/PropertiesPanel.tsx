@@ -224,8 +224,8 @@ export const PropertiesPanel: React.FC<Props> = ({
                   onCommit(element.id, { fontWeight: newWeight });
                 }}
                 className={`w-10 h-10 flex items-center justify-center text-lg font-bold rounded-lg border-2 transition-all ${(element.fontWeight || 400) >= 600
-                    ? 'bg-[#5500FF] text-white border-[#5500FF]'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  ? 'bg-[#5500FF] text-white border-[#5500FF]'
+                  : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
                   }`}
                 title="굵게 (Bold)"
               >
@@ -265,26 +265,128 @@ export const PropertiesPanel: React.FC<Props> = ({
 
         {/* AAC Card Label Editing */}
         {element.type === 'card' && element.metadata?.isAACCard && element.metadata?.aacData && (
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500">AAC 카드 라벨</label>
-            <input
-              type="text"
-              value={element.metadata.aacData.label || ''}
-              onChange={(e) => onUpdate(element.id, {
-                metadata: {
-                  ...element.metadata,
-                  aacData: { ...element.metadata.aacData, label: e.target.value }
-                }
-              })}
-              onBlur={(e) => onCommit(element.id, {
-                metadata: {
-                  ...element.metadata,
-                  aacData: { ...element.metadata.aacData, label: e.target.value }
-                }
-              })}
-              className="w-full p-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B0C0ff] focus:border-[#5500FF] transition-all"
-              placeholder="카드 라벨 입력"
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500">AAC 카드 라벨</label>
+              <input
+                type="text"
+                value={element.metadata.aacData.label || ''}
+                onChange={(e) => onUpdate(element.id, {
+                  metadata: {
+                    ...element.metadata,
+                    aacData: { ...element.metadata.aacData, label: e.target.value }
+                  }
+                })}
+                onBlur={(e) => onCommit(element.id, {
+                  metadata: {
+                    ...element.metadata,
+                    aacData: { ...element.metadata.aacData, label: e.target.value }
+                  }
+                })}
+                className="w-full p-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B0C0ff] focus:border-[#5500FF] transition-all"
+                placeholder="카드 라벨 입력"
+              />
+            </div>
+
+            {/* 라벨 글씨 크기 */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500">라벨 글씨 크기</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="8"
+                  max="48"
+                  value={element.metadata.aacData.fontSize || 12}
+                  onChange={(e) => onUpdate(element.id, {
+                    metadata: {
+                      ...element.metadata,
+                      aacData: { ...element.metadata.aacData, fontSize: parseInt(e.target.value) }
+                    }
+                  })}
+                  onMouseUp={(e) => onCommit(element.id, {
+                    metadata: {
+                      ...element.metadata,
+                      aacData: { ...element.metadata.aacData, fontSize: parseInt((e.target as HTMLInputElement).value) }
+                    }
+                  })}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5500FF]"
+                />
+                <span className="w-10 text-xs text-gray-600 text-center">{element.metadata.aacData.fontSize || 12}px</span>
+              </div>
+            </div>
+
+            {/* 라벨 글씨 두께 */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500">라벨 글씨 두께</label>
+              <button
+                onClick={() => {
+                  const newWeight = (element.metadata?.aacData?.fontWeight || 400) >= 600 ? 400 : 700;
+                  onUpdate(element.id, {
+                    metadata: {
+                      ...element.metadata,
+                      aacData: { ...element.metadata!.aacData, fontWeight: newWeight }
+                    }
+                  });
+                  onCommit(element.id, {
+                    metadata: {
+                      ...element.metadata,
+                      aacData: { ...element.metadata!.aacData, fontWeight: newWeight }
+                    }
+                  });
+                }}
+                className={`w-10 h-10 flex items-center justify-center text-lg font-bold rounded-lg border-2 transition-all ${(element.metadata.aacData.fontWeight || 400) >= 600
+                    ? 'bg-[#5500FF] text-white border-[#5500FF]'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  }`}
+                title="굵게 (Bold)"
+              >
+                B
+              </button>
+            </div>
+
+            {/* 라벨 글씨 색상 */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500">라벨 글씨 색상</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={element.metadata.aacData.color || '#374151'}
+                  onChange={(e) => {
+                    onUpdate(element.id, {
+                      metadata: {
+                        ...element.metadata,
+                        aacData: { ...element.metadata!.aacData, color: e.target.value }
+                      }
+                    });
+                    onCommit(element.id, {
+                      metadata: {
+                        ...element.metadata,
+                        aacData: { ...element.metadata!.aacData, color: e.target.value }
+                      }
+                    });
+                  }}
+                  className="w-10 h-10 p-0 border-0 rounded cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={element.metadata.aacData.color || '#374151'}
+                  onChange={(e) => onUpdate(element.id, {
+                    metadata: {
+                      ...element.metadata,
+                      aacData: { ...element.metadata!.aacData, color: e.target.value }
+                    }
+                  })}
+                  onBlur={(e) => onCommit(element.id, {
+                    metadata: {
+                      ...element.metadata,
+                      aacData: { ...element.metadata!.aacData, color: e.target.value }
+                    }
+                  })}
+                  className="flex-1 p-2 text-xs border border-gray-200 rounded-lg uppercase"
+                  maxLength={7}
+                />
+              </div>
+            </div>
           </div>
         )}
         {/* Image Handling for Shapes/Cards */}
