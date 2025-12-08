@@ -235,10 +235,10 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       // 배치 업데이트를 위해 변경사항 수집
       const updates: { id: string; changes: Partial<typeof project.elements[0]> }[] = [];
 
-      // 2. 카드 배경색 업데이트
+      // 2. 카드 배경색은 항상 흰색 유지
       updates.push({
         id: targetCard.id,
-        changes: { backgroundColor: card.backgroundColor }
+        changes: { backgroundColor: '#ffffff' }
       });
 
       // 3. 아이콘 추가 (이모지 텍스트로 대체)
