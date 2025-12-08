@@ -338,17 +338,19 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   }, [project.elements, project.pages, title, projectId, isGuest]);
 
   // Wrapper to select page and clear element selection
+  // Also triggers scroll to the newly selected page
   const handleSelectPage = (pageId: string) => {
-    project.setActivePageId(pageId);
+    if (pageId !== project.activePageId) {
+      project.setActivePageId(pageId);
+      // Scroll to the selected page after state update
+      setTimeout(() => {
+        const el = document.getElementById(`page-container-${pageId}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 0);
+    }
     project.setSelectedIds([]);
     project.setEditingId(null);
   };
-
-  // Auto-scroll to active page
-  useEffect(() => {
-    const el = document.getElementById(`page-container-${project.activePageId}`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [project.activePageId]);
 
   return (
     <div className={`flex h-screen bg-gray-100 overflow-hidden font-sans select-none ${viewport.isPanning ? 'cursor-grabbing' : ''}`}
