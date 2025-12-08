@@ -44,13 +44,6 @@ export const useProject = (initialData?: ProjectData) => {
     ? activePageId
     : (pages[0]?.id || 'page-1');
 
-  // If activePageId is invalid, sync state to valid value
-  useEffect(() => {
-    if (activePageId !== validatedActivePageId) {
-      setActivePageId(validatedActivePageId);
-    }
-  }, [activePageId, validatedActivePageId]);
-
   // Note: activePageId is now set via setTimeout in addPage to avoid race conditions
 
   // References for non-react-cycle access if needed
