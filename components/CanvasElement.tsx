@@ -86,26 +86,28 @@ const AACCardRenderer: React.FC<{ element: DesignElement }> = ({ element }) => {
     if (isSentenceItem) {
         return (
             <div
-                className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center"
+                className="w-full h-full relative overflow-hidden"
                 style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid #E5E7EB',
                     borderRadius: 6,
                 }}
             >
-                {/* 이모지 (상단) */}
-                <span style={{ fontSize: size * 0.4, lineHeight: 1 }}>
-                    {aacData?.emoji || '❓'}
-                </span>
-                {/* 라벨 (하단) */}
+                {/* 라벨 (상단) */}
                 {aacData?.label && (
-                    <span
-                        className="text-gray-600 text-center truncate w-full px-1"
-                        style={{ fontSize: Math.max(8, size * 0.15) }}
+                    <div
+                        className="absolute top-1 left-0 right-0 text-center text-gray-600 truncate px-1"
+                        style={{ fontSize: Math.max(7, size * 0.12) }}
                     >
                         {aacData.label}
-                    </span>
+                    </div>
                 )}
+                {/* 이모지 (중앙) */}
+                <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: aacData?.label ? 8 : 0 }}>
+                    <span style={{ fontSize: size * 0.45, lineHeight: 1 }}>
+                        {aacData?.emoji || '❓'}
+                    </span>
+                </div>
             </div>
         );
     }

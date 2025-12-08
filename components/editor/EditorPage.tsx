@@ -206,8 +206,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       }
     };
 
-    // 영역 카운트 업데이트 및 새 아이템 추가
-    const updatedElements = project.elements.map(el => {
+    // 영역 카운트 업데이트, 플레이스홀더 텍스트 삭제, 새 아이템 추가
+    let updatedElements = project.elements.map(el => {
       if (el.id === areaId) {
         return {
           ...el,
@@ -219,6 +219,13 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       }
       return el;
     });
+
+    // 첫 번째 아이템 추가 시 플레이스홀더 텍스트 삭제
+    if (itemCount === 0) {
+      updatedElements = updatedElements.filter(el =>
+        !(el.metadata?.isAACSentencePlaceholder && el.metadata?.parentSentenceAreaId === areaId)
+      );
+    }
 
     project.updateElements([...updatedElements, newItem as any]);
   };

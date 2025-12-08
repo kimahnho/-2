@@ -113,9 +113,11 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
             }
         }
 
-        // ========== 문장 구성 영역 (하단 고정) ==========
+        // 문장 영역 배경의 ID를 저장하여 텍스트와 연결
+        const sentenceAreaId = `sentence-bg-${Date.now()}`;
+
         elements.push({
-            id: `sentence-bg-${Date.now()}`,
+            id: sentenceAreaId,
             type: 'shape',
             x: MARGIN,
             y: sentenceY,
@@ -145,7 +147,11 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
             rotation: 0,
             zIndex: 2,
             pageId: '',
-            fontFamily: "'Gowun Dodum', sans-serif"
+            fontFamily: "'Gowun Dodum', sans-serif",
+            metadata: {
+                isAACSentencePlaceholder: true,
+                parentSentenceAreaId: sentenceAreaId
+            }
         } as DesignElement);
 
         return elements;
