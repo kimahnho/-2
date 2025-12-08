@@ -264,42 +264,16 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
       if (!targetCard) return; // 타겟이 없으면 종료
 
-      // 배치 업데이트를 위해 변경사항 수집
-      const updates: { id: string; changes: Partial<typeof project.elements[0]> }[] = [];
-
-      // 2. 카드 배경색은 항상 흰색 유지
-      updates.push({
-        id: targetCard.id,
-        changes: { backgroundColor: '#ffffff' }
-      });
-
-      // 3. 아이콘 추가 (이모지 텍스트로 대체)
+      // 2. 기존 아이콘 찾기 (isAACIcon: true인 텍스트)
       const existingIcon = project.elements.find(el =>
         el.pageId === project.activePageId &&
         el.type === 'text' &&
         el.metadata?.isAACCard &&
         el.metadata?.aacIndex === targetIndex &&
-        el.metadata?.isAACIcon
+        el.metadata?.isAACIcon === true
       );
 
-      const iconSize = Math.min(targetCard.width, targetCard.height) * 0.45;
-      const iconX = targetCard.x + (targetCard.width - iconSize) / 2;
-      // 아이콘을 카드 중앙에 배치 (약간 아래로 조정하여 상단 라벨 공간 확보)
-      const iconY = targetCard.y + (targetCard.height - iconSize) / 2 + 10;
-
-      if (existingIcon) {
-        updates.push({
-          id: existingIcon.id,
-          changes: {
-            content: card.emoji || '❓',
-            fontSize: iconSize,
-            x: iconX,
-            y: iconY
-          }
-        });
-      }
-
-      // 4. 라벨 텍스트 업데이트 - 상단에 위치
+      // 3. 기존 라벨 텍스트 찾기 (isAACIcon이 없거나 false인 텍스트)
       const labelText = project.elements.find(el =>
         el.pageId === project.activePageId &&
         el.type === 'text' &&
@@ -308,36 +282,48 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         !el.metadata?.isAACIcon
       );
 
-      // 라벨을 카드 상단에 배치
+      // 계산값
+      const iconSize = Math.min(targetCard.width, targetCard.height) * 0.45;
+      const iconX = targetCard.x + (targetCard.width - iconSize) / 2;
+      const iconY = targetCard.y + (targetCard.height - iconSize) / 2 + 10;
       const labelY = targetCard.y + 8;
       const labelX = targetCard.x + 5;
       const labelWidth = targetCard.width - 10;
 
-      if (labelText) {
-        updates.push({
-          id: labelText.id,
-          changes: {
+      // 업데이트할 요소들 복사
+      let newElements = project.elements.map(el => {
+        // 카드 배경색 흰색으로 유지
+        if (el.id === targetCard.id) {
+          return { ...el, backgroundColor: '#ffffff' };
+        }
+        // 기존 아이콘 업데이트
+        if (existingIcon && el.id === existingIcon.id) {
+          return {
+            ...el,
+            content: card.emoji || '❓',
+            fontSize: iconSize,
+            x: iconX,
+            y: iconY
+          };
+        }
+        // 기존 라벨 업데이트
+        if (labelText && el.id === labelText.id) {
+          return {
+            ...el,
             content: card.label,
             color: '#333333',
             fontSize: 12,
             x: labelX,
             y: labelY,
             width: labelWidth
-          }
-        });
-      }
+          };
+        }
+        return el;
+      });
 
-      // 모든 업데이트를 한 번에 적용 (배치 처리)
-      let newElements = [...project.elements];
-      for (const update of updates) {
-        newElements = newElements.map(el =>
-          el.id === update.id ? { ...el, ...update.changes } : el
-        );
-      }
-
-      // 새 아이콘 추가가 필요한 경우
+      // 아이콘이 없으면 새로 추가
       if (!existingIcon) {
-        const newIconId = Math.random().toString(36).substr(2, 9);
+        const newIconId = `icon-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         newElements.push({
           id: newIconId,
           type: 'text',
@@ -349,7 +335,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           content: card.emoji || '❓',
           fontSize: iconSize,
           color: '#000000',
-          zIndex: newElements.length + 1,
+          zIndex: 200,
           pageId: project.activePageId,
           metadata: {
             isAACCard: true,
@@ -362,7 +348,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       // 한 번에 업데이트
       project.updateElements(newElements);
 
-      // 5. 다음 카드로 자동 이동 (딜레이 증가하여 화면 안정화)
+      // 다음 카드로 자동 이동
       const aacCards = newElements
         .filter(el => el.pageId === project.activePageId && el.metadata?.isAACCard && el.type === 'card' && el.metadata.aacIndex !== undefined)
         .sort((a, b) => (a.metadata!.aacIndex!) - (b.metadata!.aacIndex!));
@@ -371,7 +357,6 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
       if (currentArrayIdx !== -1 && currentArrayIdx < aacCards.length - 1) {
         const nextCard = aacCards[currentArrayIdx + 1];
-        // 딜레이를 300ms로 증가하여 DOM이 안정화된 후 선택 변경
         setTimeout(() => {
           project.setSelectedIds([nextCard.id]);
         }, 300);
