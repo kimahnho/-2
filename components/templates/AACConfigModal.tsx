@@ -82,7 +82,7 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
                 const y = gridStartY + row * (cardSize + GAP);
                 const uid = `${Date.now()}-${row}-${col}-${Math.random().toString(36).slice(2, 6)}`;
 
-                // 카드 배경
+                // AAC 카드 (통합 구조 - 이모지와 라벨을 aacData에 저장)
                 elements.push({
                     id: `card-${uid}`,
                     type: 'card',
@@ -102,31 +102,12 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
                         isAACCard: true,
                         aacRow: row,
                         aacCol: col,
-                        aacIndex: row * cols + col
-                    }
-                } as DesignElement);
-
-                // 카드 플레이스홀더 텍스트
-                const fontSize = cardSize > 80 ? 12 : 10;
-                elements.push({
-                    id: `txt-${uid}`,
-                    type: 'text',
-                    x: x + 8,
-                    y: y + cardSize / 2 - 8,
-                    width: cardSize - 16,
-                    height: 16,
-                    content: '카드 추가',
-                    fontSize: fontSize,
-                    color: '#BCBCBC',
-                    rotation: 0,
-                    zIndex: 100 + row * cols + col,
-                    pageId: '',
-                    fontFamily: "'Gowun Dodum', sans-serif",
-                    metadata: {
-                        isAACCard: true,
-                        aacRow: row,
-                        aacCol: col,
-                        aacIndex: row * cols + col
+                        aacIndex: row * cols + col,
+                        aacData: {
+                            emoji: undefined,
+                            label: undefined,
+                            isFilled: false
+                        }
                     }
                 } as DesignElement);
             }

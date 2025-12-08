@@ -159,16 +159,10 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
   // 문장 구성 아이템 추가 헬퍼 함수
   const addSentenceItem = (areaId: string, emoji: string) => {
-    console.log('[addSentenceItem] Called with areaId:', areaId, 'emoji:', emoji);
-
     const areaEl = project.elements.find(el => el.id === areaId);
-    if (!areaEl) {
-      console.log('[addSentenceItem] Area element not found');
-      return;
-    }
+    if (!areaEl) return;
 
     const itemCount = areaEl.metadata?.itemCount || 0;
-    console.log('[addSentenceItem] Current itemCount:', itemCount);
 
     // 아이템 크기: 문장 영역 높이의 70% 정도로 설정 (패딩 고려)
     const ITEM_SIZE = Math.min(areaEl.height * 0.7, 80);
@@ -181,12 +175,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     const nextY = areaEl.y + (areaEl.height - ITEM_SIZE) / 2;
 
     // 영역 초과 체크
-    if (nextX + ITEM_SIZE > areaEl.x + areaEl.width) {
-      console.log('[addSentenceItem] Area full, cannot add more items');
-      return;
-    }
-
-    console.log('[addSentenceItem] Adding item at:', nextX, nextY);
+    if (nextX + ITEM_SIZE > areaEl.x + areaEl.width) return;
 
     // 배치 업데이트로 한 번에 처리
     const newItemId = `sentence-item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -201,7 +190,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       content: emoji,
       fontSize: ITEM_SIZE * 0.85,
       color: '#000000',
-      zIndex: 1000 + itemCount, // 문장 영역 위에 표시되도록 높은 z-index
+      zIndex: 1000 + itemCount,
       pageId: project.activePageId,
       metadata: {
         isAACSentenceItem: true,
@@ -224,7 +213,6 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     });
 
     project.updateElements([...updatedElements, newItem as any]);
-    console.log('[addSentenceItem] Item added successfully');
   };
 
   const handleSelectAACCard = (card: AACCard) => {
@@ -250,100 +238,27 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       return;
     }
 
-    // B. 일반 AAC 카드 선택 시: 기존 채우기 로직
-    if (selectedEl.metadata?.isAACCard && selectedEl.metadata.aacIndex !== undefined) {
+    // B. 일반 AAC 카드 선택 시: aacData 업데이트
+    if (selectedEl.metadata?.isAACCard && selectedEl.type === 'card') {
       const targetIndex = selectedEl.metadata.aacIndex;
 
-      // 1. 타겟 카드(배경) 찾기
-      const targetCard = project.elements.find(el =>
-        el.pageId === project.activePageId &&
-        el.type === 'card' &&
-        el.metadata?.isAACCard &&
-        el.metadata?.aacIndex === targetIndex
-      );
-
-      if (!targetCard) return; // 타겟이 없으면 종료
-
-      // 2. 기존 아이콘 찾기 (isAACIcon: true인 텍스트)
-      const existingIcon = project.elements.find(el =>
-        el.pageId === project.activePageId &&
-        el.type === 'text' &&
-        el.metadata?.isAACCard &&
-        el.metadata?.aacIndex === targetIndex &&
-        el.metadata?.isAACIcon === true
-      );
-
-      // 3. 기존 라벨 텍스트 찾기 (isAACIcon이 없거나 false인 텍스트)
-      const labelText = project.elements.find(el =>
-        el.pageId === project.activePageId &&
-        el.type === 'text' &&
-        el.metadata?.isAACCard &&
-        el.metadata?.aacIndex === targetIndex &&
-        !el.metadata?.isAACIcon
-      );
-
-      // 계산값
-      const iconSize = Math.min(targetCard.width, targetCard.height) * 0.45;
-      const iconX = targetCard.x + (targetCard.width - iconSize) / 2;
-      const iconY = targetCard.y + (targetCard.height - iconSize) / 2 + 10;
-      const labelY = targetCard.y + 8;
-      const labelX = targetCard.x + 5;
-      const labelWidth = targetCard.width - 10;
-
-      // 업데이트할 요소들 복사
-      let newElements = project.elements.map(el => {
-        // 카드 배경색 흰색으로 유지
-        if (el.id === targetCard.id) {
-          return { ...el, backgroundColor: '#ffffff' };
-        }
-        // 기존 아이콘 업데이트
-        if (existingIcon && el.id === existingIcon.id) {
+      // 카드의 aacData만 업데이트 (단순하고 명확한 로직)
+      const newElements = project.elements.map(el => {
+        if (el.id === selectedId) {
           return {
             ...el,
-            content: card.emoji || '❓',
-            fontSize: iconSize,
-            x: iconX,
-            y: iconY
-          };
-        }
-        // 기존 라벨 업데이트
-        if (labelText && el.id === labelText.id) {
-          return {
-            ...el,
-            content: card.label,
-            color: '#333333',
-            fontSize: 12,
-            x: labelX,
-            y: labelY,
-            width: labelWidth
+            metadata: {
+              ...el.metadata,
+              aacData: {
+                emoji: card.emoji || '❓',
+                label: card.label,
+                isFilled: true
+              }
+            }
           };
         }
         return el;
       });
-
-      // 아이콘이 없으면 새로 추가
-      if (!existingIcon) {
-        const newIconId = `icon-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        newElements.push({
-          id: newIconId,
-          type: 'text',
-          x: iconX,
-          y: iconY,
-          width: iconSize,
-          height: iconSize,
-          rotation: 0,
-          content: card.emoji || '❓',
-          fontSize: iconSize,
-          color: '#000000',
-          zIndex: 200,
-          pageId: project.activePageId,
-          metadata: {
-            isAACCard: true,
-            aacIndex: targetIndex,
-            isAACIcon: true
-          }
-        } as typeof project.elements[0]);
-      }
 
       // 한 번에 업데이트
       project.updateElements(newElements);
@@ -359,7 +274,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         const nextCard = aacCards[currentArrayIdx + 1];
         setTimeout(() => {
           project.setSelectedIds([nextCard.id]);
-        }, 300);
+        }, 100);
       }
     }
   };

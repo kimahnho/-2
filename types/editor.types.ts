@@ -41,6 +41,16 @@ export interface DesignElement {
         aacRow?: number;
         aacCol?: number;
         aacIndex?: number;
+        // AAC 카드 데이터 (통합 구조)
+        aacData?: {
+            emoji?: string;      // 이모지 (예: "🎁")
+            label?: string;      // 라벨 (예: "선물")
+            isFilled?: boolean;  // 카드가 채워졌는지 여부
+        };
+        isAACSentenceArea?: boolean;
+        isAACSentenceItem?: boolean;
+        parentSentenceAreaId?: string;
+        itemCount?: number;
         [key: string]: any;
     };
 }
