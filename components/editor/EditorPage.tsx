@@ -252,7 +252,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
       const iconSize = Math.min(targetCard.width, targetCard.height) * 0.45;
       const iconX = targetCard.x + (targetCard.width - iconSize) / 2;
-      const iconY = targetCard.y + (targetCard.height - iconSize) / 2 - 15;
+      // 아이콘을 카드 중앙에 배치 (약간 아래로 조정하여 상단 라벨 공간 확보)
+      const iconY = targetCard.y + (targetCard.height - iconSize) / 2 + 10;
 
       if (existingIcon) {
         updates.push({
@@ -266,7 +267,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         });
       }
 
-      // 4. 라벨 텍스트 업데이트
+      // 4. 라벨 텍스트 업데이트 - 상단에 위치
       const labelText = project.elements.find(el =>
         el.pageId === project.activePageId &&
         el.type === 'text' &&
@@ -275,13 +276,21 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         !el.metadata?.isAACIcon
       );
 
+      // 라벨을 카드 상단에 배치
+      const labelY = targetCard.y + 8;
+      const labelX = targetCard.x + 5;
+      const labelWidth = targetCard.width - 10;
+
       if (labelText) {
         updates.push({
           id: labelText.id,
           changes: {
             content: card.label,
-            color: '#000000',
-            fontSize: 14
+            color: '#333333',
+            fontSize: 12,
+            x: labelX,
+            y: labelY,
+            width: labelWidth
           }
         });
       }
