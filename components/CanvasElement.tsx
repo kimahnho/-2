@@ -339,8 +339,7 @@ export const CanvasElement: React.FC<Props> = ({
                 width: element.width,
                 height: element.height,
                 transform: `rotate(${element.rotation}deg)`,
-                // 선택된 요소는 항상 맨 앞에 표시
-                zIndex: isSelected ? 9999 : element.zIndex,
+                zIndex: element.zIndex,
                 cursor: isEditing ? (element.type === 'text' ? 'text' : 'default') : (element.isEmotionPlaceholder ? 'pointer' : (isSelected ? 'move' : 'default')),
                 boxSizing: 'border-box',
                 pointerEvents: element.isPassThrough ? 'none' : undefined,
@@ -349,26 +348,6 @@ export const CanvasElement: React.FC<Props> = ({
             onDoubleClick={(e) => onDoubleClick?.(e, element.id)}
             className="group"
         >
-            {/* Rotation Handle */}
-            {isSelected && !isEditing && onRotateStart && (
-                <div
-                    className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full shadow-sm cursor-grab active:cursor-grabbing hover:bg-gray-50 z-30"
-                    onMouseDown={(e) => onRotateStart(e, element.id)}
-                >
-                    <RotateCw className="w-4 h-4 text-gray-600" />
-                </div>
-            )}
-
-            {/* Selection Border */}
-            {isSelected && !isEditing && (
-                <div className="absolute -inset-1 border-2 border-[#5500FF] pointer-events-none rounded-sm z-10" />
-            )}
-
-            {/* Editing Border (Subtle dash) */}
-            {isEditing && (
-                <div className="absolute -inset-2 border border-dashed border-[#B0C0ff] pointer-events-none rounded-sm" />
-            )}
-
             {/* Actual Content - Delegated to sub-components */}
             <div className="w-full h-full relative">
                 {element.type === 'text' && (
@@ -404,14 +383,37 @@ export const CanvasElement: React.FC<Props> = ({
                 )}
             </div>
 
-            {/* Resize Handles (Only show when selected AND NOT editing) */}
+            {/* Selection UI - 포인터 이벤트와 함께 높은 z-index로 렌더링 */}
             {isSelected && !isEditing && (
                 <>
-                    <div style={{ ...handleStyle, top: -5, left: -5, cursor: 'nw-resize' }} onMouseDown={(e) => onResizeStart(e, element.id, 'nw')} />
-                    <div style={{ ...handleStyle, top: -5, right: -5, cursor: 'ne-resize' }} onMouseDown={(e) => onResizeStart(e, element.id, 'ne')} />
-                    <div style={{ ...handleStyle, bottom: -5, left: -5, cursor: 'sw-resize' }} onMouseDown={(e) => onResizeStart(e, element.id, 'sw')} />
-                    <div style={{ ...handleStyle, bottom: -5, right: -5, cursor: 'se-resize' }} onMouseDown={(e) => onResizeStart(e, element.id, 'se')} />
+                    {/* Selection Border - 높은 z-index */}
+                    <div
+                        className="absolute -inset-1 border-2 border-[#5500FF] pointer-events-none rounded-sm"
+                        style={{ zIndex: 10000 }}
+                    />
+
+                    {/* Rotation Handle */}
+                    {onRotateStart && (
+                        <div
+                            className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full shadow-sm cursor-grab active:cursor-grabbing hover:bg-gray-50"
+                            style={{ zIndex: 10001 }}
+                            onMouseDown={(e) => onRotateStart(e, element.id)}
+                        >
+                            <RotateCw className="w-4 h-4 text-gray-600" />
+                        </div>
+                    )}
+
+                    {/* Resize Handles */}
+                    <div style={{ ...handleStyle, top: -5, left: -5, cursor: 'nw-resize', zIndex: 10001 }} onMouseDown={(e) => onResizeStart(e, element.id, 'nw')} />
+                    <div style={{ ...handleStyle, top: -5, right: -5, cursor: 'ne-resize', zIndex: 10001 }} onMouseDown={(e) => onResizeStart(e, element.id, 'ne')} />
+                    <div style={{ ...handleStyle, bottom: -5, left: -5, cursor: 'sw-resize', zIndex: 10001 }} onMouseDown={(e) => onResizeStart(e, element.id, 'sw')} />
+                    <div style={{ ...handleStyle, bottom: -5, right: -5, cursor: 'se-resize', zIndex: 10001 }} onMouseDown={(e) => onResizeStart(e, element.id, 'se')} />
                 </>
+            )}
+
+            {/* Editing Border (Subtle dash) */}
+            {isEditing && (
+                <div className="absolute -inset-2 border border-dashed border-[#B0C0ff] pointer-events-none rounded-sm" style={{ zIndex: 10000 }} />
             )}
         </div>
     );
