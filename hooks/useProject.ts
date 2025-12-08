@@ -273,10 +273,10 @@ export const useProject = (initialData?: ProjectData) => {
     updateElements(newElements);
   };
 
-  const bringForward = (id: string) => updateElements(moveLayer(elements, id, 'forward'));
-  const sendBackward = (id: string) => updateElements(moveLayer(elements, id, 'backward'));
-  const bringToFront = (id: string) => updateElements(moveLayer(elements, id, 'front'));
-  const sendToBack = (id: string) => updateElements(moveLayer(elements, id, 'back'));
+  const bringForward = (id: string) => updateElements(moveLayer(elements, id, 'forward', activePageId));
+  const sendBackward = (id: string) => updateElements(moveLayer(elements, id, 'backward', activePageId));
+  const bringToFront = (id: string) => updateElements(moveLayer(elements, id, 'front', activePageId));
+  const sendToBack = (id: string) => updateElements(moveLayer(elements, id, 'back', activePageId));
 
   // --- External Replacements (Templates) ---
   const loadTemplate = (templateElements: DesignElement[]) => {
