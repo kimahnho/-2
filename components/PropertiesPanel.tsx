@@ -49,6 +49,8 @@ export const PropertiesPanel: React.FC<Props> = ({
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiStyle, setAiStyle] = useState<'character' | 'realistic' | 'emoji'>('character');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showColorPalette, setShowColorPalette] = useState(false);
+  const [showBorderColorPalette, setShowBorderColorPalette] = useState(false);
 
   if (selectedIds.length === 0) {
     return (
@@ -295,57 +297,79 @@ export const PropertiesPanel: React.FC<Props> = ({
         {/* Colors */}
         {(element.type === 'shape' || element.type === 'card' || element.type === 'circle' || element.type === 'text' || isLineOrArrow) && (
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500">
-              {element.type === 'text' ? '텍스트 색상' : (isLineOrArrow ? '선 색상' : '채우기 색상')}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {PRESET_COLORS.map(color => {
-                const currentColor = element.type === 'text'
-                  ? element.color
-                  : (isLineOrArrow ? element.borderColor : element.backgroundColor);
-
-                return (
-                  <button
-                    key={color}
-                    onClick={() => {
-                      let updates = {};
-                      if (element.type === 'text') updates = { color };
-                      else if (isLineOrArrow) updates = { borderColor: color };
-                      else updates = { backgroundColor: color };
-                      onCommit(element.id, updates);
-                    }}
-                    className={`w-7 h-7 rounded-full border border-gray-200 shadow-sm transition-transform hover:scale-110 active:scale-95 ${currentColor === color ? 'ring-2 ring-offset-2 ring-[#5500FF]' : ''
-                      }`}
-                    style={{ backgroundColor: color }}
-                  />
-                );
-              })}
-              <div className="relative w-7 h-7 rounded-full overflow-hidden border border-gray-200 shadow-sm">
-                <input
-                  type="color"
-                  value={
-                    element.type === 'text'
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-gray-500">
+                {element.type === 'text' ? '텍스트 색상' : (isLineOrArrow ? '선 색상' : '채우기 색상')}
+              </label>
+              <div className="flex items-center gap-2">
+                {/* 현재 색상 미리보기 */}
+                <div
+                  className="w-6 h-6 rounded border border-gray-300 shadow-sm"
+                  style={{
+                    backgroundColor: element.type === 'text'
                       ? element.color
-                      : (isLineOrArrow ? element.borderColor : element.backgroundColor) || '#000000'
-                  }
-                  onChange={(e) => {
-                    let updates = {};
-                    if (element.type === 'text') updates = { color: e.target.value };
-                    else if (isLineOrArrow) updates = { borderColor: e.target.value };
-                    else updates = { backgroundColor: e.target.value };
-                    onUpdate(element.id, updates);
+                      : (isLineOrArrow ? element.borderColor : element.backgroundColor) || '#ffffff'
                   }}
-                  onBlur={(e) => {
-                    let updates = {};
-                    if (element.type === 'text') updates = { color: e.target.value };
-                    else if (isLineOrArrow) updates = { borderColor: e.target.value };
-                    else updates = { backgroundColor: e.target.value };
-                    onCommit(element.id, updates);
-                  }}
-                  className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer"
                 />
+                <button
+                  onClick={() => setShowColorPalette(!showColorPalette)}
+                  className="px-2 py-1 text-[10px] font-medium bg-gray-100 hover:bg-gray-200 rounded text-gray-600 transition-colors"
+                >
+                  {showColorPalette ? '닫기' : '변경'}
+                </button>
               </div>
             </div>
+
+            {showColorPalette && (
+              <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                {PRESET_COLORS.map(color => {
+                  const currentColor = element.type === 'text'
+                    ? element.color
+                    : (isLineOrArrow ? element.borderColor : element.backgroundColor);
+
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => {
+                        let updates = {};
+                        if (element.type === 'text') updates = { color };
+                        else if (isLineOrArrow) updates = { borderColor: color };
+                        else updates = { backgroundColor: color };
+                        onCommit(element.id, updates);
+                      }}
+                      className={`w-6 h-6 rounded-full border border-gray-200 shadow-sm transition-transform hover:scale-110 active:scale-95 ${currentColor === color ? 'ring-2 ring-offset-1 ring-[#5500FF]' : ''
+                        }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  );
+                })}
+                <div className="relative w-6 h-6 rounded-full overflow-hidden border border-gray-200 shadow-sm">
+                  <input
+                    type="color"
+                    value={
+                      element.type === 'text'
+                        ? element.color
+                        : (isLineOrArrow ? element.borderColor : element.backgroundColor) || '#000000'
+                    }
+                    onChange={(e) => {
+                      let updates = {};
+                      if (element.type === 'text') updates = { color: e.target.value };
+                      else if (isLineOrArrow) updates = { borderColor: e.target.value };
+                      else updates = { backgroundColor: e.target.value };
+                      onUpdate(element.id, updates);
+                    }}
+                    onBlur={(e) => {
+                      let updates = {};
+                      if (element.type === 'text') updates = { color: e.target.value };
+                      else if (isLineOrArrow) updates = { borderColor: e.target.value };
+                      else updates = { backgroundColor: e.target.value };
+                      onCommit(element.id, updates);
+                    }}
+                    className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -460,8 +484,8 @@ export const PropertiesPanel: React.FC<Props> = ({
                     <button
                       onClick={() => onCommit(element.id, { borderWidth: 0 })}
                       className={`px-2 py-1 text-[10px] font-medium rounded transition-all ${(element.borderWidth || 0) === 0
-                          ? 'bg-[#5500FF] text-white'
-                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        ? 'bg-[#5500FF] text-white'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                         }`}
                     >
                       없음
@@ -472,27 +496,44 @@ export const PropertiesPanel: React.FC<Props> = ({
                 {/* 테두리 색상 (두께가 있을 때만 표시) */}
                 {!isLineOrArrow && (element.borderWidth || 0) > 0 && (
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-gray-500">테두리 색상</label>
-                    <div className="flex flex-wrap gap-2">
-                      {PRESET_COLORS.map(color => (
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-gray-500">테두리 색상</label>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-6 h-6 rounded border border-gray-300 shadow-sm"
+                          style={{ backgroundColor: element.borderColor || '#000000' }}
+                        />
                         <button
-                          key={color}
-                          onClick={() => onCommit(element.id, { borderColor: color })}
-                          className={`w-6 h-6 rounded-full border border-gray-200 shadow-sm transition-transform hover:scale-110 active:scale-95 ${element.borderColor === color ? 'ring-2 ring-offset-1 ring-[#5500FF]' : ''
-                            }`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                      <div className="relative w-6 h-6 rounded-full overflow-hidden border border-gray-200 shadow-sm">
-                        <input
-                          type="color"
-                          value={element.borderColor || '#000000'}
-                          onChange={(e) => onUpdate(element.id, { borderColor: e.target.value })}
-                          onBlur={(e) => onCommit(element.id, { borderColor: e.target.value })}
-                          className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer"
-                        />
+                          onClick={() => setShowBorderColorPalette(!showBorderColorPalette)}
+                          className="px-2 py-1 text-[10px] font-medium bg-gray-100 hover:bg-gray-200 rounded text-gray-600 transition-colors"
+                        >
+                          {showBorderColorPalette ? '닫기' : '변경'}
+                        </button>
                       </div>
                     </div>
+
+                    {showBorderColorPalette && (
+                      <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                        {PRESET_COLORS.map(color => (
+                          <button
+                            key={color}
+                            onClick={() => onCommit(element.id, { borderColor: color })}
+                            className={`w-6 h-6 rounded-full border border-gray-200 shadow-sm transition-transform hover:scale-110 active:scale-95 ${element.borderColor === color ? 'ring-2 ring-offset-1 ring-[#5500FF]' : ''
+                              }`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden border border-gray-200 shadow-sm">
+                          <input
+                            type="color"
+                            value={element.borderColor || '#000000'}
+                            onChange={(e) => onUpdate(element.id, { borderColor: e.target.value })}
+                            onBlur={(e) => onCommit(element.id, { borderColor: e.target.value })}
+                            className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-0 cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -534,34 +575,30 @@ export const PropertiesPanel: React.FC<Props> = ({
         <div className="pt-6 border-t border-gray-100 space-y-4">
           <div>
             <label className="text-xs font-semibold text-gray-500 mb-2 block">레이어 순서</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1">
               <button
                 onClick={() => onSendToBack?.(element.id)}
-                className="flex items-center justify-center p-2 text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
-                title="맨 뒤로"
+                className="flex items-center justify-center py-2 px-1 text-[10px] font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
               >
-                <ChevronsDown className="w-4 h-4" />
+                맨 뒤
               </button>
               <button
                 onClick={() => onSendBackward(element.id)}
-                className="flex items-center justify-center p-2 text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
-                title="뒤로"
+                className="flex items-center justify-center py-2 px-1 text-[10px] font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
               >
-                <ChevronDown className="w-4 h-4" />
+                뒤
               </button>
               <button
                 onClick={() => onBringForward(element.id)}
-                className="flex items-center justify-center p-2 text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
-                title="앞으로"
+                className="flex items-center justify-center py-2 px-1 text-[10px] font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
               >
-                <ChevronUp className="w-4 h-4" />
+                앞
               </button>
               <button
                 onClick={() => onBringToFront?.(element.id)}
-                className="flex items-center justify-center p-2 text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
-                title="맨 앞으로"
+                className="flex items-center justify-center py-2 px-1 text-[10px] font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 transition-colors"
               >
-                <ChevronsUp className="w-4 h-4" />
+                맨 앞
               </button>
             </div>
           </div>
