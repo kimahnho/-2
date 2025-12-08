@@ -104,7 +104,64 @@ export const useProject = (initialData?: ProjectData) => {
   };
 
   const deleteElements = (ids: string[]) => {
-    const newElements = elements.filter(el => !ids.includes(el.id));
+    let newElements = elements.filter(el => !ids.includes(el.id));
+
+    // 문장 아이템 삭제 시 영역 카운트 업데이트
+    const deletedSentenceItems = elements.filter(el =>
+      ids.includes(el.id) && el.metadata?.isAACSentenceItem
+    );
+
+    // 삭제된 문장 아이템의 부모 영역별로 그룹화
+    const parentCounts: { [parentId: string]: number } = {};
+    deletedSentenceItems.forEach(item => {
+      const parentId = item.metadata?.parentSentenceAreaId;
+      if (parentId) {
+        parentCounts[parentId] = (parentCounts[parentId] || 0) + 1;
+      }
+    });
+
+    // 각 부모 영역의 카운트 감소
+    newElements = newElements.map(el => {
+      if (el.metadata?.isAACSentenceArea && parentCounts[el.id]) {
+        const currentCount = el.metadata.itemCount || 0;
+        const newCount = Math.max(0, currentCount - parentCounts[el.id]);
+
+        // 카운트가 0이 되면 플레이스홀더 텍스트 복구 필요
+        if (newCount === 0 && currentCount > 0) {
+          // 플레이스홀더 텍스트 추가
+          const SENTENCE_H = el.height;
+          newElements = [...newElements, {
+            id: `sentence-txt-${Date.now()}`,
+            type: 'text' as const,
+            x: el.x + 16,
+            y: el.y + (SENTENCE_H - 18) / 2,
+            width: 140,
+            height: 18,
+            content: '문장 구성 영역',
+            fontSize: 14,
+            color: '#7C3AED',
+            rotation: 0,
+            zIndex: 2,
+            pageId: el.pageId,
+            fontFamily: "'Gowun Dodum', sans-serif",
+            metadata: {
+              isAACSentencePlaceholder: true,
+              parentSentenceAreaId: el.id
+            }
+          }];
+        }
+
+        return {
+          ...el,
+          metadata: {
+            ...el.metadata,
+            itemCount: newCount
+          }
+        };
+      }
+      return el;
+    });
+
     updateElements(newElements);
     setSelectedIds([]);
   };
