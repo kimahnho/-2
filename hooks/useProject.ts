@@ -39,10 +39,11 @@ export const useProject = (initialData?: ProjectData) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Validate activePageId - fallback to first page if current ID doesn't exist in pages
+  // Validate activePageId - fallback to last page if current ID doesn't exist in pages
+  // Using last page as fallback handles the case when a new page is added
   const validatedActivePageId = pages.find(p => p.id === activePageId)
     ? activePageId
-    : (pages[0]?.id || 'page-1');
+    : (pages.length > 0 ? pages[pages.length - 1].id : 'page-1');
 
   // Note: activePageId is now set via setTimeout in addPage to avoid race conditions
 
@@ -150,10 +151,8 @@ export const useProject = (initialData?: ProjectData) => {
     const newPageId = `page-${generateId()}`;
     const newPages = [...pages, { id: newPageId, orientation: orientation || 'portrait' }];
     commitToHistory({ elements, pages: newPages });
-    // Defer setActivePageId to next tick to ensure state is committed
-    setTimeout(() => {
-      setActivePageId(newPageId);
-    }, 0);
+    // Set active page immediately - validatedActivePageId will handle fallback if needed
+    setActivePageId(newPageId);
     return newPageId;
   };
 
