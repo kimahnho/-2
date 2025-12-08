@@ -48,14 +48,13 @@ export function useHistory<T>(initialState: T) {
   }, []);
 
   const pushState = useCallback((newState: T) => {
-    console.log('[useHistory] pushState called with pages:', (newState as any).pages?.length);
     setState(currentState => {
-      if (JSON.stringify(currentState.present) === JSON.stringify(newState)) {
-        console.log('[useHistory] pushState: state unchanged, skipping');
+      // Skip if the state reference is exactly the same (shallow comparison)
+      // We removed JSON.stringify to avoid circular reference errors with DOM elements
+      if (currentState.present === newState) {
         return currentState;
       }
 
-      console.log('[useHistory] pushState: updating state, new pages:', (newState as any).pages?.length);
       return {
         past: [...currentState.past, currentState.present],
         present: newState,

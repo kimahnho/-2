@@ -59,9 +59,6 @@ export const CanvasArea: React.FC<Props> = (props) => {
     onSetActiveTab
   });
 
-  // Debug log
-  console.log('[CanvasArea] Rendering with pages:', pages.length, 'activePageId:', activePageId);
-
   return (
     <div
       className="flex-1 overflow-auto bg-gray-100 relative custom-scrollbar flex flex-col items-center"

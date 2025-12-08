@@ -46,9 +46,6 @@ export const useProject = (initialData?: ProjectData) => {
     ? activePageId
     : (pages.length > 0 ? pages[pages.length - 1].id : 'page-1');
 
-  // Debug log
-  console.log('[useProject] pages:', pages.length, 'activePageId:', activePageId, 'validatedActivePageId:', validatedActivePageId, 'foundPage:', !!foundPage);
-
   // References for non-react-cycle access if needed
   const elementsRef = useRef(elements);
   elementsRef.current = elements;
@@ -152,11 +149,8 @@ export const useProject = (initialData?: ProjectData) => {
   const addPage = (orientation?: 'portrait' | 'landscape') => {
     const newPageId = `page-${generateId()}`;
     const newPages = [...pages, { id: newPageId, orientation: orientation || 'portrait' }];
-    console.log('[addPage] Current pages:', pages.length, 'New pages:', newPages.length, 'New page ID:', newPageId);
     commitToHistory({ elements, pages: newPages });
-    // Set active page immediately - validatedActivePageId will handle fallback if needed
     setActivePageId(newPageId);
-    console.log('[addPage] Set activePageId to:', newPageId);
     return newPageId;
   };
 
