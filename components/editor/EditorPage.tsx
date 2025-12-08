@@ -222,9 +222,22 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
     // 첫 번째 아이템 추가 시 플레이스홀더 텍스트 삭제
     if (itemCount === 0) {
-      updatedElements = updatedElements.filter(el =>
-        !(el.metadata?.isAACSentencePlaceholder && el.metadata?.parentSentenceAreaId === areaId)
-      );
+      // 플레이스홀더를 메타데이터 또는 콘텐츠로 찾기
+      updatedElements = updatedElements.filter(el => {
+        // 메타데이터로 찾기
+        if (el.metadata?.isAACSentencePlaceholder && el.metadata?.parentSentenceAreaId === areaId) {
+          return false;
+        }
+        // 콘텐츠로 찾기 (기존 템플릿 호환)
+        if (el.type === 'text' && el.content === '문장 구성 영역') {
+          // 문장 영역 내부에 있는지 확인
+          if (el.x >= areaEl.x && el.x <= areaEl.x + areaEl.width &&
+            el.y >= areaEl.y && el.y <= areaEl.y + areaEl.height) {
+            return false;
+          }
+        }
+        return true;
+      });
     }
 
     project.updateElements([...updatedElements, newItem as any]);
