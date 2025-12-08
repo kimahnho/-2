@@ -99,6 +99,11 @@ const AACCardRenderer: React.FC<{
     }, [isEditingLabel]);
 
     const handleLabelClick = (e: React.MouseEvent) => {
+        // 클릭 시에는 카드 선택이 되도록 stopPropagation 제거
+        // 더블클릭만 처리
+    };
+
+    const handleLabelDoubleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         setLabelValue(aacData?.label || '');
         setIsEditingLabel(true);
@@ -198,14 +203,13 @@ const AACCardRenderer: React.FC<{
                         />
                     ) : (
                         <div
-                            className="cursor-text hover:bg-blue-50 rounded px-1 transition-colors"
+                            className="cursor-pointer hover:bg-blue-50 rounded px-1 transition-colors"
                             style={{
                                 fontSize: aacData?.fontSize || 12,
                                 fontWeight: aacData?.fontWeight || 400,
                                 color: aacData?.color || '#374151'
                             }}
-                            onClick={handleLabelClick}
-                            onMouseDown={(e) => e.stopPropagation()}
+                            onDoubleClick={handleLabelDoubleClick}
                         >
                             {aacData?.label || '라벨 추가'}
                         </div>
