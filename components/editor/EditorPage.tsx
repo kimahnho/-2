@@ -232,9 +232,13 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
       if (!targetCard) return; // 타겟이 없으면 종료
 
+      // 배치 업데이트를 위해 변경사항 수집
+      const updates: { id: string; changes: Partial<typeof project.elements[0]> }[] = [];
+
       // 2. 카드 배경색 업데이트
-      project.updateElement(targetCard.id, {
-        backgroundColor: card.backgroundColor
+      updates.push({
+        id: targetCard.id,
+        changes: { backgroundColor: card.backgroundColor }
       });
 
       // 3. 아이콘 추가 (이모지 텍스트로 대체)
@@ -251,30 +255,15 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       const iconY = targetCard.y + (targetCard.height - iconSize) / 2 - 15;
 
       if (existingIcon) {
-        project.updateElement(existingIcon.id, {
-          content: card.emoji || '❓',
-          fontSize: iconSize,
-          x: iconX,
-          y: iconY
-        });
-      } else {
-        const newEl = project.addElement('text', card.emoji || '❓');
-        if (newEl) {
-          project.updateElement(newEl.id, {
-            x: iconX,
-            y: iconY,
-            width: iconSize,
-            height: iconSize,
-            fontSize: iconSize,
+        updates.push({
+          id: existingIcon.id,
+          changes: {
             content: card.emoji || '❓',
-            color: '#000000',
-            metadata: {
-              isAACCard: true,
-              aacIndex: targetIndex,
-              isAACIcon: true
-            }
-          });
-        }
+            fontSize: iconSize,
+            x: iconX,
+            y: iconY
+          }
+        });
       }
 
       // 4. 라벨 텍스트 업데이트
@@ -287,15 +276,53 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       );
 
       if (labelText) {
-        project.updateElement(labelText.id, {
-          content: card.label,
-          color: '#000000',
-          fontSize: 14
+        updates.push({
+          id: labelText.id,
+          changes: {
+            content: card.label,
+            color: '#000000',
+            fontSize: 14
+          }
         });
       }
 
-      // 5. 다음 카드로 자동 이동
-      const aacCards = project.elements
+      // 모든 업데이트를 한 번에 적용 (배치 처리)
+      let newElements = [...project.elements];
+      for (const update of updates) {
+        newElements = newElements.map(el =>
+          el.id === update.id ? { ...el, ...update.changes } : el
+        );
+      }
+
+      // 새 아이콘 추가가 필요한 경우
+      if (!existingIcon) {
+        const newIconId = Math.random().toString(36).substr(2, 9);
+        newElements.push({
+          id: newIconId,
+          type: 'text',
+          x: iconX,
+          y: iconY,
+          width: iconSize,
+          height: iconSize,
+          rotation: 0,
+          content: card.emoji || '❓',
+          fontSize: iconSize,
+          color: '#000000',
+          zIndex: newElements.length + 1,
+          pageId: project.activePageId,
+          metadata: {
+            isAACCard: true,
+            aacIndex: targetIndex,
+            isAACIcon: true
+          }
+        } as typeof project.elements[0]);
+      }
+
+      // 한 번에 업데이트
+      project.updateElements(newElements);
+
+      // 5. 다음 카드로 자동 이동 (딜레이 증가하여 화면 안정화)
+      const aacCards = newElements
         .filter(el => el.pageId === project.activePageId && el.metadata?.isAACCard && el.type === 'card' && el.metadata.aacIndex !== undefined)
         .sort((a, b) => (a.metadata!.aacIndex!) - (b.metadata!.aacIndex!));
 
@@ -303,9 +330,10 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
       if (currentArrayIdx !== -1 && currentArrayIdx < aacCards.length - 1) {
         const nextCard = aacCards[currentArrayIdx + 1];
+        // 딜레이를 300ms로 증가하여 DOM이 안정화된 후 선택 변경
         setTimeout(() => {
           project.setSelectedIds([nextCard.id]);
-        }, 50);
+        }, 300);
       }
     }
   };
