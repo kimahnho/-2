@@ -13,6 +13,7 @@ export const groupService = {
             const { data, error } = await supabase
                 .from('groups')
                 .select('*')
+                .is('deleted_at', null)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -45,13 +46,17 @@ export const groupService = {
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
         if (isSupabaseConfigured() && supabase) {
+            // Get current user for RLS
+            const { data: { user } } = await supabase.auth.getUser();
+
             const { data, error } = await supabase
                 .from('groups')
                 .insert({
                     name,
                     student_ids: studentIds,
                     description,
-                    color: randomColor
+                    color: randomColor,
+                    user_id: user?.id // Required for RLS
                 })
                 .select()
                 .single();
@@ -90,7 +95,7 @@ export const groupService = {
         // Note: Cross-service dependencies (schedule, projects) 
         // are handled by storageService for backward compatibility
         if (isSupabaseConfigured() && supabase) {
-            const { error } = await supabase.from('groups').delete().eq('id', id);
+            const { error } = await supabase.from('groups').update({ deleted_at: new Date().toISOString() }).eq('id', id);
             if (error) console.error("Failed to delete group", error);
             return;
         }

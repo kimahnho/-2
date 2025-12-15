@@ -47,6 +47,9 @@ export interface DesignElement {
             emoji?: string;      // 이모지 (예: "🎁")
             label?: string;      // 라벨 (예: "선물")
             isFilled?: boolean;  // 카드가 채워졌는지 여부
+            fontSize?: number;   // 라벨 폰트 크기
+            fontWeight?: number; // 라벨 폰트 두께
+            color?: string;      // 라벨 폰트 색상
         };
         isAACSentenceArea?: boolean;
         isAACSentenceItem?: boolean;

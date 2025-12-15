@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { Page, DesignElement } from '../types';
 import { PRESET_COLORS } from '../constants';
 import { Trash2, Copy, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { MiniElementRenderer } from './MiniElementRenderer';
 
 interface Props {
   pages: Page[];
@@ -117,36 +118,7 @@ export const PageManager: React.FC<Props> = ({
                   }}
                 >
                   {pageElements.map(el => (
-                    <div
-                      key={el.id}
-                      style={{
-                        position: 'absolute',
-                        left: el.x,
-                        top: el.y,
-                        width: el.width,
-                        height: el.height,
-                        transform: `rotate(${el.rotation}deg)`,
-                        zIndex: el.zIndex,
-                        backgroundColor: el.type === 'shape' || el.type === 'card' ? el.backgroundColor : undefined,
-                        backgroundImage: el.backgroundImage ? `url(${el.backgroundImage})` : undefined,
-                        backgroundSize: 'cover',
-                        border: el.borderWidth ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
-                        borderRadius: el.borderRadius,
-                        opacity: el.opacity,
-                        color: el.color,
-                        fontSize: el.fontSize,
-                        fontFamily: 'Fredoka, sans-serif',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        whiteSpace: 'pre-wrap',
-                        lineHeight: 1.2
-                      }}
-                    >
-                      {el.type === 'text' && el.content}
-                      {el.type === 'image' && <img src={el.content} className="w-full h-full object-contain" />}
-                    </div>
+                    <MiniElementRenderer key={el.id} element={el} />
                   ))}
                 </div>
 

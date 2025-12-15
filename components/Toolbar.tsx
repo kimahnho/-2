@@ -41,6 +41,9 @@ interface Props {
     onSelectAACCard?: (card: AACCard) => void;
     currentAACCardIndex?: number;
     totalAACCards?: number;
+    // 자동화 요소 삽입
+    onAddEmotionCard?: () => void;
+    onAddAACCard?: () => void;
 }
 
 export const Toolbar: React.FC<Props> = ({
@@ -62,7 +65,9 @@ export const Toolbar: React.FC<Props> = ({
     onLogoClick,
     onSelectAACCard,
     currentAACCardIndex,
-    totalAACCards
+    totalAACCards,
+    onAddEmotionCard,
+    onAddAACCard
 }) => {
 
     const toggleTab = (tab: TabType) => {
@@ -78,8 +83,8 @@ export const Toolbar: React.FC<Props> = ({
             {/* Navigation Rail */}
             <div className="w-[72px] bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-4 shrink-0 z-40">
                 <div className="mb-4 cursor-pointer" onClick={onLogoClick} title="대시보드로 돌아가기">
-                    <div className="w-10 h-10 bg-[#5500FF] rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[#5500FF]/30 hover:scale-105 transition-transform">
-                        M
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-lg hover:scale-105 transition-transform bg-white">
+                        <img src="/logo-turtle.png" alt="MURU.AI" className="w-9 h-9 object-contain" />
                     </div>
                 </div>
 
@@ -192,7 +197,11 @@ export const Toolbar: React.FC<Props> = ({
                             )}
 
                             {activeTab === 'elements' && (
-                                <ElementsPanel onAddElement={onAddElement} />
+                                <ElementsPanel
+                                    onAddElement={onAddElement}
+                                    onAddEmotionCard={onAddEmotionCard}
+                                    onAddAACCard={onAddAACCard}
+                                />
                             )}
 
                             {activeTab === 'text' && (

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { DesignElement, Page } from '../types';
 import { CanvasElement } from './CanvasElement';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/canvasUtils';
@@ -18,6 +18,7 @@ interface Props {
   onSetSelectedIds: (ids: string[]) => void;
   onSetEditingId: (id: string | null) => void;
   onSetActiveTab: (tab: any) => void;
+  onAddImageElement?: (dataUrl: string, x?: number, y?: number) => void;
 }
 
 export const CanvasArea: React.FC<Props> = (props) => {
@@ -33,8 +34,21 @@ export const CanvasArea: React.FC<Props> = (props) => {
     onCommitElements,
     onSetSelectedIds,
     onSetEditingId,
-    onSetActiveTab
+    onSetActiveTab,
+    onAddImageElement
   } = props;
+
+  // Panning state for middle mouse button
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isDragOver, setIsDragOver] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Ref to track latest elements for proper commit in onBlur
+  const elementsRef = useRef(elements);
+  useEffect(() => {
+    elementsRef.current = elements;
+  }, [elements]);
 
   const {
     guides,
@@ -44,8 +58,8 @@ export const CanvasArea: React.FC<Props> = (props) => {
     handleElementMouseDown,
     handleResizeStart,
     handleRotateStart,
-    handleMouseMove,
-    handleMouseUp
+    handleMouseMove: handleCanvasMouseMove,
+    handleMouseUp: handleCanvasMouseUp
   } = useCanvasEvents({
     elements,
     activePageId,
@@ -59,13 +73,100 @@ export const CanvasArea: React.FC<Props> = (props) => {
     onSetActiveTab
   });
 
+  // Handle mouse down for panning (middle button = button 1)
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 1) { // Middle mouse button
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+  }, []);
+
+  // Handle mouse move for panning and canvas events
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isPanning && scrollContainerRef.current) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      scrollContainerRef.current.scrollLeft -= dx;
+      scrollContainerRef.current.scrollTop -= dy;
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+    handleCanvasMouseMove(e);
+  }, [isPanning, panStart, handleCanvasMouseMove]);
+
+  // Handle mouse up for panning and canvas events
+  const handleMouseUp = useCallback(() => {
+    if (isPanning) {
+      setIsPanning(false);
+    }
+    handleCanvasMouseUp();
+  }, [isPanning, handleCanvasMouseUp]);
+
+  // Prevent default behavior for middle click
+  const handleAuxClick = useCallback((e: React.MouseEvent) => {
+    if (e.button === 1) {
+      e.preventDefault();
+    }
+  }, []);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragOver(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length === 0) return;
+
+    const file = files[0];
+    if (!file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (onAddImageElement) {
+        onAddImageElement(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  }, [onAddImageElement]);
+
   return (
     <div
-      className="flex-1 overflow-auto bg-gray-100 relative custom-scrollbar flex flex-col items-center"
+      ref={scrollContainerRef}
+      className={`flex-1 overflow-auto bg-gray-100 relative custom-scrollbar flex flex-col items-center transition-colors ${isDragOver ? 'bg-blue-100' : ''}`}
+      style={{ cursor: isPanning ? 'grabbing' : 'default' }}
+      onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onAuxClick={handleAuxClick}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 bg-blue-500/20 border-4 border-dashed border-blue-500 z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-white px-6 py-4 rounded-xl shadow-lg text-blue-600 font-bold text-lg">
+            여기에 이미지를 놓으세요
+          </div>
+        </div>
+      )}
       <div className="py-12 flex flex-col gap-8 pb-32">
         {pages.map((page) => {
           const pageElements = elements.filter(el => el.pageId === page.id);
@@ -82,7 +183,9 @@ export const CanvasArea: React.FC<Props> = (props) => {
               id={`page-container-${page.id}`}
               className={`relative transition-shadow duration-200 ${isActive ? 'ring-2 ring-[#5500FF]/50 shadow-2xl' : 'shadow-lg opacity-90 hover:opacity-100'}`}
               style={{ width: canvasW * zoom, height: canvasH * zoom }}
-              onMouseDown={(e) => handlePageMouseDown(e, page.id)}
+              onMouseDown={(e) => {
+                if (e.button !== 1) handlePageMouseDown(e, page.id); // Don't trigger page select on middle click
+              }}
             >
               <div
                 ref={el => { pageRefs.current[page.id] = el; }}
@@ -110,7 +213,7 @@ export const CanvasArea: React.FC<Props> = (props) => {
                       const newElements = elements.map(e => e.id === el.id ? { ...e, ...updates } : e);
                       onUpdateElements(newElements);
                     }}
-                    onBlur={() => onCommitElements(elements)}
+                    onBlur={() => onCommitElements(elementsRef.current)}
                   />
                 ))}
 

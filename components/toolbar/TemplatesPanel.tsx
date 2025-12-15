@@ -4,10 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { Layout, Heart, Brain, Users, Star, Grid } from 'lucide-react';
+import { Layout, Heart, Brain, Users, Star, Grid, Layers } from 'lucide-react';
 import { DesignElement } from '../../types';
 import { TEMPLATES } from '../../constants';
 import { AACConfigModal } from '../templates/AACConfigModal';
+import { StorySequenceConfigModal } from '../templates/StorySequenceConfigModal';
+import { TemplatePreview } from '../templates/TemplatePreview';
 
 interface Props {
     onLoadTemplate: (elements: DesignElement[]) => void;
@@ -26,6 +28,7 @@ const TEMPLATE_CATEGORIES = [
 export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOrientation }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('all');
     const [showAACConfig, setShowAACConfig] = useState(false);
+    const [showStorySequenceConfig, setShowStorySequenceConfig] = useState(false);
 
     // 카테고리 필터링 (AAC 카테고리는 일반 템플릿에서 제외)
     const filteredTemplates = selectedCategory === 'all'
@@ -44,6 +47,16 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
             onLoadTemplate(elements);
         }, 50);
         setShowAACConfig(false);
+    };
+
+    const handleStorySequenceApply = (elements: DesignElement[], orientation: 'portrait' | 'landscape') => {
+        if (onUpdatePageOrientation) {
+            onUpdatePageOrientation(orientation);
+        }
+        setTimeout(() => {
+            onLoadTemplate(elements);
+        }, 50);
+        setShowStorySequenceConfig(false);
     };
 
     return (
@@ -94,6 +107,35 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
                 </div>
             )}
 
+            {/* 이야기 장면 순서 맞추기 (전체 또는 인지 카테고리 선택 시 표시) */}
+            {(selectedCategory === 'all' || selectedCategory === 'cognitive') && (
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                        <Layers className="w-4 h-4 text-blue-500" />
+                        <h3 className="font-bold text-sm text-gray-700">이야기 장면 순서 맞추기</h3>
+                    </div>
+                    <button
+                        onClick={() => setShowStorySequenceConfig(true)}
+                        className="w-full p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 hover:border-blue-500 hover:shadow-lg transition-all text-left group"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-blue-500 rounded-xl text-white group-hover:scale-110 transition-transform">
+                                <Layers className="w-6 h-6" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-bold text-gray-900 text-base">이야기 장면 순서 맞추기</h4>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    2~8개 카드, 순서 화살표 자동 생성
+                                </p>
+                            </div>
+                            <div className="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-bold rounded-full">
+                                설정
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            )}
+
             {/* Popular Templates */}
             {filteredTemplates.length > 0 && (
                 <div>
@@ -108,22 +150,31 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
                             <button
                                 key={template.id}
                                 onClick={() => onLoadTemplate(template.elements as unknown as DesignElement[])}
-                                className="group relative aspect-[3/4] bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden border border-gray-200 hover:border-[#5500FF] hover:shadow-lg transition-all text-left"
+                                className="group relative aspect-[3/4] bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-[#5500FF] hover:shadow-lg transition-all text-left"
                             >
-                                {/* Background Gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-                                {/* Preview Icon */}
-                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-40 transition-opacity">
-                                    <Layout className="w-12 h-12 text-gray-600" />
+                                {/* Template Preview */}
+                                <div className="absolute inset-0 p-1">
+                                    <TemplatePreview
+                                        elements={template.elements as Partial<DesignElement>[]}
+                                        width={110}
+                                        height={146}
+                                    />
                                 </div>
 
+                                {/* Overlay Gradient */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
                                 {/* Template Info */}
-                                <div className="absolute inset-0 p-3 flex flex-col justify-end">
+                                <div className="absolute inset-0 p-3 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                                     <div className="flex items-center gap-1 mb-1">
                                         <span className="px-1.5 py-0.5 bg-orange-500/90 text-white text-[9px] font-bold rounded">인기</span>
                                     </div>
                                     <h4 className="text-white text-xs font-bold">{template.name}</h4>
+                                </div>
+
+                                {/* Always visible name at bottom */}
+                                <div className="absolute bottom-0 left-0 right-0 bg-white/95 px-2 py-1.5 border-t border-gray-100">
+                                    <h4 className="text-gray-700 text-[10px] font-medium text-center truncate">{template.name}</h4>
                                 </div>
                             </button>
                         ))}
@@ -143,19 +194,28 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
                             <button
                                 key={template.id}
                                 onClick={() => onLoadTemplate(template.elements as unknown as DesignElement[])}
-                                className="group relative aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden border border-gray-200 hover:border-[#5500FF] hover:shadow-lg transition-all text-left"
+                                className="group relative aspect-[3/4] bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-[#5500FF] hover:shadow-lg transition-all text-left"
                             >
-                                {/* Background */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-
-                                {/* Preview Icon */}
-                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-40 transition-opacity">
-                                    <Layout className="w-12 h-12 text-gray-600" />
+                                {/* Template Preview */}
+                                <div className="absolute inset-0 p-1">
+                                    <TemplatePreview
+                                        elements={template.elements as Partial<DesignElement>[]}
+                                        width={110}
+                                        height={146}
+                                    />
                                 </div>
 
-                                {/* Template Info */}
-                                <div className="absolute inset-0 p-3 flex flex-col justify-end">
+                                {/* Overlay Gradient on hover */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                {/* Template Info on hover */}
+                                <div className="absolute inset-0 p-3 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                                     <h4 className="text-white text-xs font-bold">{template.name}</h4>
+                                </div>
+
+                                {/* Always visible name at bottom */}
+                                <div className="absolute bottom-0 left-0 right-0 bg-white/95 px-2 py-1.5 border-t border-gray-100">
+                                    <h4 className="text-gray-700 text-[10px] font-medium text-center truncate">{template.name}</h4>
                                 </div>
                             </button>
                         ))}
@@ -176,6 +236,15 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
                 <AACConfigModal
                     onClose={() => setShowAACConfig(false)}
                     onApply={handleAACApply}
+                    onOrientationChange={onUpdatePageOrientation}
+                />
+            )}
+
+            {/* Story Sequence Config Modal */}
+            {showStorySequenceConfig && (
+                <StorySequenceConfigModal
+                    onClose={() => setShowStorySequenceConfig(false)}
+                    onApply={handleStorySequenceApply}
                     onOrientationChange={onUpdatePageOrientation}
                 />
             )}

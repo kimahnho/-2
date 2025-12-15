@@ -38,6 +38,7 @@ export interface SavedProjectMetadata {
     groupId?: string;
     title: string;
     thumbnail?: string;
+    previewElements?: import('./editor.types').DesignElement[]; // For live preview
     updatedAt: number;
     createdAt: number;
 }

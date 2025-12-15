@@ -1,16 +1,15 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StudentProfile, StudentGroup } from '../../types';
 import { storageService } from '../../services/storageService';
-import { User, Plus, ArrowRight, Users, Check } from 'lucide-react';
+import { User, Plus, ArrowRight, Users, Check, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
 import { DeleteConfirmationModal } from './scheduler/modals/DeleteConfirmationModal';
 
 interface Props {
     onSelectStudent: (student: StudentProfile) => void;
     onSelectGroup: (group: StudentGroup) => void;
     onDataChange?: () => void;
-    isGuest?: boolean; // Added
-    onRequireLogin?: () => void; // Added
+    isGuest?: boolean;
+    onRequireLogin?: () => void;
 }
 
 export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup, onDataChange, isGuest, onRequireLogin }) => {
@@ -19,11 +18,22 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
     const [groups, setGroups] = useState<StudentGroup[]>([]);
     const [isAdding, setIsAdding] = useState(false);
 
-    // ... (existing state)
     // Delete State
     const [deleteTarget, setDeleteTarget] = useState<{ type: 'student' | 'group', id: string } | null>(null);
-    const timerRef = useRef<any>(null);
-    const isLongPress = useRef(false);
+
+    // Edit State
+    const [editingStudent, setEditingStudent] = useState<StudentProfile | null>(null);
+    const [editingGroup, setEditingGroup] = useState<StudentGroup | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editBirthYear, setEditBirthYear] = useState('');
+    const [editNotes, setEditNotes] = useState('');
+    const [editGroupName, setEditGroupName] = useState('');
+    const [editGroupDesc, setEditGroupDesc] = useState('');
+    const [editGroupStudentIds, setEditGroupStudentIds] = useState<string[]>([]);
+
+    // Menu State for 3-dot dropdown
+    const [menuOpen, setMenuOpen] = useState<string | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     // New Student Form
     const [newName, setNewName] = useState('');
@@ -34,6 +44,17 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
     const [newGroupName, setNewGroupName] = useState('');
     const [newGroupDesc, setNewGroupDesc] = useState('');
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setMenuOpen(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const loadData = useCallback(async () => {
         const [loadedStudents, loadedGroups] = await Promise.all([
@@ -101,22 +122,64 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
         setNewGroupName(''); setNewGroupDesc(''); setSelectedStudentIds([]);
     };
 
-    // Long Press Handlers
-    const startPress = (type: 'student' | 'group', id: string) => {
-        if (isGuest) return; // Disable delete for guest
-        isLongPress.current = false;
-        timerRef.current = setTimeout(() => {
-            isLongPress.current = true;
-            if (navigator.vibrate) navigator.vibrate(50);
-            setDeleteTarget({ type, id });
-        }, 700);
+    // Menu handlers for 3-dot menu
+    const handleMenuClick = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setMenuOpen(menuOpen === id ? null : id);
     };
 
-    const cancelPress = () => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
+    const handleDelete = (e: React.MouseEvent, type: 'student' | 'group', id: string) => {
+        e.stopPropagation();
+        setMenuOpen(null);
+        setDeleteTarget({ type, id });
+    };
+
+    const handleEdit = (e: React.MouseEvent, type: 'student' | 'group', data: any) => {
+        e.stopPropagation();
+        setMenuOpen(null);
+        if (type === 'student') {
+            const student = data as StudentProfile;
+            setEditingStudent(student);
+            setEditName(student.name);
+            setEditBirthYear(student.birthYear?.toString() || '');
+            setEditNotes(student.notes || '');
+        } else {
+            const group = data as StudentGroup;
+            setEditingGroup(group);
+            setEditGroupName(group.name);
+            setEditGroupDesc(group.description || '');
+            setEditGroupStudentIds(group.studentIds);
         }
+    };
+
+    const handleSaveStudent = async () => {
+        if (!editingStudent || !editName.trim()) return;
+        await storageService.updateStudent(editingStudent.id, {
+            name: editName,
+            birthYear: editBirthYear ? parseInt(editBirthYear) : undefined,
+            notes: editNotes
+        });
+        await loadData();
+        setEditingStudent(null);
+        if (onDataChange) onDataChange();
+    };
+
+    const handleSaveGroup = async () => {
+        if (!editingGroup || !editGroupName.trim() || editGroupStudentIds.length === 0) return;
+        await storageService.updateGroup(editingGroup.id, {
+            name: editGroupName,
+            description: editGroupDesc,
+            studentIds: editGroupStudentIds
+        });
+        await loadData();
+        setEditingGroup(null);
+        if (onDataChange) onDataChange();
+    };
+
+    const toggleEditStudentSelection = (id: string) => {
+        setEditGroupStudentIds(prev =>
+            prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
+        );
     };
 
     const handleCardClick = (type: 'student' | 'group', data: any) => {
@@ -124,8 +187,8 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
             onRequireLogin?.();
             return;
         }
-        if (isLongPress.current) {
-            isLongPress.current = false;
+        if (menuOpen) {
+            setMenuOpen(null);
             return;
         }
         if (type === 'student') onSelectStudent(data);
@@ -209,16 +272,37 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
                         return (
                             <div
                                 key={student.id}
-                                onMouseDown={() => startPress('student', student.id)}
-                                onMouseUp={cancelPress}
-                                onMouseLeave={cancelPress}
-                                onTouchStart={() => startPress('student', student.id)}
-                                onTouchEnd={cancelPress}
-                                onTouchMove={cancelPress}
                                 onClick={() => handleCardClick('student', student)}
-                                className="group relative bg-white rounded-2xl border border-gray-200 hover:border-[#B0C0ff] hover:shadow-xl transition-all cursor-pointer h-[240px] p-6 flex flex-col items-center text-center overflow-hidden select-none active:scale-95"
-                                title="꾹 눌러서 삭제"
+                                className="group relative bg-white rounded-2xl border border-gray-200 hover:border-[#B0C0ff] hover:shadow-xl transition-all cursor-pointer h-[240px] p-6 flex flex-col items-center text-center overflow-hidden select-none"
                             >
+                                {/* 3-dot menu button */}
+                                {!isGuest && (
+                                    <div className="absolute top-3 right-3 z-20" ref={menuOpen === student.id ? menuRef : null}>
+                                        <button
+                                            onClick={(e) => handleMenuClick(e, student.id)}
+                                            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                        >
+                                            <MoreVertical className="w-5 h-5" />
+                                        </button>
+                                        {menuOpen === student.id && (
+                                            <div className="absolute right-0 top-8 bg-white rounded-lg shadow-xl border border-gray-100 py-1 min-w-[120px] z-30">
+                                                <button
+                                                    onClick={(e) => handleEdit(e, 'student', student)}
+                                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                >
+                                                    <Pencil className="w-4 h-4" /> 편집
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDelete(e, 'student', student.id)}
+                                                    className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                                >
+                                                    <Trash2 className="w-4 h-4" /> 삭제
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-gray-50 to-transparent pointer-events-none z-0" />
 
                                 <div
@@ -347,16 +431,37 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
                     {groups.map(group => (
                         <div
                             key={group.id}
-                            onMouseDown={() => startPress('group', group.id)}
-                            onMouseUp={cancelPress}
-                            onMouseLeave={cancelPress}
-                            onTouchStart={() => startPress('group', group.id)}
-                            onTouchEnd={cancelPress}
-                            onTouchMove={cancelPress}
                             onClick={() => handleCardClick('group', group)}
-                            className="group relative bg-white rounded-2xl border border-gray-200 hover:border-[#B0C0ff] hover:shadow-xl transition-all cursor-pointer h-[240px] p-6 flex flex-col items-center text-center overflow-hidden select-none active:scale-95"
-                            title="꾹 눌러서 삭제"
+                            className="group relative bg-white rounded-2xl border border-gray-200 hover:border-[#B0C0ff] hover:shadow-xl transition-all cursor-pointer h-[240px] p-6 flex flex-col items-center text-center overflow-hidden select-none"
                         >
+                            {/* 3-dot menu button */}
+                            {!isGuest && (
+                                <div className="absolute top-3 right-3 z-20" ref={menuOpen === group.id ? menuRef : null}>
+                                    <button
+                                        onClick={(e) => handleMenuClick(e, group.id)}
+                                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <MoreVertical className="w-5 h-5" />
+                                    </button>
+                                    {menuOpen === group.id && (
+                                        <div className="absolute right-0 top-8 bg-white rounded-lg shadow-xl border border-gray-100 py-1 min-w-[120px] z-30">
+                                            <button
+                                                onClick={(e) => handleEdit(e, 'group', group)}
+                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                            >
+                                                <Pencil className="w-4 h-4" /> 편집
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDelete(e, 'group', group.id)}
+                                                className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                            >
+                                                <Trash2 className="w-4 h-4" /> 삭제
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-gray-50 to-transparent pointer-events-none z-0" />
 
                             <div
@@ -388,6 +493,116 @@ export const ProfileManager: React.FC<Props> = ({ onSelectStudent, onSelectGroup
                 title={deleteTarget?.type === 'student' ? "학습자를 삭제하시겠습니까?" : "그룹을 삭제하시겠습니까?"}
                 description={deleteTarget?.type === 'student' ? "해당 학습자의 모든 학습 자료와 그룹에서도 제거됩니다." : "그룹의 학습 자료도 함께 삭제됩니다."}
             />
+
+            {/* Student Edit Modal */}
+            {editingStudent && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-gray-900">학습자 정보 수정</h3>
+                            <button onClick={() => setEditingStudent(null)} className="p-2 hover:bg-gray-100 rounded-full">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">이름</label>
+                                <input
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5500FF] outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">태어난 연도</label>
+                                <input
+                                    type="number"
+                                    value={editBirthYear}
+                                    onChange={e => setEditBirthYear(e.target.value)}
+                                    placeholder="예: 2015"
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5500FF] outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">특이사항/메모</label>
+                                <textarea
+                                    value={editNotes}
+                                    onChange={e => setEditNotes(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5500FF] outline-none h-24 resize-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-6">
+                            <button onClick={() => setEditingStudent(null)} className="flex-1 py-3 text-gray-600 hover:bg-gray-100 rounded-lg font-medium">취소</button>
+                            <button onClick={handleSaveStudent} disabled={!editName.trim()} className="flex-1 py-3 bg-[#5500FF] text-white rounded-lg font-bold hover:bg-[#4400cc] disabled:bg-gray-300">저장</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Group Edit Modal */}
+            {editingGroup && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-gray-900">그룹 정보 수정</h3>
+                            <button onClick={() => setEditingGroup(null)} className="p-2 hover:bg-gray-100 rounded-full">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">그룹 이름</label>
+                                <input
+                                    value={editGroupName}
+                                    onChange={e => setEditGroupName(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5500FF] outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">설명</label>
+                                <input
+                                    value={editGroupDesc}
+                                    onChange={e => setEditGroupDesc(e.target.value)}
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5500FF] outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">
+                                    멤버 선택 <span className="text-[#5500FF]">({editGroupStudentIds.length}명)</span>
+                                </label>
+                                <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                                    {students.map(s => {
+                                        const isSelected = editGroupStudentIds.includes(s.id);
+                                        return (
+                                            <div
+                                                key={s.id}
+                                                onClick={() => toggleEditStudentSelection(s.id)}
+                                                className={`p-3 flex items-center gap-3 cursor-pointer border-b last:border-0 ${isSelected ? 'bg-[#5500FF]/5' : 'hover:bg-gray-50'}`}
+                                            >
+                                                <div
+                                                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                                                    style={{ backgroundColor: s.avatarColor || '#5500FF' }}
+                                                >
+                                                    {s.name[0]}
+                                                </div>
+                                                <span className="flex-1 font-medium">{s.name}</span>
+                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'bg-[#5500FF] border-[#5500FF]' : 'border-gray-300'}`}>
+                                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-6">
+                            <button onClick={() => setEditingGroup(null)} className="flex-1 py-3 text-gray-600 hover:bg-gray-100 rounded-lg font-medium">취소</button>
+                            <button onClick={handleSaveGroup} disabled={!editGroupName.trim() || editGroupStudentIds.length === 0} className="flex-1 py-3 bg-[#5500FF] text-white rounded-lg font-bold hover:bg-[#4400cc] disabled:bg-gray-300">저장</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

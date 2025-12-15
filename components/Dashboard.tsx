@@ -4,6 +4,7 @@ import { SavedProjectMetadata, StudentProfile, StudentGroup } from '../types';
 import { storageService } from '../services/storageService';
 import { DashboardHeader } from './dashboard/DashboardHeader';
 import { ProjectList } from './dashboard/ProjectList';
+import { ConfirmModal } from './common/ConfirmModal';
 import { Grid, List, Users } from 'lucide-react';
 
 interface Props {
@@ -73,10 +74,18 @@ export const Dashboard: React.FC<Props> = ({
         setSearchQuery('');
     }, [currentStudent?.id, currentGroup?.id]);
 
+    // Delete confirmation state
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
     const handleDeleteProject = async (id: string) => {
-        if (window.confirm('정말 이 디자인을 삭제하시겠습니까?\n삭제된 디자인은 복구할 수 없습니다.')) {
-            await storageService.deleteProject(id);
-            setProjects(prev => prev.filter(p => p.id !== id));
+        setDeleteTarget(id);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteTarget) {
+            await storageService.deleteProject(deleteTarget);
+            setProjects(prev => prev.filter(p => p.id !== deleteTarget));
+            setDeleteTarget(null);
         }
     };
 
@@ -202,6 +211,19 @@ export const Dashboard: React.FC<Props> = ({
                     onDeleteProject={handleDeleteProject}
                 />
             </main>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteTarget !== null}
+                title="디자인 삭제"
+                message={`정말 이 디자인을 삭제하시겠습니까?
+삭제된 디자인은 복구할 수 없습니다.`}
+                confirmText="삭제"
+                cancelText="취소"
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+                variant="danger"
+            />
         </div>
     );
 };

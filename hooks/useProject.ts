@@ -99,7 +99,57 @@ export const useProject = (initialData?: ProjectData) => {
   };
 
   const updateElement = (id: string, updates: Partial<DesignElement>, commit: boolean = true) => {
-    const newElements = elements.map(el => el.id === id ? { ...el, ...updates } : el);
+    const newElements = elements.map(el => {
+      if (el.id !== id) return el;
+
+      // Deep merge for metadata to preserve nested properties
+      if (updates.metadata && el.metadata) {
+        const mergedAACData = updates.metadata.aacData && el.metadata.aacData
+          ? { ...el.metadata.aacData, ...updates.metadata.aacData }
+          : updates.metadata.aacData || el.metadata.aacData;
+
+        const mergedMetadata = {
+          ...el.metadata,
+          ...updates.metadata,
+          aacData: mergedAACData
+        };
+
+        return { ...el, ...updates, metadata: mergedMetadata };
+      }
+
+      return { ...el, ...updates };
+    });
+    updateElements(newElements, commit);
+  };
+
+  // Batch update for multiple elements at once (avoids sequential override issues)
+  const updateMultipleElements = (
+    updates: Array<{ id: string; changes: Partial<DesignElement> }>,
+    commit: boolean = true
+  ) => {
+    const newElements = elements.map(el => {
+      const updateEntry = updates.find(u => u.id === el.id);
+      if (!updateEntry) return el;
+
+      const changes = updateEntry.changes;
+
+      // Deep merge for metadata
+      if (changes.metadata && el.metadata) {
+        const mergedAACData = changes.metadata.aacData && el.metadata.aacData
+          ? { ...el.metadata.aacData, ...changes.metadata.aacData }
+          : changes.metadata.aacData || el.metadata.aacData;
+
+        const mergedMetadata = {
+          ...el.metadata,
+          ...changes.metadata,
+          aacData: mergedAACData
+        };
+
+        return { ...el, ...changes, metadata: mergedMetadata };
+      }
+
+      return { ...el, ...changes };
+    });
     updateElements(newElements, commit);
   };
 
@@ -317,6 +367,7 @@ export const useProject = (initialData?: ProjectData) => {
     addElementDirect,
     addMultipleElements,
     updateElement,
+    updateMultipleElements,
     updateElements,
     deleteElements,
     duplicateElements,

@@ -22,6 +22,8 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
     const [cols, setCols] = useState(4);
     const [rows, setRows] = useState(4);
     const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+    const [labelPosition, setLabelPosition] = useState<'above' | 'below' | 'none'>('above');
+    const [symbolScale, setSymbolScale] = useState(0.45);
 
     // 방향 변경 핸들러 - 즉시 캔버스 방향 동기화
     const handleOrientationChange = (newOrientation: 'portrait' | 'landscape') => {
@@ -106,7 +108,12 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
                         aacData: {
                             emoji: undefined,
                             label: undefined,
-                            isFilled: false
+                            isFilled: false,
+                            fontSize: 20,
+                            fontWeight: 400,
+                            color: '#000000',
+                            symbolScale: symbolScale,
+                            labelPosition: labelPosition
                         }
                     }
                 } as DesignElement);
@@ -257,6 +264,31 @@ export const AACConfigModal: React.FC<Props> = ({ onClose, onApply, onOrientatio
                                     </div>
                                 </div>
                             </button>
+                        </div>
+                    </div>
+
+                    {/* 텍스트 위치 */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-3">
+                            텍스트 위치
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { value: 'above', label: '상징 위' },
+                                { value: 'below', label: '상징 아래' },
+                                { value: 'none', label: '없음' }
+                            ].map((option) => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => setLabelPosition(option.value as 'above' | 'below' | 'none')}
+                                    className={`px-3 py-2.5 text-sm font-medium rounded-xl border-2 transition-all ${labelPosition === option.value
+                                            ? 'border-[#5500FF] bg-[#5500FF]/10 text-[#5500FF]'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                        }`}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
 

@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const scheduleService = {
     getAllScheduleItems: async (): Promise<ScheduleItem[]> => {
         if (isSupabaseConfigured() && supabase) {
-            const { data, error } = await supabase.from('schedule_items').select('*');
+            const { data, error } = await supabase.from('schedule_items').select('*').is('deleted_at', null);
             if (error) {
                 console.error("Failed to load schedule items", error);
                 return [];
@@ -38,6 +38,9 @@ export const scheduleService = {
 
     addScheduleItem: async (item: Omit<ScheduleItem, 'id'>): Promise<ScheduleItem> => {
         if (isSupabaseConfigured() && supabase) {
+            // Get current user for RLS
+            const { data: { user } } = await supabase.auth.getUser();
+
             const { data, error } = await supabase
                 .from('schedule_items')
                 .insert({
@@ -46,7 +49,8 @@ export const scheduleService = {
                     time: item.time,
                     subject: item.subject,
                     target_id: item.targetId,
-                    target_type: item.targetType
+                    target_type: item.targetType,
+                    user_id: user?.id // Required for RLS
                 })
                 .select()
                 .single();
@@ -96,7 +100,7 @@ export const scheduleService = {
 
     deleteScheduleItem: async (id: string): Promise<void> => {
         if (isSupabaseConfigured() && supabase) {
-            const { error } = await supabase.from('schedule_items').delete().eq('id', id);
+            const { error } = await supabase.from('schedule_items').update({ deleted_at: new Date().toISOString() }).eq('id', id);
             if (error) console.error("Failed to delete schedule item", error);
             return;
         }
@@ -108,7 +112,7 @@ export const scheduleService = {
 
     deleteByTargetId: async (targetId: string): Promise<void> => {
         if (isSupabaseConfigured() && supabase) {
-            await supabase.from('schedule_items').delete().eq('target_id', targetId);
+            await supabase.from('schedule_items').update({ deleted_at: new Date().toISOString() }).eq('target_id', targetId);
             return;
         }
 

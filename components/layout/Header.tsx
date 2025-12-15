@@ -43,7 +43,8 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
                     </a>
                 </div>
 
-                {/* Navigation */}
+                {/* Navigation - Hidden during BETA */}
+                {/* TODO: Re-enable after beta test by removing this comment wrapper
                 <nav style={styles.navSection}>
                     <button
                         onClick={() => navigate('/templates')}
@@ -58,12 +59,15 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
                         가격
                     </button>
                 </nav>
+                */}
 
                 {/* User Profile or Login Button */}
                 {user ? (
                     <div style={styles.rightSection}>
-                        {/* Subscription Badge */}
+                        {/* Subscription Badge - Hidden during BETA */}
+                        {/* TODO: Re-enable after beta test
                         <SubscriptionBadge userId={user.id} />
+                        */}
 
                         {/* Profile Button */}
                         <div style={{ position: 'relative' }} ref={dropdownRef}>

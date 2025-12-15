@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { DesignElement, DragInfo, ResizeInfo, RotateInfo, Guide } from '../types';
 import { calculateSnapping, calculateRotation } from '../utils/canvasUtils';
@@ -34,6 +35,8 @@ export const useCanvasEvents = ({
   const [selectionBox, setSelectionBox] = useState<{ start: { x: number, y: number }, end: { x: number, y: number }, pageId: string } | null>(null);
 
   const pageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  // 스마트 선택을 위한 필터 기준 요소 ID 저장
+  const selectionFilterRef = useRef<string | null>(null);
 
   const handlePageMouseDown = (e: React.MouseEvent, pageId: string) => {
     if (e.button !== 0) return; // Only left click
@@ -53,15 +56,24 @@ export const useCanvasEvents = ({
       pageId: pageId
     });
 
-    if (!e.shiftKey) {
+    // Shift 키가 눌려있고 이미 선택된 요소가 있다면, 첫 번째 선택된 요소를 필터 기준으로 설정
+    if (e.shiftKey && selectedIds.length > 0) {
+      selectionFilterRef.current = selectedIds[0];
+    } else if (!e.shiftKey) {
       onSetSelectedIds([]);
       onSetEditingId(null);
+      selectionFilterRef.current = null;
+    } else {
+      selectionFilterRef.current = null;
     }
   };
 
   const handleElementMouseDown = (e: React.MouseEvent, id: string) => {
     if (e.button !== 0) return;
     e.stopPropagation();
+
+    // Reset filter ref on element click
+    selectionFilterRef.current = null;
 
     const clickedEl = elements.find(el => el.id === id);
     if (clickedEl?.isEmotionPlaceholder) onSetActiveTab('emotions');
@@ -153,7 +165,7 @@ export const useCanvasEvents = ({
       if (dragInfo) { setDragInfo(null); onCommitElements(elements); }
       if (resizeInfo) { setResizeInfo(null); onCommitElements(elements); }
       if (rotateInfo) { setRotateInfo(null); onCommitElements(elements); }
-      if (selectionBox) setSelectionBox(null);
+      if (selectionBox) { setSelectionBox(null); selectionFilterRef.current = null; }
       setGuides([]);
       return;
     }
@@ -173,7 +185,7 @@ export const useCanvasEvents = ({
         const y1 = Math.min(selectionBox.start.y, currentY);
         const y2 = Math.max(selectionBox.start.y, currentY);
 
-        const overlappingIds = elements
+        let overlappingIds = elements
           .filter(el => el.pageId === selectionBox.pageId)
           .filter(el => {
             const elRight = el.x + el.width;
@@ -181,6 +193,33 @@ export const useCanvasEvents = ({
             return (el.x < x2 && elRight > x1 && el.y < y2 && elBottom > y1);
           })
           .map(el => el.id);
+
+        // Smart Selection Filter
+        if (selectionFilterRef.current) {
+          const filterElement = elements.find(el => el.id === selectionFilterRef.current);
+          if (filterElement) {
+            overlappingIds = overlappingIds.filter(id => {
+              const targetEl = elements.find(el => el.id === id);
+              if (!targetEl) return false;
+
+              // 1. Check basic type
+              if (targetEl.type !== filterElement.type) return false;
+
+              // 2. Check metadata (e.g., isAACCard)
+              const isFilterAAC = filterElement.metadata?.isAACCard;
+              const isTargetAAC = targetEl.metadata?.isAACCard;
+              if (isFilterAAC !== isTargetAAC) return false;
+
+              return true;
+            });
+
+            // Add the filter element itself to selection if not filtered out (optional, but good UX)
+            if (!overlappingIds.includes(selectionFilterRef.current)) {
+              overlappingIds.push(selectionFilterRef.current);
+            }
+          }
+        }
+
         onSetSelectedIds(overlappingIds);
       }
       return;
@@ -230,13 +269,16 @@ export const useCanvasEvents = ({
         const relX = initial.x - bbox.x;
         const relY = initial.y - bbox.y;
 
-        return {
-          ...el,
+        const updates: Partial<DesignElement> = {
           x: newBboxX + relX * scaleX,
           y: newBboxY + relY * scaleY,
           width: Math.max(10, initial.width * scaleX),
           height: Math.max(10, initial.height * scaleY),
         };
+
+        // backgroundPosition is now stored as relative ratios, no scaling needed
+
+        return { ...el, ...updates };
       });
       onUpdateElements(newElements);
       return;
@@ -272,7 +314,10 @@ export const useCanvasEvents = ({
       setRotateInfo(null);
       setGuides([]);
     }
-    if (selectionBox) setSelectionBox(null);
+    if (selectionBox) {
+      setSelectionBox(null);
+      selectionFilterRef.current = null;
+    }
   };
 
   return {

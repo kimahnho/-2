@@ -10,6 +10,7 @@ import { TabType, ProjectData } from '../../types';
 import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save, Smartphone, Monitor } from 'lucide-react';
 import { printCanvas } from '../../utils/exportUtils';
 import { storageService } from '../../services/storageService';
+import { ExportModal } from '../ExportModal';
 
 // Custom Hooks - Logic Layer
 import { useProject } from '../../hooks/useProject';
@@ -33,14 +34,68 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
   // --- 2. View State (UI) ---
   const viewport = useViewport();
-  const [activeTab, setActiveTab] = useState<TabType | null>('design');
+  const [activeTab, setActiveTab] = useState<TabType>('design');
   const [title, setTitle] = useState(initialTitle || '제목 없는 디자인');
   const [uploadedAssets, setUploadedAssets] = useState<string[]>([]);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Simple helper for assets
   const handleSaveAsset = (url: string) => {
     setUploadedAssets(prev => prev.includes(url) ? prev : [url, ...prev]);
+  };
+
+  // Image upload handler
+  const handleUploadImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const maxSize = 400;
+        const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
+        const width = img.width * ratio;
+        const height = img.height * ratio;
+
+        // If single shape is selected, fill it with image
+        if (project.selectedIds.length === 1) {
+          const el = project.elements.find(e => e.id === project.selectedIds[0]);
+          if (el && (el.type === 'shape' || el.type === 'circle')) {
+            project.updateElement(el.id, { backgroundImage: dataUrl }, true);
+            handleSaveAsset(dataUrl);
+            return;
+          }
+        }
+
+        // Otherwise add as new image element
+        const x = (800 - width) / 2;
+        const y = (1132 - height) / 2;
+        const newEl = {
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'image' as const,
+          x, y, width, height,
+          content: dataUrl,
+          rotation: 0,
+          zIndex: project.elements.length + 1,
+          pageId: project.activePageId,
+          borderRadius: 0,
+        };
+        project.updateElements([...project.elements, newEl]);
+        project.setSelectedIds([newEl.id]);
+        handleSaveAsset(dataUrl);
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset for same file selection
   };
 
 
@@ -119,13 +174,13 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     }
   }, [project.selectedIds, sentenceBuilderId /* project.elements 등은 생략, 루프 방지 */]);
 
-  // AAC 카드 선택 감지 및 탭 자동 열기
+  // AAC 카드 또는 감정 카드 선택 시 자동 탭 전환
   useEffect(() => {
     if (project.selectedIds.length === 1) {
       const selectedId = project.selectedIds[0];
       const selectedEl = project.elements.find(el => el.id === selectedId);
 
-      // AAC 요소 (카드 또는 문장 영역) 선택 시
+      // AAC 요소 (카드 또는 문장 영역) 선택 시 'aac' 탭으로 전환
       const isAACCard = selectedEl?.metadata?.isAACCard && selectedEl.metadata.aacIndex !== undefined;
       const isSentenceArea = selectedEl?.metadata?.isAACSentenceArea;
 
@@ -156,6 +211,12 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           setCurrentAACCardIndex(undefined);
           setTotalAACCards(undefined);
         }
+      }
+
+      // 감정 카드/플레이스홀더 선택 시 'emotions' 탭으로 전환
+      const isEmotionCard = selectedEl?.metadata?.isEmotionPlaceholder || selectedEl?.metadata?.isEmotionCard;
+      if (isEmotionCard) {
+        if (activeTab !== 'emotions') setActiveTab('emotions');
       }
     }
   }, [project.selectedIds, project.elements, project.activePageId, activeTab]);
@@ -291,12 +352,19 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       // 한 번에 업데이트
       project.updateElements(newElements);
 
-      // 다음 카드로 자동 이동
+      // 다음 카드로 자동 이동 (세로 우선: 위→아래, 다음 열)
       const aacCards = newElements
         .filter(el => el.pageId === project.activePageId && el.metadata?.isAACCard && el.type === 'card' && el.metadata.aacIndex !== undefined)
-        .sort((a, b) => (a.metadata!.aacIndex!) - (b.metadata!.aacIndex!));
+        // 세로 우선 정렬: x좌표(열) 우선, 같은 열이면 y좌표(행) 순서
+        .sort((a, b) => {
+          const xDiff = a.x - b.x;
+          if (Math.abs(xDiff) > 10) return xDiff; // 10px 허용 오차 (같은 열 판정)
+          return a.y - b.y; // 같은 열이면 위→아래
+        });
 
-      const currentArrayIdx = aacCards.findIndex(el => el.metadata!.aacIndex === targetIndex);
+      // 현재 카드의 위치 찾기
+      const currentCard = newElements.find(el => el.id === selectedId);
+      const currentArrayIdx = aacCards.findIndex(el => el.id === selectedId);
 
       if (currentArrayIdx !== -1 && currentArrayIdx < aacCards.length - 1) {
         const nextCard = aacCards[currentArrayIdx + 1];
@@ -305,6 +373,92 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         }, 100);
       }
     }
+  };
+
+  // --- Automation Elements Handlers ---
+  // 감정 카드 삽입 - 겹치지 않게 위치 오프셋 적용
+  const handleAddEmotionCard = () => {
+    const cardId = `emotion-card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    // 현재 페이지의 감정 카드 개수로 오프셋 계산
+    const existingEmotionCards = project.elements.filter(
+      el => el.pageId === project.activePageId && el.metadata?.isEmotionCard
+    ).length;
+    const offset = existingEmotionCards * 30;
+
+    const newCard = {
+      id: cardId,
+      type: 'card' as const,
+      x: 100 + offset,
+      y: 100 + offset,
+      width: 150,
+      height: 180,
+      rotation: 0,
+      backgroundColor: '#FFF0F5',
+      borderRadius: 16,
+      borderWidth: 2,
+      borderColor: '#F472B6',
+      borderStyle: 'solid' as const,
+      zIndex: 100 + existingEmotionCards,
+      pageId: project.activePageId,
+      isEmotionPlaceholder: true,
+      metadata: {
+        isEmotionCard: true,
+        emotionData: {
+          imageUrl: undefined,
+          label: undefined,
+          isFilled: false
+        }
+      }
+    };
+    project.updateElements([...project.elements, newCard as any]);
+    // 카드 선택만 하고 탭은 변경하지 않음 (여러 개 추가 가능)
+    project.setSelectedIds([cardId]);
+  };
+
+  // AAC 카드 삽입 - 겹치지 않게 위치 오프셋 적용
+  const handleAddAACCard = () => {
+    const cardId = `aac-card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    // 현재 페이지의 AAC 카드 개수로 오프셋 계산 (템플릿 AAC 카드는 제외, 직접 추가된 것만)
+    const existingAACCards = project.elements.filter(
+      el => el.pageId === project.activePageId && el.metadata?.isAACCard && el.id.startsWith('aac-card-')
+    ).length;
+    const offset = existingAACCards * 30;
+
+    const newCard = {
+      id: cardId,
+      type: 'card' as const,
+      x: 100 + offset,
+      y: 100 + offset,
+      width: 120,
+      height: 120,
+      rotation: 0,
+      backgroundColor: '#ffffff',
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: '#E5E7EB',
+      borderStyle: 'solid' as const,
+      zIndex: 100 + existingAACCards,
+      pageId: project.activePageId,
+      metadata: {
+        isAACCard: true,
+        aacRow: 0,
+        aacCol: 0,
+        aacIndex: 0,
+        aacData: {
+          emoji: undefined,
+          label: undefined,
+          isFilled: false,
+          fontSize: 20,
+          fontWeight: 400,
+          color: '#000000',
+          symbolScale: 0.45,
+          labelPosition: 'below' as 'above' | 'below' | 'none'
+        }
+      }
+    };
+    project.updateElements([...project.elements, newCard as any]);
+    // 카드 선택만 하고 탭은 변경하지 않음 (여러 개 추가 가능)
+    project.setSelectedIds([cardId]);
   };
 
   // --- 4. Input Handling (Keyboard) ---
@@ -325,7 +479,9 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         elements: project.elements,
         pages: project.pages
       };
-      storageService.saveProject(projectId, projectData, title);
+      const firstPageId = project.pages[0]?.id;
+      const previewElements = firstPageId ? project.elements.filter(el => el.pageId === firstPageId) : [];
+      storageService.saveProject(projectId, projectData, title, undefined, previewElements);
       setIsSaving(false);
     }, 1000); // Save after 1 second of inactivity
 
@@ -374,34 +530,36 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         onApplyEmotion={actions.handleApplyEmotion}
         onAddElementWithCaption={actions.handleAddImageWithCaption}
         onLogoClick={onBack}
+        onAddEmotionCard={handleAddEmotionCard}
+        onAddAACCard={handleAddAACCard}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col relative min-w-0">
 
         {/* Top Navigation Bar */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0 z-20 no-print">
-          <div className="flex items-center gap-4">
-            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-[#5500FF] transition-colors" title="대시보드로 돌아가기">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-2 sm:px-4 shrink-0 z-20 no-print gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-[#5500FF] transition-colors shrink-0" title="대시보드로 돌아가기">
               <Home className="w-5 h-5" />
             </button>
-            <div className="h-6 w-px bg-gray-200"></div>
-            <input value={title} onChange={e => setTitle(e.target.value)} className="font-bold text-gray-800 text-lg bg-transparent border border-transparent hover:border-gray-200 focus:border-[#5500FF] rounded px-2 py-1 outline-none transition-all w-64" />
-            <div className="flex items-center gap-2 text-xs text-gray-400 min-w-[80px]">
+            <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
+            <input value={title} onChange={e => setTitle(e.target.value)} className="font-bold text-gray-800 text-sm sm:text-lg bg-transparent border border-transparent hover:border-gray-200 focus:border-[#5500FF] rounded px-2 py-1 outline-none transition-all w-24 sm:w-40 md:w-64 min-w-0" />
+            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 min-w-[80px]">
               {isGuest ? (
-                <span className="text-orange-500 font-medium">게스트 모드 (저장 안 됨)</span>
+                <span className="text-orange-500 font-medium">게스트 모드</span>
               ) : (
                 isSaving ? <><Loader2 className="w-3 h-3 animate-spin" /> 저장 중...</> : <><Save className="w-3 h-3" /> 저장됨</>
               )}
             </div>
-            <div className="h-6 w-px bg-gray-200"></div>
-            <div className="flex gap-1">
+            <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
+            <div className="hidden md:flex gap-1">
               <button onClick={project.undo} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600" title="실행 취소 (Ctrl+Z)"><Undo2 className="w-4 h-4" /></button>
               <button onClick={project.redo} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600" title="다시 실행 (Ctrl+Shift+Z)"><Redo2 className="w-4 h-4" /></button>
             </div>
-            <div className="h-6 w-px bg-gray-200"></div>
+            <div className="h-6 w-px bg-gray-200 hidden lg:block"></div>
             {/* 페이지 방향 토글 */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="hidden lg:flex items-center gap-1 bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => project.updatePageOrientation(project.activePageId, 'portrait')}
                 className={`p-1.5 rounded-md transition-all flex items-center gap-1.5 text-xs font-medium ${project.getActivePageOrientation() === 'portrait'
@@ -411,7 +569,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
                 title="세로 방향"
               >
                 <Smartphone className="w-4 h-4" />
-                <span className="hidden lg:inline">세로</span>
+                <span className="hidden xl:inline">세로</span>
               </button>
               <button
                 onClick={() => project.updatePageOrientation(project.activePageId, 'landscape')}
@@ -422,15 +580,16 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
                 title="가로 방향"
               >
                 <Monitor className="w-4 h-4" />
-                <span className="hidden lg:inline">가로</span>
+                <span className="hidden xl:inline">가로</span>
               </button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => { if (window.confirm("현재 페이지의 요소를 초기화하시겠습니까?")) { project.deleteElements(project.elements.filter(e => e.pageId === project.activePageId).map(e => e.id)); } }} className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-500 rounded-lg"><Trash2 className="w-5 h-5" /></button>
-            <button onClick={printCanvas} className="p-2 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-lg"><Printer className="w-5 h-5" /></button>
-            <button onClick={actions.handleExport} disabled={actions.isExporting} className="bg-[#5500FF] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#4400cc] flex items-center gap-2 transition-all">
-              {actions.isExporting ? <Loader2 className="animate-spin w-4 h-4" /> : <Download className="w-4 h-4" />} 내보내기
+          <div className="flex gap-1 sm:gap-2 shrink-0">
+            <button onClick={() => { if (window.confirm("현재 페이지의 요소를 초기화하시겠습니까?")) { project.deleteElements(project.elements.filter(e => e.pageId === project.activePageId).map(e => e.id)); } }} className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-500 rounded-lg"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></button>
+            <button onClick={printCanvas} className="p-2 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-lg"><Printer className="w-4 h-4 sm:w-5 sm:h-5" /></button>
+            <button onClick={() => setShowExportModal(true)} className="bg-[#5500FF] text-white px-2 sm:px-4 py-2 rounded-lg font-medium hover:bg-[#4400cc] flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-sm">
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">내보내기</span>
             </button>
           </div>
         </header>
@@ -452,6 +611,31 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
             onSetSelectedIds={project.setSelectedIds}
             onSetEditingId={project.setEditingId}
             onSetActiveTab={setActiveTab}
+            onAddImageElement={(dataUrl) => {
+              const img = new Image();
+              img.onload = () => {
+                const maxSize = 400;
+                const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
+                const width = img.width * ratio;
+                const height = img.height * ratio;
+                const x = (800 - width) / 2;
+                const y = (1132 - height) / 2;
+                const newEl = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  type: 'image' as const,
+                  x, y, width, height,
+                  content: dataUrl,
+                  rotation: 0,
+                  zIndex: project.elements.length + 1,
+                  pageId: project.activePageId,
+                  borderRadius: 0,
+                };
+                project.updateElements([...project.elements, newEl]);
+                project.setSelectedIds([newEl.id]);
+                handleSaveAsset(dataUrl);
+              };
+              img.src = dataUrl;
+            }}
           />
         </div>
 
@@ -480,11 +664,32 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         elements={project.elements} selectedIds={project.selectedIds}
         onUpdate={(id, updates) => project.updateElement(id, updates, false)}
         onCommit={(id, updates) => project.updateElement(id, updates, true)}
+        onBatchUpdate={(updates) => project.updateMultipleElements(updates, false)}
+        onBatchCommit={(updates) => project.updateMultipleElements(updates, true)}
         onDelete={project.deleteElements} onDuplicate={project.duplicateElements}
         onBringForward={project.bringForward} onSendBackward={project.sendBackward}
         onBringToFront={project.bringToFront} onSendToBack={project.sendToBack}
         onAlign={project.alignSelected} onGenerateImage={handleGuestAiGen}
+        onUploadImage={handleUploadImage}
       />
+
+      {/* Hidden file input for image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <ExportModal
+          pages={project.pages}
+          projectTitle={title}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
     </div>
   );
 };

@@ -28,7 +28,8 @@ export const projectService = {
         if (isSupabaseConfigured() && supabase) {
             const { data, error } = await supabase
                 .from('projects')
-                .select('id, student_id, group_id, title, thumbnail, created_at, updated_at')
+                .select('id, student_id, group_id, title, thumbnail, preview_elements, created_at, updated_at')
+                .is('deleted_at', null)
                 .order('updated_at', { ascending: false });
 
             if (error) {
@@ -43,7 +44,8 @@ export const projectService = {
                 title: p.title,
                 thumbnail: p.thumbnail,
                 createdAt: new Date(p.created_at).getTime(),
-                updatedAt: new Date(p.updated_at).getTime()
+                updatedAt: new Date(p.updated_at).getTime(),
+                previewElements: p.preview_elements // Assuming snake_case in Supabase if implemented
             }));
         }
 
@@ -91,10 +93,14 @@ export const projectService = {
         const uniqueTitle = await getUniqueTitle(title);
 
         if (isSupabaseConfigured() && supabase) {
+            // Get current user for RLS
+            const { data: { user } } = await supabase.auth.getUser();
+
             const insertData: Record<string, unknown> = {
                 title: uniqueTitle,
                 elements: [],
-                pages: [{ id: 'page-1' }]
+                pages: [{ id: 'page-1' }],
+                user_id: user?.id // Required for RLS
             };
 
             if (isGroup && ownerId) {
@@ -141,7 +147,7 @@ export const projectService = {
         return id;
     },
 
-    saveProject: async (id: string, data: ProjectData, title?: string, thumbnail?: string): Promise<void> => {
+    saveProject: async (id: string, data: ProjectData, title?: string, thumbnail?: string, previewElements?: any[]): Promise<void> => {
         if (isSupabaseConfigured() && supabase) {
             const updateData: Record<string, unknown> = {
                 elements: data.elements,
@@ -155,6 +161,10 @@ export const projectService = {
 
             if (thumbnail) {
                 updateData.thumbnail = thumbnail;
+            }
+
+            if (previewElements) {
+                updateData.preview_elements = previewElements;
             }
 
             const { error } = await supabase.from('projects').update(updateData).eq('id', id);
@@ -189,7 +199,8 @@ export const projectService = {
                     ...p,
                     updatedAt: Date.now(),
                     title: newTitle,
-                    thumbnail: thumbnail || p.thumbnail
+                    thumbnail: thumbnail || p.thumbnail,
+                    previewElements: previewElements || p.previewElements // Save preview elements
                 };
             }
             return p;
@@ -199,7 +210,7 @@ export const projectService = {
 
     deleteProject: async (id: string): Promise<void> => {
         if (isSupabaseConfigured() && supabase) {
-            const { error } = await supabase.from('projects').delete().eq('id', id);
+            const { error } = await supabase.from('projects').update({ deleted_at: new Date().toISOString() }).eq('id', id);
             if (error) console.error("Failed to delete project", error);
             return;
         }

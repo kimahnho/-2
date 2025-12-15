@@ -85,17 +85,26 @@ const LoginRoute: React.FC = () => {
 };
 
 // Dashboard Route
-const DashboardRoute: React.FC<{ user: AuthUser | null; onLogin: () => void }> = ({ user, onLogin }) => {
+const DashboardRoute: React.FC<{ user: AuthUser | null; authLoading?: boolean; onLogin: () => void }> = ({ user, authLoading, onLogin }) => {
     const navigate = useNavigate();
     const [currentStudent, setCurrentStudent] = useState<StudentProfile | null>(null);
     const [currentGroup, setCurrentGroup] = useState<StudentGroup | null>(null);
 
-    // Redirect if not logged in
+    // Redirect if not logged in (only after auth check completes)
     useEffect(() => {
-        if (!user) {
+        if (!authLoading && !user) {
             navigate('/');
         }
-    }, [user, navigate]);
+    }, [user, authLoading, navigate]);
+
+    // Show loading while checking auth
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5500FF]"></div>
+            </div>
+        );
+    }
 
     if (!user) return null;
 
@@ -233,11 +242,16 @@ const TemplatesRoute: React.FC<{ user: AuthUser | null; onLogin: () => void }> =
 // Main App Router
 export const AppRouter: React.FC = () => {
     const [user, setUser] = useState<AuthUser | null>(null);
+    const [authLoading, setAuthLoading] = useState(true);
 
     useEffect(() => {
-        authService.getCurrentUser().then(setUser);
+        authService.getCurrentUser().then(u => {
+            setUser(u);
+            setAuthLoading(false);
+        });
         const { data: { subscription } } = authService.onAuthStateChange((_event, session) => {
             setUser(session);
+            setAuthLoading(false);
         });
         return () => subscription.unsubscribe();
     }, []);
@@ -252,7 +266,7 @@ export const AppRouter: React.FC = () => {
             <Routes>
                 <Route path="/" element={<LandingRoute user={user} onLogin={handleLogin} />} />
                 <Route path="/login" element={<LoginRoute />} />
-                <Route path="/dashboard" element={<DashboardRoute user={user} onLogin={handleLogin} />} />
+                <Route path="/dashboard" element={<DashboardRoute user={user} authLoading={authLoading} onLogin={handleLogin} />} />
                 <Route path="/editor/:projectId" element={<EditorRoute user={user} />} />
                 <Route path="/pricing" element={<PricingRoute user={user} onLogin={handleLogin} />} />
                 <Route path="/templates" element={<TemplatesRoute user={user} onLogin={handleLogin} />} />

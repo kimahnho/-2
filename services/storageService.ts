@@ -34,6 +34,9 @@ export const storageService = {
   createStudent: (name: string, birthYear?: string, notes?: string): Promise<StudentProfile> =>
     studentService.createStudent(name, birthYear, notes),
 
+  updateStudent: (id: string, updates: Partial<Omit<StudentProfile, 'id' | 'createdAt'>>): Promise<void> =>
+    studentService.updateStudent(id, updates),
+
   /**
    * Deletes a student and handles cross-domain cleanup:
    * - Removes from all groups
@@ -59,6 +62,9 @@ export const storageService = {
 
   createGroup: (name: string, studentIds: string[], description?: string): Promise<StudentGroup> =>
     groupService.createGroup(name, studentIds, description),
+
+  updateGroup: (id: string, updates: Partial<Omit<StudentGroup, 'id' | 'createdAt'>>): Promise<void> =>
+    groupService.updateGroup(id, updates),
 
   /**
    * Deletes a group and handles cross-domain cleanup:
@@ -96,8 +102,8 @@ export const storageService = {
   createProject: (title?: string, ownerId?: string, isGroup?: boolean): Promise<string> =>
     projectService.createProject(title, ownerId, isGroup),
 
-  saveProject: (id: string, data: ProjectData, title?: string, thumbnail?: string): Promise<void> =>
-    projectService.saveProject(id, data, title, thumbnail),
+  saveProject: (id: string, data: ProjectData, title?: string, thumbnail?: string, previewElements?: any[]): Promise<void> =>
+    projectService.saveProject(id, data, title, thumbnail, previewElements),
 
   deleteProject: (id: string): Promise<void> => projectService.deleteProject(id),
 };

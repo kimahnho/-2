@@ -13,6 +13,7 @@ export const studentService = {
             const { data, error } = await supabase
                 .from('students')
                 .select('*')
+                .is('deleted_at', null)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -48,13 +49,17 @@ export const studentService = {
         const yearNum = birthYear ? parseInt(birthYear) : undefined;
 
         if (isSupabaseConfigured() && supabase) {
+            // Get current user for RLS
+            const { data: { user } } = await supabase.auth.getUser();
+
             const { data, error } = await supabase
                 .from('students')
                 .insert({
                     name,
                     birth_year: yearNum,
                     notes,
-                    avatar_color: randomColor
+                    avatar_color: randomColor,
+                    user_id: user?.id // Required for RLS
                 })
                 .select()
                 .single();
@@ -94,7 +99,7 @@ export const studentService = {
         // Note: Cross-service dependencies (groups, schedule, projects) 
         // are handled by storageService for backward compatibility
         if (isSupabaseConfigured() && supabase) {
-            const { error } = await supabase.from('students').delete().eq('id', id);
+            const { error } = await supabase.from('students').update({ deleted_at: new Date().toISOString() }).eq('id', id);
             if (error) console.error("Failed to delete student", error);
             return;
         }
