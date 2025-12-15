@@ -18,7 +18,7 @@
 | XSS (교차 사이트 스크립팅) | ✅ 보호됨 | - |
 | CSRF | ✅ 구현됨 | - |
 | 입력 검증 | ✅ 구현됨 | - |
-| 환경 변수 관리 | ⚠️ 개선 필요 | 중간 |
+| 환경 변수 관리 | ✅ 안전 | - |
 | HTTPS | ✅ Vercel 기본 제공 | - |
 
 ---
@@ -41,16 +41,23 @@
 
 ## 2. CORS (교차 출처 리소스 공유)
 
-### 상태: ⚠️ 개선 필요
+### 상태: ✅ 구현됨
 
-**현재 설정:**
+**구현 내용:**
 ```typescript
-res.setHeader('Access-Control-Allow-Origin', '*');
+const ALLOWED_ORIGINS = [
+    'https://muru-worksheet.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+];
+if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+}
 ```
 
-**문제점:**
-- 모든 출처(`*`)에서 API 접근 허용
-- 악의적인 웹사이트에서 API 남용 가능
+**보안 효과:**
+- 허용된 출처만 API 접근 가능
+- CSRF 보호도 함께 적용 (Origin/Referer 검증)
 
 **권장 조치:**
 ```typescript
@@ -72,17 +79,19 @@ if (origin && allowedOrigins.includes(origin)) {
 
 ## 3. Rate Limiting (요청 속도 제한)
 
-### 상태: ❌ 미구현
+### 상태: ✅ 구현됨
 
-**문제점:**
-- API 엔드포인트에 요청 제한 없음
-- DDoS 공격 또는 API 남용에 취약
-- Gemini API 비용 폭증 위험
+**구현 내용:**
+```typescript
+// api/rateLimit.ts - IP 기반 요청 제한
+const RATE_LIMIT_CONFIG = { windowMs: 60000, maxRequests: 10 }; // 이미지
+const RATE_LIMIT_CONFIG = { windowMs: 60000, maxRequests: 20 }; // 텍스트
+```
 
-**권장 조치:**
-- Vercel Edge Functions에서 `@upstash/ratelimit` 사용
-- IP 또는 사용자 ID 기반 속도 제한 구현
-- 예: 분당 10회, 일당 100회 제한
+**보안 효과:**
+- IP 기반 분당 요청 제한 (이미지 10회, 텍스트 20회)
+- 429 Too Many Requests 응답 + Retry-After 헤더
+- X-RateLimit 헤더로 클라이언트에 제한 정보 제공
 
 ---
 
@@ -142,29 +151,30 @@ if (origin && allowedOrigins.includes(origin)) {
 
 ## 8. 입력 검증
 
-### 상태: ⚠️ 개선 필요
+### 상태: ✅ 구현됨
 
-**문제점:**
-- API 엔드포인트에서 입력 검증 부재
-- `prompt` 필드 길이 제한 없음
-- `type`, `style` 필드 유효값 검증 없음
-
-**예시 (현재):**
+**구현 내용:**
 ```typescript
-const body: GenerateImageRequest = req.body;
-const { prompt, style = 'character' } = body;
-// 검증 없이 바로 사용
-```
+// generate-image.ts
+const VALID_STYLES = ['character', 'realistic', 'emoji'];
+const VALID_TYPES = ['therapy-image', 'character-emotion'];
+const MAX_PROMPT_LENGTH = 1000;
 
-**권장 조치:**
-```typescript
-if (!prompt || prompt.length > 1000) {
-    return res.status(400).json({ error: 'Invalid prompt' });
+if (!type || !VALID_TYPES.includes(type)) {
+    return res.status(400).json({ error: 'Invalid type' });
 }
-if (!['character', 'realistic', 'emoji'].includes(style)) {
+if (!VALID_STYLES.includes(style)) {
     return res.status(400).json({ error: 'Invalid style' });
 }
+if (prompt.length > MAX_PROMPT_LENGTH) {
+    return res.status(400).json({ error: 'Prompt too long' });
+}
 ```
+
+**보안 효과:**
+- 유효한 type, style 값만 허용
+- prompt/topic 길이 제한 (1000자/500자)
+- 필수 필드 누락 시 400 에러
 
 **관련 파일:**
 - `api/generate-image.ts`
@@ -220,20 +230,25 @@ customer_key: customerKey
 
 ## 우선순위별 권장 조치
 
-### 높음 (즉시 조치 필요)
-1. **Rate Limiting 구현** - API 남용 방지
-2. **입력 검증 추가** - API 엔드포인트 보호
+### 완료됨 ✅
+1. ~~**Rate Limiting 구현**~~ - IP 기반 분당 제한 적용
+2. ~~**입력 검증 추가**~~ - type, style, prompt 길이 검증
+3. ~~**CORS 제한**~~ - ALLOWED_ORIGINS 화이트리스트 적용
+4. ~~**CSRF 보호**~~ - Origin/Referer 검증 적용
 
-### 중간 (조속히 조치 권장)
-3. **CORS 제한** - 허용된 출처만 접근
-4. **Tailwind 빌드 포함** - CDN 의존성 제거
-
-### 낮음 (장기 개선)
-5. **결제 키 암호화** - 추가 보안 레이어
-6. **CSRF 토큰** - 민감한 작업에 적용
+### 장기 개선 (선택)
+5. **Tailwind 빌드 포함** - CDN 의존성 제거
+6. **결제 키 암호화** - 추가 보안 레이어
 
 ---
 
 ## 결론
 
-MURU.AI 서비스는 **API 키 보호**, **RLS**, **XSS 방지** 등 핵심 보안이 잘 구현되어 있습니다. 그러나 **Rate Limiting**, **CORS 제한**, **입력 검증** 부분에서 개선이 필요합니다. 권장 조치를 적용하면 프로덕션 수준의 보안을 달성할 수 있습니다.
+MURU.AI 서비스는 **프로덕션 수준의 보안**을 달성했습니다:
+- ✅ API 키 보호 (서버 사이드만)
+- ✅ RLS 정책 (사용자별 데이터 격리)
+- ✅ Rate Limiting (분당 요청 제한)
+- ✅ CORS + CSRF 보호
+- ✅ 입력 검증 (type, style, 길이)
+- ✅ SQL Injection, XSS 방지
+
