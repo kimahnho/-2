@@ -46,43 +46,38 @@ export const adminService = {
     },
 
     /**
-     * 모든 제출된 자료 조회 (관리자 전용)
+     * 모든 프로젝트 조회 (관리자 전용)
+     * projects 테이블에서 모든 사용자의 프로젝트를 가져옴
      */
-    getAllResources: async (status?: string): Promise<AdminResource[]> => {
+    getAllProjects: async (): Promise<AdminResource[]> => {
         if (!isSupabaseConfigured() || !supabase) {
             return [];
         }
 
-        let query = supabase
-            .from('admin_resources')
-            .select('*')
-            .order('submitted_at', { ascending: false });
-
-        if (status) {
-            query = query.eq('status', status);
-        }
-
-        const { data, error } = await query;
+        const { data, error } = await supabase
+            .from('projects')
+            .select('id, title, thumbnail, preview_elements, user_id, created_at, updated_at')
+            .is('deleted_at', null)
+            .order('updated_at', { ascending: false });
 
         if (error) {
-            console.error('Failed to fetch admin resources:', error);
+            console.error('Failed to fetch all projects:', error);
             return [];
         }
 
-        return (data || []).map(r => ({
-            id: r.id,
-            title: r.title,
-            elements: r.elements || [],
-            pages: r.pages || [],
-            thumbnail: r.thumbnail,
-            previewElements: r.preview_elements,
-            submittedBy: r.submitted_by,
-            submittedAt: r.submitted_at,
-            originalProjectId: r.original_project_id,
-            status: r.status,
-            adminNotes: r.admin_notes,
-            reviewedBy: r.reviewed_by,
-            reviewedAt: r.reviewed_at
+        return (data || []).map(p => ({
+            id: p.id,
+            title: p.title,
+            elements: [],
+            pages: [],
+            thumbnail: p.thumbnail,
+            previewElements: p.preview_elements,
+            submittedBy: p.user_id,
+            submittedAt: p.created_at,
+            status: 'approved' as const,
+            adminNotes: undefined,
+            reviewedBy: undefined,
+            reviewedAt: undefined
         }));
     },
 
