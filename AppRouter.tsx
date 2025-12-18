@@ -15,6 +15,7 @@ import { TemplatesPage } from './components/templates/TemplatesPage';
 import { storageService } from './services/storageService';
 import { authService, type AuthUser } from './services';
 import { ProjectData, StudentProfile, StudentGroup } from './types';
+import { AdminPanel } from './components/admin/AdminPanel';
 
 // Layout wrapper with Header
 const MainLayout: React.FC<{ children: React.ReactNode; user: AuthUser | null; onLogin: () => void }> = ({ children, user, onLogin }) => (
@@ -270,6 +271,7 @@ export const AppRouter: React.FC = () => {
                 <Route path="/editor/:projectId" element={<EditorRoute user={user} />} />
                 <Route path="/pricing" element={<PricingRoute user={user} onLogin={handleLogin} />} />
                 <Route path="/templates" element={<TemplatesRoute user={user} onLogin={handleLogin} />} />
+                <Route path="/admin" element={<AdminPanel />} />
             </Routes>
         </BrowserRouter>
     );
