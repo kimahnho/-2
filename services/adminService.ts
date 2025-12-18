@@ -82,6 +82,96 @@ export const adminService = {
     },
 
     /**
+     * 유저별 프로젝트 수 조회
+     */
+    getProjectCountByUser: async (): Promise<{ userId: string; count: number }[]> => {
+        if (!isSupabaseConfigured() || !supabase) {
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('projects')
+            .select('user_id')
+            .is('deleted_at', null);
+
+        if (error) {
+            console.error('Failed to fetch project counts:', error);
+            return [];
+        }
+
+        // Group by user_id and count
+        const counts = (data || []).reduce((acc, p) => {
+            if (p.user_id) {
+                acc[p.user_id] = (acc[p.user_id] || 0) + 1;
+            }
+            return acc;
+        }, {} as Record<string, number>);
+
+        return Object.entries(counts).map(([userId, count]) => ({ userId, count }));
+    },
+
+    /**
+     * 특정 유저의 프로젝트만 조회
+     */
+    getProjectsByUser: async (userId: string): Promise<AdminResource[]> => {
+        if (!isSupabaseConfigured() || !supabase) {
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('projects')
+            .select('id, title, thumbnail, preview_elements, user_id, created_at, updated_at')
+            .eq('user_id', userId)
+            .is('deleted_at', null)
+            .order('updated_at', { ascending: false });
+
+        if (error) {
+            console.error('Failed to fetch user projects:', error);
+            return [];
+        }
+
+        return (data || []).map(p => ({
+            id: p.id,
+            title: p.title,
+            elements: [],
+            pages: [],
+            thumbnail: p.thumbnail,
+            previewElements: p.preview_elements,
+            submittedBy: p.user_id,
+            submittedAt: p.created_at,
+            status: 'approved' as const,
+            adminNotes: undefined,
+            reviewedBy: undefined,
+            reviewedAt: undefined
+        }));
+    },
+
+    /**
+     * 프로젝트 상세 데이터 조회 (다운로드용)
+     */
+    getProjectData: async (projectId: string): Promise<{ elements: any[]; pages: any[] } | null> => {
+        if (!isSupabaseConfigured() || !supabase) {
+            return null;
+        }
+
+        const { data, error } = await supabase
+            .from('projects')
+            .select('elements, pages')
+            .eq('id', projectId)
+            .single();
+
+        if (error) {
+            console.error('Failed to fetch project data:', error);
+            return null;
+        }
+
+        return {
+            elements: data?.elements || [],
+            pages: data?.pages || []
+        };
+    },
+
+    /**
      * 내가 제출한 자료 조회 (일반 사용자)
      */
     getMySubmissions: async (): Promise<AdminResource[]> => {
