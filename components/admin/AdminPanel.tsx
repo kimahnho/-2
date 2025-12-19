@@ -7,11 +7,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminService, AdminResource } from '../../services/adminService';
-import { Shield, Download, ArrowLeft, FileText, Calendar, Users, ChevronRight, ArrowUp } from 'lucide-react';
+import { Shield, Download, ArrowLeft, FileText, Calendar, Users, ChevronRight, Mail } from 'lucide-react';
 
-interface UserGroup {
+interface UserInfo {
     userId: string;
-    count: number;
+    email: string;
+    displayName: string;
+    avatarUrl?: string;
+    provider: string;
+    projectCount: number;
 }
 
 type ViewMode = 'users' | 'projects';
@@ -23,10 +27,10 @@ export const AdminPanel: React.FC = () => {
     const [viewMode, setViewMode] = useState<ViewMode>('users');
 
     // 유저 목록
-    const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
+    const [users, setUsers] = useState<UserInfo[]>([]);
+    const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
 
     // 선택된 유저의 프로젝트
-    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [projects, setProjects] = useState<AdminResource[]>([]);
 
     // 선택된 프로젝트 (미리보기용)
@@ -49,28 +53,28 @@ export const AdminPanel: React.FC = () => {
     // 유저 목록 로드
     useEffect(() => {
         if (!isAdmin) return;
-        loadUserGroups();
+        loadUsers();
     }, [isAdmin]);
 
-    const loadUserGroups = async () => {
-        const data = await adminService.getProjectCountByUser();
-        setUserGroups(data.sort((a, b) => b.count - a.count));
+    const loadUsers = async () => {
+        const data = await adminService.getUsersWithProjects();
+        setUsers(data.sort((a, b) => b.projectCount - a.projectCount));
     };
 
-    const handleSelectUser = async (userId: string) => {
-        setSelectedUserId(userId);
+    const handleSelectUser = async (user: UserInfo) => {
+        setSelectedUser(user);
         setViewMode('projects');
-        const data = await adminService.getProjectsByUser(userId);
+        const data = await adminService.getProjectsByUser(user.userId);
         setProjects(data);
     };
 
     const handleBackToUsers = () => {
         setViewMode('users');
-        setSelectedUserId(null);
+        setSelectedUser(null);
         setProjects([]);
     };
 
-    // PDF/이미지 다운로드 (썸네일 다운로드)
+    // 이미지 다운로드
     const handleDownloadThumbnail = async (project: AdminResource) => {
         if (!project.thumbnail) {
             alert('미리보기 이미지가 없습니다.');
@@ -129,6 +133,25 @@ export const AdminPanel: React.FC = () => {
         }
     };
 
+    // 프로바이더 배지
+    const getProviderBadge = (provider: string) => {
+        const colors: Record<string, string> = {
+            'kakao': 'bg-yellow-100 text-yellow-800',
+            'google': 'bg-blue-100 text-blue-800',
+            'email': 'bg-gray-100 text-gray-800',
+        };
+        const names: Record<string, string> = {
+            'kakao': '카카오',
+            'google': '구글',
+            'email': '이메일',
+        };
+        return (
+            <span className={`text-xs px-2 py-0.5 rounded-full ${colors[provider] || 'bg-gray-100 text-gray-600'}`}>
+                {names[provider] || provider}
+            </span>
+        );
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -163,13 +186,18 @@ export const AdminPanel: React.FC = () => {
                             </button>
                         )}
                         <Shield className="w-6 h-6 text-[#5500FF]" />
-                        <h1 className="text-xl font-bold text-gray-800">
-                            {viewMode === 'users' ? '관리자 패널' : '유저 자료 열람'}
-                        </h1>
+                        <div>
+                            <h1 className="text-xl font-bold text-gray-800">
+                                {viewMode === 'users' ? '관리자 패널' : selectedUser?.displayName || '유저 자료'}
+                            </h1>
+                            {viewMode === 'projects' && selectedUser?.email && (
+                                <p className="text-xs text-gray-500">{selectedUser.email}</p>
+                            )}
+                        </div>
                     </div>
                     <div className="text-sm text-gray-500">
                         {viewMode === 'users'
-                            ? `총 ${userGroups.length}명의 유저`
+                            ? `총 ${users.length}명의 유저`
                             : `${projects.length}개 프로젝트`
                         }
                     </div>
@@ -180,33 +208,52 @@ export const AdminPanel: React.FC = () => {
                 {/* User List View */}
                 {viewMode === 'users' && (
                     <>
-                        {userGroups.length === 0 ? (
+                        {users.length === 0 ? (
                             <div className="bg-white rounded-xl p-12 text-center text-gray-500">
                                 <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
                                 <p>등록된 유저가 없습니다.</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {userGroups.map((group) => (
+                                {users.map((user) => (
                                     <div
-                                        key={group.userId}
-                                        onClick={() => handleSelectUser(group.userId)}
+                                        key={user.userId}
+                                        onClick={() => handleSelectUser(user)}
                                         className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex items-center justify-between"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-[#5500FF] to-[#8855FF] rounded-full flex items-center justify-center text-white font-bold">
-                                                {group.userId.slice(0, 2).toUpperCase()}
-                                            </div>
+                                            {/* Avatar */}
+                                            {user.avatarUrl ? (
+                                                <img
+                                                    src={user.avatarUrl}
+                                                    alt={user.displayName}
+                                                    className="w-12 h-12 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-12 h-12 bg-gradient-to-br from-[#5500FF] to-[#8855FF] rounded-full flex items-center justify-center text-white font-bold">
+                                                    {user.displayName.slice(0, 2).toUpperCase()}
+                                                </div>
+                                            )}
                                             <div>
-                                                <p className="font-medium text-gray-800">
-                                                    유저 ID: {group.userId.slice(0, 8)}...
-                                                </p>
-                                                <p className="text-sm text-gray-500">
-                                                    프로젝트 {group.count}개
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium text-gray-800">
+                                                        {user.displayName}
+                                                    </p>
+                                                    {getProviderBadge(user.provider)}
+                                                </div>
+                                                <p className="text-sm text-gray-500 flex items-center gap-1">
+                                                    <Mail className="w-3 h-3" />
+                                                    {user.email || '이메일 없음'}
                                                 </p>
                                             </div>
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-right">
+                                                <p className="text-lg font-bold text-[#5500FF]">{user.projectCount}</p>
+                                                <p className="text-xs text-gray-500">프로젝트</p>
+                                            </div>
+                                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                                        </div>
                                     </div>
                                 ))}
                             </div>

@@ -82,9 +82,50 @@ export const adminService = {
     },
 
     /**
-     * 유저별 프로젝트 수 조회
+     * 모든 유저 정보와 프로젝트 수 조회 (관리자 전용)
+     * SQL 함수 get_all_users_with_projects 호출
      */
-    getProjectCountByUser: async (): Promise<{ userId: string; count: number }[]> => {
+    getUsersWithProjects: async (): Promise<{
+        userId: string;
+        email: string;
+        displayName: string;
+        avatarUrl?: string;
+        provider: string;
+        projectCount: number;
+    }[]> => {
+        if (!isSupabaseConfigured() || !supabase) {
+            return [];
+        }
+
+        const { data, error } = await supabase.rpc('get_all_users_with_projects');
+
+        if (error) {
+            console.error('Failed to fetch users with projects:', error);
+            // Fallback: 기존 방식 사용
+            return adminService.getProjectCountByUserFallback();
+        }
+
+        return (data || []).map((u: any) => ({
+            userId: u.user_id,
+            email: u.email || '',
+            displayName: u.display_name || u.email?.split('@')[0] || 'Unknown',
+            avatarUrl: u.avatar_url,
+            provider: u.provider || 'email',
+            projectCount: Number(u.project_count) || 0
+        }));
+    },
+
+    /**
+     * 폴백: SQL 함수가 없을 경우 기존 방식 사용
+     */
+    getProjectCountByUserFallback: async (): Promise<{
+        userId: string;
+        email: string;
+        displayName: string;
+        avatarUrl?: string;
+        provider: string;
+        projectCount: number;
+    }[]> => {
         if (!isSupabaseConfigured() || !supabase) {
             return [];
         }
@@ -99,7 +140,6 @@ export const adminService = {
             return [];
         }
 
-        // Group by user_id and count
         const counts = (data || []).reduce((acc, p) => {
             if (p.user_id) {
                 acc[p.user_id] = (acc[p.user_id] || 0) + 1;
@@ -107,7 +147,13 @@ export const adminService = {
             return acc;
         }, {} as Record<string, number>);
 
-        return Object.entries(counts).map(([userId, count]) => ({ userId, count }));
+        return Object.entries(counts).map(([userId, count]) => ({
+            userId,
+            email: '',
+            displayName: userId.slice(0, 8) + '...',
+            provider: 'unknown',
+            projectCount: count
+        }));
     },
 
     /**
