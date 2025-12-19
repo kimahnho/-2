@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService, AuthUser } from '../../services';
+import { adminService } from '../../services/adminService';
 import { SubscriptionBadge } from './SubscriptionBadge';
 
 interface HeaderProps {
@@ -11,7 +12,17 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Check admin status
+    useEffect(() => {
+        if (user) {
+            adminService.isAdmin().then(setIsAdmin);
+        } else {
+            setIsAdmin(false);
+        }
+    }, [user]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -102,9 +113,42 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogin }) => {
                                     boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                                     border: '1px solid #e5e7eb',
                                     padding: '8px',
-                                    minWidth: '150px',
+                                    minWidth: '160px',
                                     zIndex: 9999
                                 }}>
+                                    {/* Admin Button - Only visible to admins */}
+                                    {isAdmin && (
+                                        <button
+                                            onClick={() => {
+                                                navigate('/admin');
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                background: 'none',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                fontSize: '14px',
+                                                color: '#5500FF',
+                                                cursor: 'pointer',
+                                                textAlign: 'left',
+                                                fontWeight: '600',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}
+                                            onMouseOver={(e) => e.currentTarget.style.background = '#f3f0ff'}
+                                            onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                                        >
+                                            🛡️ 관리자 페이지
+                                        </button>
+                                    )}
+
+                                    {isAdmin && (
+                                        <div style={{ height: '1px', background: '#e5e7eb', margin: '4px 0' }} />
+                                    )}
+
                                     <button
                                         onClick={handleSignOut}
                                         style={{

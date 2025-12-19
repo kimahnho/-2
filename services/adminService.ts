@@ -357,12 +357,82 @@ export const adminService = {
             return null;
         }
 
-        // Note: This requires admin or service role access
-        // For now, just return the userId
         return {
             id: userId,
             email: undefined,
             name: undefined
         };
+    },
+
+    /**
+     * 모든 학습자 조회 (관리자 전용)
+     */
+    getAllStudents: async (): Promise<{
+        id: string;
+        name: string;
+        birthYear?: number;
+        notes?: string;
+        userId: string;
+        createdAt: string;
+    }[]> => {
+        if (!isSupabaseConfigured() || !supabase) {
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Failed to fetch all students:', error);
+            return [];
+        }
+
+        return (data || []).map(s => ({
+            id: s.id,
+            name: s.name,
+            birthYear: s.birth_year,
+            notes: s.notes,
+            userId: s.user_id,
+            createdAt: s.created_at
+        }));
+    },
+
+    /**
+     * 모든 그룹 조회 (관리자 전용)
+     */
+    getAllGroups: async (): Promise<{
+        id: string;
+        name: string;
+        description?: string;
+        memberCount?: number;
+        userId: string;
+        createdAt: string;
+    }[]> => {
+        if (!isSupabaseConfigured() || !supabase) {
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('groups')
+            .select('*')
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Failed to fetch all groups:', error);
+            return [];
+        }
+
+        return (data || []).map(g => ({
+            id: g.id,
+            name: g.name,
+            description: g.description,
+            memberCount: g.member_count,
+            userId: g.user_id,
+            createdAt: g.created_at
+        }));
     }
 };
