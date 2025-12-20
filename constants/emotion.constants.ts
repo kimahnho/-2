@@ -4,85 +4,104 @@
  * @module constants/emotion
  * 
  * 이미지 소스:
- * - Cloudinary 커스텀 이미지 (우선)
- * - Twemoji (CC-BY 4.0) - 출처 표기만 필요, 상업적 사용 가능
- *   https://github.com/twitter/twemoji
+ * - Cloudinary 커스텀 이미지 (스타일별)
+ * - Twemoji (CC-BY 4.0) - fallback
  * 
- * Cloudinary 폴더: muru-cards/emotion-cards/
- * 파일명 규칙: {label}.png (예: 기뻐요.png)
+ * Cloudinary 폴더 구조:
+ * muru-cards/emotion-cards/
+ * ├── photo/       (실제 사진)
+ * ├── illustration/ (그림)
+ * └── line-drawing/ (선그림)
  */
 
 // Cloudinary 설정
 const CLOUDINARY_CLOUD_NAME = 'dabbfycew';
-const CLOUDINARY_FOLDER = 'muru-cards/emotion-cards';
+const CLOUDINARY_BASE_FOLDER = 'muru-cards/emotion-cards';
 
 /**
- * Cloudinary URL 생성
+ * 카드 스타일 타입
+ */
+export type CardStyle = 'photo' | 'illustration' | 'line-drawing';
+
+/**
+ * 스타일 옵션 (UI 표시용)
+ */
+export const CARD_STYLES: { id: CardStyle; name: string; icon: string }[] = [
+    { id: 'photo', name: '실제 사진', icon: '📷' },
+    { id: 'illustration', name: '그림', icon: '🎨' },
+    { id: 'line-drawing', name: '선그림', icon: '✏️' },
+];
+
+/**
+ * 스타일별 Cloudinary URL 생성
+ * @param style 카드 스타일
  * @param label 감정 라벨 (파일명으로 사용)
  */
-const getCloudinaryUrl = (label: string): string => {
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_FOLDER}/${encodeURIComponent(label)}`;
+const getCloudinaryUrl = (style: CardStyle, label: string): string => {
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${encodeURIComponent(label)}.png`;
 };
 
 /**
- * Twemoji URL 생성 (CC-BY 4.0 - 출처 표기만 필요, 상업적 사용 가능)
- * @param emojiCode 이모지 코드 (예: '1f604' for 😄)
+ * Twemoji URL 생성 (CC-BY 4.0 - fallback)
+ * @param emojiCode 이모지 코드
  */
 const getTwemojiUrl = (emojiCode: string): string => {
-    // Twemoji CDN (SVG)
     return `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/${emojiCode}.svg`;
 };
 
 /**
  * 감정 카드 정의
- * - cloudinaryUrl: Cloudinary에 업로드된 커스텀 이미지 (없으면 fallback 사용)
- * - fallbackUrl: Twemoji (CC-BY 4.0, 상업적 사용 가능, 출처 표기 필요)
  */
 const EMOTION_CARD_DEFINITIONS = [
-    { label: "기뻐요", emoji: "1f604", cloudinaryFile: "기뻐요.png" },       // 😄
-    { label: "슬퍼요", emoji: "1f622", cloudinaryFile: "슬퍼요.png" },       // 😢
-    { label: "화나요", emoji: "1f621", cloudinaryFile: "화나요.png" },       // 😡
-    { label: "놀라워요", emoji: "1f632", cloudinaryFile: "놀라워요.png" },   // 😲
-    { label: "싫어요", emoji: "1f44e", cloudinaryFile: "싫어요.png" },       // 👎
-    { label: "무서워요", emoji: "1f628", cloudinaryFile: "무서워요.png" },   // 😨
-    { label: "헷갈려요", emoji: "1f615", cloudinaryFile: "헷갈려요.png" },   // 😕
-    { label: "신나요", emoji: "1f929", cloudinaryFile: "신나요.png" },       // 🤩
-    { label: "힘들어요", emoji: "1f62b", cloudinaryFile: "힘들어요.png" },   // 😫
-    { label: "아쉬워요", emoji: "1f61e", cloudinaryFile: "아쉬워요.png" },   // 😞
-    { label: "짜증나요", emoji: "1f624", cloudinaryFile: "짜증나요.png" },   // 😤
-    { label: "아파요", emoji: "1f912", cloudinaryFile: "아파요.png" },       // 🤒
-    { label: "심심해요", emoji: "1f971", cloudinaryFile: "심심해요.png" },   // 🥱
-    { label: "사랑해요", emoji: "1f970", cloudinaryFile: "사랑해요.png" },   // 🥰
-    { label: "좋아요", emoji: "1f44d", cloudinaryFile: "좋아요.png" },       // 👍
-    { label: "기다려요", emoji: "23f3", cloudinaryFile: "기다려요.png" },    // ⏳
-    { label: "도와주세요", emoji: "1f198", cloudinaryFile: "도와주세요.png" }, // 🆘
-    { label: "궁금해요", emoji: "1f914", cloudinaryFile: "궁금해요.png" },   // 🤔
-    { label: "잘 모르겠어요", emoji: "1f937", cloudinaryFile: "잘 모르겠어요.png" }, // 🤷
-    { label: "피곤해요", emoji: "1f634", cloudinaryFile: "피곤해요.png" },   // 😴
+    { id: 'happy', label: "기뻐요", emoji: "1f604" },
+    { id: 'sad', label: "슬퍼요", emoji: "1f622" },
+    { id: 'angry', label: "화나요", emoji: "1f621" },
+    { id: 'surprised', label: "놀라워요", emoji: "1f632" },
+    { id: 'dislike', label: "싫어요", emoji: "1f44e" },
+    { id: 'scared', label: "무서워요", emoji: "1f628" },
+    { id: 'confused', label: "헷갈려요", emoji: "1f615" },
+    { id: 'excited', label: "신나요", emoji: "1f929" },
+    { id: 'exhausted', label: "힘들어요", emoji: "1f62b" },
+    { id: 'disappointed', label: "아쉬워요", emoji: "1f61e" },
+    { id: 'annoyed', label: "짜증나요", emoji: "1f624" },
+    { id: 'sick', label: "아파요", emoji: "1f912" },
+    { id: 'bored', label: "심심해요", emoji: "1f971" },
+    { id: 'love', label: "사랑해요", emoji: "1f970" },
+    { id: 'like', label: "좋아요", emoji: "1f44d" },
+    { id: 'waiting', label: "기다려요", emoji: "23f3" },
+    { id: 'help', label: "도와주세요", emoji: "1f198" },
+    { id: 'curious', label: "궁금해요", emoji: "1f914" },
+    { id: 'uncertain', label: "잘 모르겠어요", emoji: "1f937" },
+    { id: 'sleepy', label: "피곤해요", emoji: "1f634" },
 ];
 
 /**
- * EMOTION_CARDS - Cloudinary URL 우선, Twemoji fallback
- * 
- * 라이선스: Twemoji (CC-BY 4.0)
- * - 상업적 사용 가능
- * - 출처 표기 필요: "Twemoji by Twitter, CC-BY 4.0"
+ * 스타일별 감정 카드 URL 가져오기
+ * @param style 카드 스타일
  */
-export const EMOTION_CARDS = EMOTION_CARD_DEFINITIONS.map(def => ({
-    label: def.label,
-    // Cloudinary URL (이미지 업로드 후 사용됨)
-    url: getCloudinaryUrl(def.cloudinaryFile),
-    // Fallback URL - Twemoji (CC-BY 4.0)
-    fallbackUrl: getTwemojiUrl(def.emoji),
-}));
+export const getEmotionCardsByStyle = (style: CardStyle) => {
+    return EMOTION_CARD_DEFINITIONS.map(def => ({
+        id: def.id,
+        label: def.label,
+        url: getCloudinaryUrl(style, def.label),
+        fallbackUrl: getTwemojiUrl(def.emoji),
+    }));
+};
 
 /**
- * Cloudinary 감정 카드가 준비되었는지 확인
- * (첫 번째 이미지 로드 가능 여부로 판단)
+ * 기본 감정 카드 (Twemoji fallback 포함)
+ * 하위 호환성을 위해 유지
  */
-export const checkEmotionCardsReady = async (): Promise<boolean> => {
+export const EMOTION_CARDS = getEmotionCardsByStyle('illustration');
+
+/**
+ * Cloudinary 이미지가 준비되었는지 확인
+ * @param style 확인할 스타일
+ */
+export const checkEmotionCardsReady = async (style: CardStyle = 'illustration'): Promise<boolean> => {
     try {
-        const response = await fetch(EMOTION_CARDS[0].url, { method: 'HEAD' });
+        const cards = getEmotionCardsByStyle(style);
+        const response = await fetch(cards[0].url, { method: 'HEAD' });
         return response.ok;
     } catch {
         return false;
@@ -99,3 +118,4 @@ export const EMOTION_CARDS_LICENSE = {
     url: 'https://github.com/twitter/twemoji',
     attribution: 'Twemoji by Twitter, CC-BY 4.0'
 };
+

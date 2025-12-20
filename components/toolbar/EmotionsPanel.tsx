@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { Search, Sparkles, Loader2, X } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, Sparkles, Loader2, X, Camera, Palette, Pencil } from 'lucide-react';
 import { CharacterProfile } from '../../types';
-import { EMOTION_CARDS } from '../../constants';
+import { getEmotionCardsByStyle, CARD_STYLES, CardStyle } from '../../constants/emotion.constants';
 import { generateCharacterEmotion, generateTherapyImage } from '../../services/geminiService';
 
 interface Props {
@@ -25,6 +25,7 @@ export const EmotionsPanel: React.FC<Props> = ({
 }) => {
     const [emotionSubTab, setEmotionSubTab] = useState<'presets' | 'my-characters'>('presets');
     const [emotionSearch, setEmotionSearch] = useState('');
+    const [cardStyle, setCardStyle] = useState<CardStyle>('illustration');
 
     // Character Generation State
     const [characterName, setCharacterName] = useState('');
@@ -35,7 +36,10 @@ export const EmotionsPanel: React.FC<Props> = ({
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiStyle, setAiStyle] = useState<'character' | 'realistic' | 'emoji'>('character');
 
-    const filteredEmotions = EMOTION_CARDS.filter(card =>
+    // 스타일별 감정 카드
+    const emotionCards = useMemo(() => getEmotionCardsByStyle(cardStyle), [cardStyle]);
+
+    const filteredEmotions = emotionCards.filter(card =>
         card.label.includes(emotionSearch)
     );
 
@@ -121,6 +125,25 @@ export const EmotionsPanel: React.FC<Props> = ({
 
             {emotionSubTab === 'presets' ? (
                 <>
+                    {/* 스타일 선택기 */}
+                    <div className="flex gap-1 mb-3">
+                        {CARD_STYLES.map(style => (
+                            <button
+                                key={style.id}
+                                onClick={() => setCardStyle(style.id)}
+                                className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${cardStyle === style.id
+                                    ? 'bg-[#5500FF] text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                            >
+                                {style.id === 'photo' && <Camera className="w-3 h-3" />}
+                                {style.id === 'illustration' && <Palette className="w-3 h-3" />}
+                                {style.id === 'line-drawing' && <Pencil className="w-3 h-3" />}
+                                {style.name}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="relative mb-4">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input

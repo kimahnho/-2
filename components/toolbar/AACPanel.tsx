@@ -7,7 +7,7 @@ import React from 'react';
 import {
     Grid, MessageSquare, Home, User, Heart, ThumbsUp, ThumbsDown,
     Utensils, Coffee, Bath, Shirt, Moon, Sun, Play, Pause, HelpCircle,
-    Clock, Calendar, Music, Book, Tv, Gift, Car, Phone
+    Clock, Book, Tv, Gift, Car, Phone, Music, Camera, Palette, Pencil
 } from 'lucide-react';
 
 interface Props {
@@ -35,10 +35,21 @@ const AAC_CATEGORIES = [
     { id: 'places', name: '장소', icon: <Home className="w-4 h-4" /> },
 ];
 
+// 카드 스타일 타입
+export type AACCardStyle = 'photo' | 'illustration' | 'line-drawing';
+
+// 스타일 옵션
+const AAC_CARD_STYLES: { id: AACCardStyle; name: string; icon: React.ReactNode }[] = [
+    { id: 'photo', name: '실제 사진', icon: <Camera className="w-3 h-3" /> },
+    { id: 'illustration', name: '그림', icon: <Palette className="w-3 h-3" /> },
+    { id: 'line-drawing', name: '선그림', icon: <Pencil className="w-3 h-3" /> },
+];
+
 // Cloudinary 설정
 const CLOUDINARY_CLOUD_NAME = 'dabbfycew';
-const getCloudinaryAACUrl = (category: string, label: string): string => {
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/aac-cards/${category}/${encodeURIComponent(label)}.png`;
+const getCloudinaryAACUrl = (style: AACCardStyle, category: string, label: string): string => {
+    // 폴더 구조: muru-cards/aac-cards/{style}/{category}/{label}.png
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/aac-cards/${style}/${category}/${encodeURIComponent(label)}.png`;
 };
 
 // AAC 카드 정의
@@ -94,22 +105,41 @@ const AAC_CARD_DEFINITIONS: AACCardDef[] = [
     { id: 'friend', label: '친구 집', category: 'places', icon: <User className="w-8 h-8" />, backgroundColor: '#A855F7', emoji: '🧑‍🤝‍🧑' },
 ];
 
-// Cloudinary URL이 포함된 AAC 카드
-const AAC_CARDS: (AACCardDef & { cloudinaryUrl: string })[] = AAC_CARD_DEFINITIONS.map(card => ({
+// Cloudinary URL이 포함된 AAC 카드 생성 함수
+const getAACCards = (style: AACCardStyle) => AAC_CARD_DEFINITIONS.map(card => ({
     ...card,
-    cloudinaryUrl: getCloudinaryAACUrl(card.category, card.label),
+    cloudinaryUrl: getCloudinaryAACUrl(style, card.category, card.label),
 }));
 
 export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, totalCards }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('basic');
+    const [cardStyle, setCardStyle] = React.useState<AACCardStyle>('illustration');
 
-    const filteredCards = AAC_CARDS.filter(card => card.category === selectedCategory);
+    const aacCards = React.useMemo(() => getAACCards(cardStyle), [cardStyle]);
+    const filteredCards = aacCards.filter(card => card.category === selectedCategory);
 
     return (
         <div className="space-y-4">
             {/* 안내 메시지 */}
             <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2 text-center">
                 카드를 선택하면 자동으로 다음 칸으로 이동합니다
+            </div>
+
+            {/* 스타일 선택기 */}
+            <div className="flex gap-1">
+                {AAC_CARD_STYLES.map(style => (
+                    <button
+                        key={style.id}
+                        onClick={() => setCardStyle(style.id)}
+                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${cardStyle === style.id
+                                ? 'bg-[#5500FF] text-white shadow-sm'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                    >
+                        {style.icon}
+                        {style.name}
+                    </button>
+                ))}
             </div>
 
             {/* 카테고리 선택 */}
