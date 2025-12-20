@@ -35,8 +35,24 @@ const AAC_CATEGORIES = [
     { id: 'places', name: '장소', icon: <Home className="w-4 h-4" /> },
 ];
 
-// AAC 카드 목록 (기본 제공)
-const AAC_CARDS: AACCard[] = [
+// Cloudinary 설정
+const CLOUDINARY_CLOUD_NAME = 'dabbfycew';
+const getCloudinaryAACUrl = (category: string, label: string): string => {
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/aac-cards/${category}/${encodeURIComponent(label)}.png`;
+};
+
+// AAC 카드 정의
+interface AACCardDef {
+    id: string;
+    label: string;
+    category: string;
+    icon: React.ReactNode;
+    backgroundColor: string;
+    emoji: string;
+}
+
+// AAC 카드 목록 (기본 제공) - Cloudinary URL 자동 생성
+const AAC_CARD_DEFINITIONS: AACCardDef[] = [
     // 기본
     { id: 'yes', label: '예', category: 'basic', icon: <ThumbsUp className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '👍' },
     { id: 'no', label: '아니오', category: 'basic', icon: <ThumbsDown className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '👎' },
@@ -78,6 +94,12 @@ const AAC_CARDS: AACCard[] = [
     { id: 'friend', label: '친구 집', category: 'places', icon: <User className="w-8 h-8" />, backgroundColor: '#A855F7', emoji: '🧑‍🤝‍🧑' },
 ];
 
+// Cloudinary URL이 포함된 AAC 카드
+const AAC_CARDS: (AACCardDef & { cloudinaryUrl: string })[] = AAC_CARD_DEFINITIONS.map(card => ({
+    ...card,
+    cloudinaryUrl: getCloudinaryAACUrl(card.category, card.label),
+}));
+
 export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, totalCards }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('basic');
 
@@ -116,10 +138,29 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
                         className="flex flex-col items-center p-3 rounded-xl border-2 border-gray-200 hover:border-[#5500FF] hover:shadow-md transition-all group"
                     >
                         <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2 group-hover:scale-110 transition-transform"
+                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2 group-hover:scale-110 transition-transform overflow-hidden"
                             style={{ backgroundColor: card.backgroundColor }}
                         >
-                            {card.icon}
+                            {/* Cloudinary 이미지 우선, 실패 시 이모지 표시 */}
+                            <img
+                                src={card.cloudinaryUrl}
+                                alt={card.label}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    // 이미지 로드 실패 시 이모지로 대체
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    // 다음 sibling (span.emoji-fallback)을 표시
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = 'flex';
+                                }}
+                            />
+                            <span
+                                className="text-2xl hidden items-center justify-center w-full h-full"
+                                style={{ display: 'none' }}
+                            >
+                                {card.emoji}
+                            </span>
                         </div>
                         <span className="text-xs font-medium text-gray-700">{card.label}</span>
                     </button>
