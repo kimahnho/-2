@@ -5,8 +5,8 @@
  * 
  * 이미지 소스:
  * - Cloudinary 커스텀 이미지 (우선)
- * - Fluent Emoji (MIT License) - 상업적 사용 완전 자유
- *   https://github.com/microsoft/fluentui-emoji
+ * - Twemoji (CC-BY 4.0) - 출처 표기만 필요, 상업적 사용 가능
+ *   https://github.com/twitter/twemoji
  * 
  * Cloudinary 폴더: muru-cards/emotion-cards/
  * 파일명 규칙: {label}.png (예: 기뻐요.png)
@@ -25,18 +25,18 @@ const getCloudinaryUrl = (label: string): string => {
 };
 
 /**
- * Fluent Emoji URL 생성 (MIT License - 상업적 사용 자유)
+ * Twemoji URL 생성 (CC-BY 4.0 - 출처 표기만 필요, 상업적 사용 가능)
  * @param emojiCode 이모지 코드 (예: '1f604' for 😄)
  */
-const getFluentEmojiUrl = (emojiCode: string): string => {
-    // Microsoft Fluent Emoji CDN (3D 스타일)
-    return `https://raw.githubusercontent.com/nicedoc/emojis/main/fluent/${emojiCode}.webp`;
+const getTwemojiUrl = (emojiCode: string): string => {
+    // Twemoji CDN (SVG)
+    return `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/${emojiCode}.svg`;
 };
 
 /**
  * 감정 카드 정의
  * - cloudinaryUrl: Cloudinary에 업로드된 커스텀 이미지 (없으면 fallback 사용)
- * - fallbackUrl: Fluent Emoji (MIT 라이선스, 상업적 사용 자유)
+ * - fallbackUrl: Twemoji (CC-BY 4.0, 상업적 사용 가능, 출처 표기 필요)
  */
 const EMOTION_CARD_DEFINITIONS = [
     { label: "기뻐요", emoji: "1f604", cloudinaryFile: "기뻐요.png" },       // 😄
@@ -62,16 +62,18 @@ const EMOTION_CARD_DEFINITIONS = [
 ];
 
 /**
- * EMOTION_CARDS - Cloudinary URL 우선, Fluent Emoji fallback
+ * EMOTION_CARDS - Cloudinary URL 우선, Twemoji fallback
  * 
- * 라이선스: MIT (상업적 사용 완전 자유, 출처 표기 불필요)
+ * 라이선스: Twemoji (CC-BY 4.0)
+ * - 상업적 사용 가능
+ * - 출처 표기 필요: "Twemoji by Twitter, CC-BY 4.0"
  */
 export const EMOTION_CARDS = EMOTION_CARD_DEFINITIONS.map(def => ({
     label: def.label,
     // Cloudinary URL (이미지 업로드 후 사용됨)
     url: getCloudinaryUrl(def.cloudinaryFile),
-    // Fallback URL - Fluent Emoji (MIT License)
-    fallbackUrl: getFluentEmojiUrl(def.emoji),
+    // Fallback URL - Twemoji (CC-BY 4.0)
+    fallbackUrl: getTwemojiUrl(def.emoji),
 }));
 
 /**
@@ -87,4 +89,13 @@ export const checkEmotionCardsReady = async (): Promise<boolean> => {
     }
 };
 
-
+/**
+ * 라이선스 정보 (앱 정보 페이지에 표기 필요)
+ */
+export const EMOTION_CARDS_LICENSE = {
+    name: 'Twemoji',
+    author: 'Twitter',
+    license: 'CC-BY 4.0',
+    url: 'https://github.com/twitter/twemoji',
+    attribution: 'Twemoji by Twitter, CC-BY 4.0'
+};
