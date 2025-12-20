@@ -233,7 +233,7 @@ export const useCanvasEvents = ({
       return;
     }
 
-    // Resize Logic (그룹 리사이징 지원)
+    // Resize Logic (그룹 리사이징 지원, Shift = 정비율)
     if (resizeInfo && resizeInfo.isResizing && resizeInfo.initialElements && resizeInfo.boundingBox) {
       const deltaX = (e.clientX - resizeInfo.startX) / zoom;
       const deltaY = (e.clientY - resizeInfo.startY) / zoom;
@@ -254,6 +254,34 @@ export const useCanvasEvents = ({
       if (resizeInfo.handle.includes('n')) {
         newBboxH = Math.max(20, bbox.height - deltaY);
         newBboxY = bbox.y + deltaY;
+      }
+
+      // Shift 키 누르면 정비율 리사이징
+      if (e.shiftKey) {
+        const aspectRatio = bbox.width / bbox.height;
+
+        // 코너 핸들 (nw, ne, sw, se)인 경우
+        if (resizeInfo.handle.length === 2) {
+          // 더 많이 변한 쪽을 기준으로 정비율 적용
+          const widthChange = Math.abs(newBboxW - bbox.width);
+          const heightChange = Math.abs(newBboxH - bbox.height);
+
+          if (widthChange >= heightChange) {
+            // 가로 변화가 더 크면 세로를 맞춤
+            newBboxH = newBboxW / aspectRatio;
+          } else {
+            // 세로 변화가 더 크면 가로를 맞춤
+            newBboxW = newBboxH * aspectRatio;
+          }
+
+          // 핸들 방향에 따라 위치 조정
+          if (resizeInfo.handle.includes('w')) {
+            newBboxX = bbox.x + bbox.width - newBboxW;
+          }
+          if (resizeInfo.handle.includes('n')) {
+            newBboxY = bbox.y + bbox.height - newBboxH;
+          }
+        }
       }
 
       // 스케일 계산
