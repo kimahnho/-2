@@ -6,17 +6,17 @@
 -- 해결: RLS 정책을 명확하게 재설정
 -- ============================================
 
--- 1. 기존 정책 모두 삭제
+-- 1. 기존 정책 모두 삭제 (새 정책 이름 포함)
 DROP POLICY IF EXISTS "Allow all operations on projects" ON projects;
 DROP POLICY IF EXISTS "Users can view their own projects" ON projects;
 DROP POLICY IF EXISTS "Admins can view all projects" ON projects;
 DROP POLICY IF EXISTS "Users can insert their own projects" ON projects;
 DROP POLICY IF EXISTS "Users can update their own projects" ON projects;
 DROP POLICY IF EXISTS "Users can delete their own projects" ON projects;
-
--- 2. RLS 활성화 확인
-ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE projects FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "projects_select_policy" ON projects;
+DROP POLICY IF EXISTS "projects_insert_policy" ON projects;
+DROP POLICY IF EXISTS "projects_update_policy" ON projects;
+DROP POLICY IF EXISTS "projects_delete_policy" ON projects;
 
 -- 3. is_admin 함수 (없으면 생성)
 CREATE OR REPLACE FUNCTION is_admin()
