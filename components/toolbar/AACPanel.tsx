@@ -132,8 +132,8 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
                         key={style.id}
                         onClick={() => setCardStyle(style.id)}
                         className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${cardStyle === style.id
-                                ? 'bg-[#5500FF] text-white shadow-sm'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-[#5500FF] text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         {style.icon}
@@ -161,40 +161,37 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
 
             {/* 카드 목록 */}
             <div className="grid grid-cols-2 gap-2">
-                {filteredCards.map(card => (
-                    <button
-                        key={card.id}
-                        onClick={() => onSelectAACCard(card)}
-                        className="flex flex-col items-center p-3 rounded-xl border-2 border-gray-200 hover:border-[#5500FF] hover:shadow-md transition-all group"
-                    >
-                        <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2 group-hover:scale-110 transition-transform overflow-hidden"
-                            style={{ backgroundColor: card.backgroundColor }}
+                {/* 그림 스타일이면 이모지 표시, 아니면 준비중 */}
+                {cardStyle === 'illustration' ? (
+                    filteredCards.map(card => (
+                        <button
+                            key={card.id}
+                            onClick={() => onSelectAACCard(card)}
+                            className="flex flex-col items-center p-3 rounded-xl border-2 border-gray-200 hover:border-[#5500FF] hover:shadow-md transition-all group"
                         >
-                            {/* Cloudinary 이미지 우선, 실패 시 이모지 표시 */}
-                            <img
-                                src={card.cloudinaryUrl}
-                                alt={card.label}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    // 이미지 로드 실패 시 이모지로 대체
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    // 다음 sibling (span.emoji-fallback)을 표시
-                                    const fallback = target.nextElementSibling as HTMLElement;
-                                    if (fallback) fallback.style.display = 'flex';
-                                }}
-                            />
-                            <span
-                                className="text-2xl hidden items-center justify-center w-full h-full"
-                                style={{ display: 'none' }}
+                            <div
+                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2 group-hover:scale-110 transition-transform overflow-hidden text-2xl"
+                                style={{ backgroundColor: card.backgroundColor }}
                             >
                                 {card.emoji}
-                            </span>
+                            </div>
+                            <span className="text-xs font-medium text-gray-700">{card.label}</span>
+                        </button>
+                    ))
+                ) : (
+                    // 실제 사진/선그림: 준비중 표시
+                    <div className="col-span-2 text-center py-12 text-gray-400">
+                        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center text-2xl">
+                            {cardStyle === 'photo' ? '📷' : '✏️'}
                         </div>
-                        <span className="text-xs font-medium text-gray-700">{card.label}</span>
-                    </button>
-                ))}
+                        <p className="text-sm font-medium mb-1">
+                            {cardStyle === 'photo' ? '실제 사진' : '선그림'} 카드 준비 중
+                        </p>
+                        <p className="text-xs text-gray-400">
+                            Cloudinary에 이미지 업로드 후 사용 가능합니다
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* 빈 상태 */}

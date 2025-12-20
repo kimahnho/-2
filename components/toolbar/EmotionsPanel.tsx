@@ -154,42 +154,51 @@ export const EmotionsPanel: React.FC<Props> = ({
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-4">
-                        {filteredEmotions.length > 0 ? (
-                            filteredEmotions.map((card, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        // Use Cloudinary URL if available, otherwise fallback
-                                        const imageUrl = card.url || card.fallbackUrl;
-                                        onSaveAsset(imageUrl);
-                                        if (onApplyEmotion) {
-                                            onApplyEmotion(imageUrl, card.label);
-                                        } else {
-                                            onAddElement('image', imageUrl);
-                                        }
-                                    }}
-                                    className="flex flex-col items-center gap-2 p-2 rounded-xl border border-gray-100 hover:border-[#B0C0ff] hover:bg-[#F5F7FF] transition-all group"
-                                >
-                                    <div className="w-full aspect-square rounded-lg overflow-hidden bg-white shadow-sm flex items-center justify-center p-2">
-                                        <img
-                                            src={card.url}
-                                            alt={card.label}
-                                            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                                            onError={(e) => {
-                                                // Cloudinary 이미지 로드 실패 시 OpenMoji fallback
-                                                const target = e.target as HTMLImageElement;
-                                                if (card.fallbackUrl && target.src !== card.fallbackUrl) {
-                                                    target.src = card.fallbackUrl;
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-600 group-hover:text-[#5500FF]">{card.label}</span>
-                                </button>
-                            ))
+                        {/* 그림 스타일이면 Twemoji 표시, 아니면 Cloudinary만 */}
+                        {cardStyle === 'illustration' ? (
+                            // 그림 스타일: Twemoji fallback 사용
+                            filteredEmotions.length > 0 ? (
+                                filteredEmotions.map((card, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            const imageUrl = card.fallbackUrl || card.url;
+                                            onSaveAsset(imageUrl);
+                                            if (onApplyEmotion) {
+                                                onApplyEmotion(imageUrl, card.label);
+                                            } else {
+                                                onAddElement('image', imageUrl);
+                                            }
+                                        }}
+                                        className="flex flex-col items-center gap-2 p-2 rounded-xl border border-gray-100 hover:border-[#B0C0ff] hover:bg-[#F5F7FF] transition-all group"
+                                    >
+                                        <div className="w-full aspect-square rounded-lg overflow-hidden bg-white shadow-sm flex items-center justify-center p-2">
+                                            <img
+                                                src={card.fallbackUrl}
+                                                alt={card.label}
+                                                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-600 group-hover:text-[#5500FF]">{card.label}</span>
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="col-span-2 text-center py-8 text-gray-400 text-xs">
+                                    검색 결과가 없습니다.
+                                </div>
+                            )
                         ) : (
-                            <div className="col-span-2 text-center py-8 text-gray-400 text-xs">
-                                검색 결과가 없습니다.
+                            // 실제 사진/선그림: Cloudinary 이미지만 (준비중 표시)
+                            <div className="col-span-2 text-center py-12 text-gray-400">
+                                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                    {cardStyle === 'photo' ? '📷' : '✏️'}
+                                </div>
+                                <p className="text-sm font-medium mb-1">
+                                    {cardStyle === 'photo' ? '실제 사진' : '선그림'} 카드 준비 중
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                    Cloudinary에 이미지 업로드 후 사용 가능합니다
+                                </p>
                             </div>
                         )}
                     </div>
