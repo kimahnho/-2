@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminService, AdminResource } from '../../services/adminService';
-import { Shield, Download, ArrowLeft, FileText, Calendar, Users, ChevronRight, Mail, User, BookOpen } from 'lucide-react';
+import { Shield, Download, ArrowLeft, FileText, Calendar, Users, ChevronRight, Mail, User, BookOpen, Eye } from 'lucide-react';
 
 interface UserInfo {
     userId: string;
@@ -207,13 +207,17 @@ export const AdminPanel: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 {projects.map((project) => (
                                     <div key={project.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                                        <div className="aspect-video bg-gray-100 relative cursor-pointer" onClick={() => setSelectedProject(project)}>
+                                        <div className="aspect-video bg-gray-100 relative cursor-pointer" onClick={() => navigate(`/admin/preview/${project.id}`)}>
                                             {project.thumbnail ? <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><FileText className="w-8 h-8" /></div>}
+                                            <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                                                <span className="bg-white px-3 py-1 rounded-full text-sm font-medium shadow">미리보기</span>
+                                            </div>
                                         </div>
                                         <div className="p-4">
                                             <h3 className="font-medium text-gray-800 mb-2 truncate">{project.title}</h3>
                                             <div className="flex items-center gap-2 text-xs text-gray-500 mb-3"><Calendar className="w-3 h-3" />{new Date(project.submittedAt).toLocaleDateString('ko-KR')}</div>
                                             <div className="flex gap-2">
+                                                <button onClick={() => navigate(`/admin/preview/${project.id}`)} className="flex-1 py-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center justify-center gap-1"><Eye className="w-3 h-3" />미리보기</button>
                                                 <button onClick={() => handleDownloadThumbnail(project)} className="flex-1 py-2 text-xs bg-[#5500FF] hover:bg-[#4400DD] text-white rounded-lg flex items-center justify-center gap-1" disabled={!project.thumbnail}><Download className="w-3 h-3" />다운로드</button>
                                             </div>
                                         </div>

@@ -27,9 +27,10 @@ interface Props {
   initialTitle?: string;
   onBack: () => void;
   isGuest?: boolean; // Added
+  readOnly?: boolean; // 관리자 미리보기용 읽기 전용 모드
 }
 
-export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTitle, onBack, isGuest = false }) => {
+export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTitle, onBack, isGuest = false, readOnly = false }) => {
   // --- 1. Domain State (Data) ---
   const project = useProject(initialData);
   const characterManager = useCharacters();
@@ -540,46 +541,61 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   return (
     <div className={`flex h-screen bg-gray-100 overflow-hidden font-sans select-none ${viewport.isPanning ? 'cursor-grabbing' : ''}`}
       onMouseMove={viewport.handlePanMove} onMouseUp={viewport.endPan} onWheel={viewport.handleWheel}
-      onDoubleClickCapture={handleCanvasDoubleClick}>
+      onDoubleClickCapture={readOnly ? undefined : handleCanvasDoubleClick}>
 
-      {/* Left Sidebar: Toolbar */}
-      <Toolbar
-        activeTab={activeTab} onTabChange={setActiveTab}
-        onAddElement={project.addElement} onLoadTemplate={project.loadTemplate}
-        onUpdatePageOrientation={(orientation) => project.updatePageOrientation(project.activePageId, orientation)}
+      {/* 읽기 전용 모드 배너 */}
+      {readOnly && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 z-50 font-medium text-sm">
+          🔒 읽기 전용 모드 - 편집이 비활성화되었습니다
+        </div>
+      )}
 
-        // AAC Props
-        onSelectAACCard={handleSelectAACCard}
-        currentAACCardIndex={currentAACCardIndex}
-        totalAACCards={totalAACCards}
-        uploadedAssets={uploadedAssets} onSaveAsset={handleSaveAsset}
-        characters={characterManager.characters}
-        onAddCharacter={characterManager.addCharacter}
-        onDeleteCharacter={characterManager.deleteCharacter}
-        onAddEmotionToCharacter={characterManager.addEmotionToCharacter}
-        onDeleteEmotionFromCharacter={characterManager.deleteEmotionFromCharacter}
-        onUpdateEmotionLabel={characterManager.updateEmotionLabel}
-        onApplyEmotion={actions.handleApplyEmotion}
-        onAddElementWithCaption={actions.handleAddImageWithCaption}
-        onLogoClick={onBack}
-        onAddEmotionCard={handleAddEmotionCard}
-        onAddAACCard={handleAddAACCard}
-        onUploadImage={handleUploadImage}
-      />
+      {/* Left Sidebar: Toolbar - 읽기 전용 모드에서 숨김 */}
+      {!readOnly && (
+        <Toolbar
+          activeTab={activeTab} onTabChange={setActiveTab}
+          onAddElement={project.addElement} onLoadTemplate={project.loadTemplate}
+          onUpdatePageOrientation={(orientation) => project.updatePageOrientation(project.activePageId, orientation)}
+
+          // AAC Props
+          onSelectAACCard={handleSelectAACCard}
+          currentAACCardIndex={currentAACCardIndex}
+          totalAACCards={totalAACCards}
+          uploadedAssets={uploadedAssets} onSaveAsset={handleSaveAsset}
+          characters={characterManager.characters}
+          onAddCharacter={characterManager.addCharacter}
+          onDeleteCharacter={characterManager.deleteCharacter}
+          onAddEmotionToCharacter={characterManager.addEmotionToCharacter}
+          onDeleteEmotionFromCharacter={characterManager.deleteEmotionFromCharacter}
+          onUpdateEmotionLabel={characterManager.updateEmotionLabel}
+          onApplyEmotion={actions.handleApplyEmotion}
+          onAddElementWithCaption={actions.handleAddImageWithCaption}
+          onLogoClick={onBack}
+          onAddEmotionCard={handleAddEmotionCard}
+          onAddAACCard={handleAddAACCard}
+          onUploadImage={handleUploadImage}
+        />
+      )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative min-w-0">
+      <div className={`flex-1 flex flex-col relative min-w-0 ${readOnly ? 'pt-10' : ''}`}>
 
         {/* Top Navigation Bar */}
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-2 sm:px-4 shrink-0 z-20 no-print gap-2">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-[#5500FF] transition-colors shrink-0" title="대시보드로 돌아가기">
+            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-[#5500FF] transition-colors shrink-0" title="뒤로 가기">
               <Home className="w-5 h-5" />
             </button>
             <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
-            <input value={title} onChange={e => setTitle(e.target.value)} className="font-bold text-gray-800 text-sm sm:text-lg bg-transparent border border-transparent hover:border-gray-200 focus:border-[#5500FF] rounded px-2 py-1 outline-none transition-all w-24 sm:w-40 md:w-64 min-w-0" />
+            {readOnly ? (
+              <span className="font-bold text-gray-800 text-sm sm:text-lg px-2 py-1">{title}</span>
+            ) : (
+              <input value={title} onChange={e => setTitle(e.target.value)} className="font-bold text-gray-800 text-sm sm:text-lg bg-transparent border border-transparent hover:border-gray-200 focus:border-[#5500FF] rounded px-2 py-1 outline-none transition-all w-24 sm:w-40 md:w-64 min-w-0" />
+            )}
             <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 min-w-[80px]">
-              {isGuest ? (
+              {readOnly ? (
+                <span className="text-yellow-600 font-medium">🔒 읽기 전용</span>
+              ) : isGuest ? (
                 <span className="text-orange-500 font-medium">게스트 모드</span>
               ) : (
                 isSaving ? <><Loader2 className="w-3 h-3 animate-spin" /> 저장 중...</> : <><Save className="w-3 h-3" /> 저장됨</>
@@ -692,19 +708,21 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         />
       </div>
 
-      {/* Right Sidebar: Properties */}
-      <PropertiesPanel
-        elements={project.elements} selectedIds={project.selectedIds}
-        onUpdate={(id, updates) => project.updateElement(id, updates, false)}
-        onCommit={(id, updates) => project.updateElement(id, updates, true)}
-        onBatchUpdate={(updates) => project.updateMultipleElements(updates, false)}
-        onBatchCommit={(updates) => project.updateMultipleElements(updates, true)}
-        onDelete={project.deleteElements} onDuplicate={project.duplicateElements}
-        onBringForward={project.bringForward} onSendBackward={project.sendBackward}
-        onBringToFront={project.bringToFront} onSendToBack={project.sendToBack}
-        onAlign={project.alignSelected} onGenerateImage={handleGuestAiGen}
-        onUploadImage={handleUploadImage}
-      />
+      {/* Right Sidebar: Properties - 읽기 전용 모드에서 숨김 */}
+      {!readOnly && (
+        <PropertiesPanel
+          elements={project.elements} selectedIds={project.selectedIds}
+          onUpdate={(id, updates) => project.updateElement(id, updates, false)}
+          onCommit={(id, updates) => project.updateElement(id, updates, true)}
+          onBatchUpdate={(updates) => project.updateMultipleElements(updates, false)}
+          onBatchCommit={(updates) => project.updateMultipleElements(updates, true)}
+          onDelete={project.deleteElements} onDuplicate={project.duplicateElements}
+          onBringForward={project.bringForward} onSendBackward={project.sendBackward}
+          onBringToFront={project.bringToFront} onSendToBack={project.sendToBack}
+          onAlign={project.alignSelected} onGenerateImage={handleGuestAiGen}
+          onUploadImage={handleUploadImage}
+        />
+      )}
 
       {/* Hidden file input for image upload */}
       <input

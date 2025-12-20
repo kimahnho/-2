@@ -240,6 +240,76 @@ const TemplatesRoute: React.FC<{ user: AuthUser | null; onLogin: () => void }> =
     );
 };
 
+// Admin Preview Route - 관리자 읽기 전용 미리보기
+const AdminPreviewRoute: React.FC = () => {
+    const navigate = useNavigate();
+    const { projectId } = useParams<{ projectId: string }>();
+    const [initialData, setInitialData] = useState<ProjectData | undefined>(undefined);
+    const [initialTitle, setInitialTitle] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        const loadProject = async () => {
+            // 관리자 권한 확인
+            const { adminService } = await import('./services/adminService');
+            const admin = await adminService.isAdmin();
+            setIsAdmin(admin);
+
+            if (!admin) {
+                alert('관리자 권한이 필요합니다.');
+                navigate('/');
+                return;
+            }
+
+            if (!projectId) {
+                navigate('/admin');
+                return;
+            }
+
+            // 프로젝트 데이터 로드
+            const data = await adminService.getProjectData(projectId);
+            if (data) {
+                setInitialData({
+                    elements: data.elements || [],
+                    pages: data.pages || [{ id: 'page-1', elements: [], background: '#ffffff', width: 794, height: 1123 }]
+                });
+            }
+
+            // 프로젝트 제목 가져오기 (간단히 처리)
+            setInitialTitle('관리자 미리보기');
+            setLoading(false);
+        };
+
+        loadProject();
+    }, [projectId, navigate]);
+
+    const handleBack = () => {
+        navigate('/admin');
+    };
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div>관리자 권한 확인 중...</div>
+            </div>
+        );
+    }
+
+    if (!isAdmin || !projectId) return null;
+
+    return (
+        <EditorPage
+            projectId={projectId}
+            initialData={initialData}
+            initialTitle={initialTitle}
+            onBack={handleBack}
+            isGuest={true}
+            readOnly={true}
+        />
+    );
+};
+
 // Main App Router
 export const AppRouter: React.FC = () => {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -272,6 +342,7 @@ export const AppRouter: React.FC = () => {
                 <Route path="/pricing" element={<PricingRoute user={user} onLogin={handleLogin} />} />
                 <Route path="/templates" element={<TemplatesRoute user={user} onLogin={handleLogin} />} />
                 <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/admin/preview/:projectId" element={<AdminPreviewRoute />} />
             </Routes>
         </BrowserRouter>
     );
