@@ -634,7 +634,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
             </div>
           </div>
           <div className="flex gap-1 sm:gap-2 shrink-0">
-            <button onClick={() => { if (window.confirm("현재 페이지의 요소를 초기화하시겠습니까?")) { project.deleteElements(project.elements.filter(e => e.pageId === project.activePageId).map(e => e.id)); } }} className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-500 rounded-lg"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></button>
+            {!readOnly && <button onClick={() => { if (window.confirm("현재 페이지의 요소를 초기화하시겠습니까?")) { project.deleteElements(project.elements.filter(e => e.pageId === project.activePageId).map(e => e.id)); } }} className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-500 rounded-lg"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></button>}
             <button onClick={printCanvas} className="p-2 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-lg"><Printer className="w-4 h-4 sm:w-5 sm:h-5" /></button>
             <button onClick={() => setShowExportModal(true)} className="bg-[#5500FF] text-white px-2 sm:px-4 py-2 rounded-lg font-medium hover:bg-[#4400cc] flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-sm">
               <Download className="w-4 h-4" />
@@ -658,9 +658,10 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
             // Pass commit=true for final state (Mouse Up)
             onCommitElements={(els) => project.updateElements(els, true)}
             onSetSelectedIds={project.setSelectedIds}
-            onSetEditingId={project.setEditingId}
+            onSetEditingId={readOnly ? () => { } : project.setEditingId}
             onSetActiveTab={setActiveTab}
-            onAddImageElement={(dataUrl) => {
+            readOnly={readOnly}
+            onAddImageElement={readOnly ? () => { } : (dataUrl) => {
               const img = new Image();
               img.onload = () => {
                 const maxSize = 400;
@@ -701,11 +702,17 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         </div>
 
         {/* Bottom Bar: Page Manager */}
-        <PageManager
-          pages={project.pages} elements={project.elements} activePageId={project.activePageId}
-          onSelectPage={handleSelectPage} onMovePage={project.movePage}
-          onDeletePage={project.deletePage} onDuplicatePage={project.duplicatePage} onAddPage={project.addPage}
-        />
+        {readOnly ? (
+          <div className="h-[60px] bg-white border-t border-gray-200 flex items-center justify-center text-gray-500 text-sm">
+            🔒 페이지 관리 비활성화됨
+          </div>
+        ) : (
+          <PageManager
+            pages={project.pages} elements={project.elements} activePageId={project.activePageId}
+            onSelectPage={handleSelectPage} onMovePage={project.movePage}
+            onDeletePage={project.deletePage} onDuplicatePage={project.duplicatePage} onAddPage={project.addPage}
+          />
+        )}
       </div>
 
       {/* Right Sidebar: Properties - 읽기 전용 모드에서 숨김 */}

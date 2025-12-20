@@ -19,6 +19,7 @@ interface Props {
   onSetEditingId: (id: string | null) => void;
   onSetActiveTab: (tab: any) => void;
   onAddImageElement?: (dataUrl: string, x?: number, y?: number) => void;
+  readOnly?: boolean; // 관리자 읽기 전용 모드
 }
 
 export const CanvasArea: React.FC<Props> = (props) => {
@@ -35,8 +36,9 @@ export const CanvasArea: React.FC<Props> = (props) => {
     onSetSelectedIds,
     onSetEditingId,
     onSetActiveTab,
-    onAddImageElement
-  } = props;
+    onAddImageElement,
+    readOnly = false
+  } = props as Props & { readOnly?: boolean };
 
   // Panning state for middle mouse button
   const [isPanning, setIsPanning] = useState(false);
@@ -229,20 +231,20 @@ export const CanvasArea: React.FC<Props> = (props) => {
                   <CanvasElement
                     key={el.id}
                     element={el}
-                    isSelected={selectedIds.includes(el.id)}
-                    isEditing={editingId === el.id}
-                    onMouseDown={handleElementMouseDown}
-                    onDoubleClick={(e) => { e.stopPropagation(); onSetEditingId(el.id); }}
-                    onResizeStart={handleResizeStart}
-                    onRotateStart={handleRotateStart}
-                    onUpdate={(update) => {
+                    isSelected={!readOnly && selectedIds.includes(el.id)}
+                    isEditing={!readOnly && editingId === el.id}
+                    onMouseDown={readOnly ? () => { } : handleElementMouseDown}
+                    onDoubleClick={readOnly ? () => { } : (e) => { e.stopPropagation(); onSetEditingId(el.id); }}
+                    onResizeStart={readOnly ? () => { } : handleResizeStart}
+                    onRotateStart={readOnly ? () => { } : handleRotateStart}
+                    onUpdate={readOnly ? () => { } : (update) => {
                       // Support both string (text) and object (image props) updates
                       const updates = typeof update === 'string' ? { content: update } : update;
                       // @ts-ignore - TS might complain about partial match but it's safe
                       const newElements = elements.map(e => e.id === el.id ? { ...e, ...updates } : e);
                       onUpdateElements(newElements);
                     }}
-                    onBlur={() => onCommitElements(elementsRef.current)}
+                    onBlur={readOnly ? () => { } : () => onCommitElements(elementsRef.current)}
                   />
                 ))}
 
