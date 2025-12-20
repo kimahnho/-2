@@ -532,6 +532,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         onLogoClick={onBack}
         onAddEmotionCard={handleAddEmotionCard}
         onAddAACCard={handleAddAACCard}
+        onUploadImage={handleUploadImage}
       />
 
       {/* Main Content Area */}

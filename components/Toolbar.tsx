@@ -44,6 +44,8 @@ interface Props {
     // 자동화 요소 삽입
     onAddEmotionCard?: () => void;
     onAddAACCard?: () => void;
+    // 파일 업로드
+    onUploadImage?: () => void;
 }
 
 export const Toolbar: React.FC<Props> = ({
@@ -67,7 +69,8 @@ export const Toolbar: React.FC<Props> = ({
     currentAACCardIndex,
     totalAACCards,
     onAddEmotionCard,
-    onAddAACCard
+    onAddAACCard,
+    onUploadImage
 }) => {
 
     const toggleTab = (tab: TabType) => {
@@ -223,7 +226,11 @@ export const Toolbar: React.FC<Props> = ({
 
                             {activeTab === 'uploads' && (
                                 <div className="space-y-4">
-                                    <button className="w-full py-3 bg-[#EAEFFF] text-[#5500FF] rounded-lg font-bold hover:bg-[#D6E0FF] transition-colors border border-[#B0C0ff] border-dashed">
+                                    <button
+                                        type="button"
+                                        onClick={onUploadImage}
+                                        className="w-full py-3 bg-[#EAEFFF] text-[#5500FF] rounded-lg font-bold hover:bg-[#D6E0FF] transition-colors border border-[#B0C0ff] border-dashed"
+                                    >
                                         파일 업로드
                                     </button>
 
