@@ -9,6 +9,7 @@ import { CanvasArea } from '../CanvasArea';
 import { TabType, ProjectData } from '../../types';
 import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save, Smartphone, Monitor } from 'lucide-react';
 import { printCanvas } from '../../utils/exportUtils';
+import { compressImage, isImageFile, isFileTooLarge } from '../../utils/imageUtils';
 import { storageService } from '../../services/storageService';
 import { ExportModal } from '../ExportModal';
 
@@ -51,13 +52,29 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
+    // 파일 검증
+    if (!isImageFile(file)) {
+      alert('이미지 파일만 업로드 가능합니다.');
+      return;
+    }
+    if (isFileTooLarge(file, 10)) {
+      alert('파일 크기는 10MB 이하로 제한됩니다.');
+      return;
+    }
+
+    try {
+      // 이미지 압축 (최대 1200px, 품질 80%, 최대 500KB)
+      const compressedDataUrl = await compressImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.8,
+        maxSizeKB: 500
+      });
+
       const img = new Image();
       img.onload = () => {
         const maxSize = 400;
@@ -69,8 +86,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         if (project.selectedIds.length === 1) {
           const el = project.elements.find(e => e.id === project.selectedIds[0]);
           if (el && (el.type === 'shape' || el.type === 'circle')) {
-            project.updateElement(el.id, { backgroundImage: dataUrl }, true);
-            handleSaveAsset(dataUrl);
+            project.updateElement(el.id, { backgroundImage: compressedDataUrl }, true);
+            handleSaveAsset(compressedDataUrl);
             return;
           }
         }
@@ -82,7 +99,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           id: Math.random().toString(36).substr(2, 9),
           type: 'image' as const,
           x, y, width, height,
-          content: dataUrl,
+          content: compressedDataUrl,
           rotation: 0,
           zIndex: project.elements.length + 1,
           pageId: project.activePageId,
@@ -90,11 +107,13 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         };
         project.updateElements([...project.elements, newEl]);
         project.setSelectedIds([newEl.id]);
-        handleSaveAsset(dataUrl);
+        handleSaveAsset(compressedDataUrl);
       };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
+      img.src = compressedDataUrl;
+    } catch (error) {
+      console.error('Image compression failed:', error);
+      alert('이미지 처리에 실패했습니다.');
+    }
     e.target.value = ''; // Reset for same file selection
   };
 

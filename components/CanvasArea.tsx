@@ -124,7 +124,7 @@ export const CanvasArea: React.FC<Props> = (props) => {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
@@ -135,14 +135,29 @@ export const CanvasArea: React.FC<Props> = (props) => {
     const file = files[0];
     if (!file.type.startsWith('image/')) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
+    // 파일 크기 검증 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일 크기는 10MB 이하로 제한됩니다.');
+      return;
+    }
+
+    try {
+      // 동적 import로 압축 유틸 사용
+      const { compressImage } = await import('../utils/imageUtils');
+      const compressedDataUrl = await compressImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.8,
+        maxSizeKB: 500
+      });
+
       if (onAddImageElement) {
-        onAddImageElement(dataUrl);
+        onAddImageElement(compressedDataUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Image compression failed:', error);
+      alert('이미지 처리에 실패했습니다.');
+    }
   }, [onAddImageElement]);
 
   return (
