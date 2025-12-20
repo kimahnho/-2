@@ -187,9 +187,6 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
                         <p className="text-sm font-medium mb-1">
                             {cardStyle === 'photo' ? '실제 사진' : '선그림'} 카드 준비 중
                         </p>
-                        <p className="text-xs text-gray-400">
-                            Cloudinary에 이미지 업로드 후 사용 가능합니다
-                        </p>
                     </div>
                 )}
             </div>
