@@ -31,7 +31,7 @@ export const DesignPanel: React.FC<Props> = ({ onAddElement, onAddElementWithCap
             } else {
                 onAddElement('image', imageUrl);
             }
-            onSaveAsset(imageUrl);
+            // AI 생성 이미지는 업로드 패널에 저장하지 않음 (직접 업로드만 저장)
         } catch (error) {
             alert("이미지 생성에 실패했습니다. 다시 시도해주세요.");
         } finally {

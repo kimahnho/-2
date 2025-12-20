@@ -62,7 +62,6 @@ export const EmotionsPanel: React.FC<Props> = ({
             const baseImageUrl = await generateTherapyImage(basePrompt, aiStyle);
 
             onAddCharacter(characterName, characterDesc, aiStyle, baseImageUrl);
-            onSaveAsset(baseImageUrl); // Also save to assets
 
             setCharacterName('');
             setCharacterDesc('');
@@ -163,7 +162,6 @@ export const EmotionsPanel: React.FC<Props> = ({
                                         key={idx}
                                         onClick={() => {
                                             const imageUrl = card.fallbackUrl || card.url;
-                                            onSaveAsset(imageUrl);
                                             if (onApplyEmotion) {
                                                 onApplyEmotion(imageUrl, card.label);
                                             } else {
@@ -325,7 +323,6 @@ export const EmotionsPanel: React.FC<Props> = ({
                                 {activeCharacter?.baseImageUrl && (
                                     <button
                                         onClick={() => {
-                                            onSaveAsset(activeCharacter.baseImageUrl!);
                                             if (onApplyEmotion) {
                                                 onApplyEmotion(activeCharacter.baseImageUrl!, "기본");
                                             } else {
