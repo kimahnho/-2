@@ -58,8 +58,6 @@ export const AdminPanel: React.FC = () => {
     const [students, setStudents] = useState<StudentInfo[]>([]);
     const [groups, setGroups] = useState<GroupInfo[]>([]);
 
-    const [downloading, setDownloading] = useState(false);
-
     // 관리자 권한 확인
     useEffect(() => {
         const checkAdmin = async () => {
@@ -108,52 +106,14 @@ export const AdminPanel: React.FC = () => {
         setProjects([]);
     };
 
-    // 이미지 다운로드
-    const handleDownloadThumbnail = async (project: AdminResource) => {
+    // 이미지 다운로드 (새 탭에서 열기 방식으로 변경 - CORS 우회)
+    const handleDownloadThumbnail = (project: AdminResource) => {
         if (!project.thumbnail) {
             alert('미리보기 이미지가 없습니다.');
             return;
         }
-        try {
-            const response = await fetch(project.thumbnail);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${project.title}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            alert('다운로드에 실패했습니다.');
-        }
-    };
-
-    // JSON 데이터 다운로드
-    const handleDownloadData = async (project: AdminResource) => {
-        setDownloading(true);
-        try {
-            const data = await adminService.getProjectData(project.id);
-            if (!data) {
-                alert('데이터를 가져올 수 없습니다.');
-                return;
-            }
-            const exportData = { id: project.id, title: project.title, createdAt: project.submittedAt, elements: data.elements, pages: data.pages };
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${project.title}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            alert('다운로드에 실패했습니다.');
-        } finally {
-            setDownloading(false);
-        }
+        // 새 탭에서 이미지 열기 (사용자가 우클릭으로 저장 가능)
+        window.open(project.thumbnail, '_blank');
     };
 
     const getProviderBadge = (provider: string) => {
@@ -254,8 +214,7 @@ export const AdminPanel: React.FC = () => {
                                             <h3 className="font-medium text-gray-800 mb-2 truncate">{project.title}</h3>
                                             <div className="flex items-center gap-2 text-xs text-gray-500 mb-3"><Calendar className="w-3 h-3" />{new Date(project.submittedAt).toLocaleDateString('ko-KR')}</div>
                                             <div className="flex gap-2">
-                                                <button onClick={() => handleDownloadThumbnail(project)} className="flex-1 py-2 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center gap-1" disabled={!project.thumbnail}><Download className="w-3 h-3" />이미지</button>
-                                                <button onClick={() => handleDownloadData(project)} className="flex-1 py-2 text-xs bg-[#5500FF] hover:bg-[#4400DD] text-white rounded-lg flex items-center justify-center gap-1" disabled={downloading}><Download className="w-3 h-3" />데이터</button>
+                                                <button onClick={() => handleDownloadThumbnail(project)} className="flex-1 py-2 text-xs bg-[#5500FF] hover:bg-[#4400DD] text-white rounded-lg flex items-center justify-center gap-1" disabled={!project.thumbnail}><Download className="w-3 h-3" />다운로드</button>
                                             </div>
                                         </div>
                                     </div>
@@ -332,8 +291,7 @@ export const AdminPanel: React.FC = () => {
                             </div>
                             {selectedProject.thumbnail ? <img src={selectedProject.thumbnail} alt="Preview" className="w-full rounded-lg mb-4 border" /> : <div className="w-full aspect-video bg-gray-100 rounded-lg mb-4 flex items-center justify-center text-gray-400"><FileText className="w-16 h-16" /></div>}
                             <div className="flex gap-3">
-                                <button onClick={() => handleDownloadThumbnail(selectedProject)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium flex items-center justify-center gap-2" disabled={!selectedProject.thumbnail}><Download className="w-5 h-5" />이미지 다운로드</button>
-                                <button onClick={() => handleDownloadData(selectedProject)} className="flex-1 py-3 bg-[#5500FF] hover:bg-[#4400DD] text-white rounded-lg font-medium flex items-center justify-center gap-2" disabled={downloading}><Download className="w-5 h-5" />데이터 다운로드</button>
+                                <button onClick={() => handleDownloadThumbnail(selectedProject)} className="flex-1 py-3 bg-[#5500FF] hover:bg-[#4400DD] text-white rounded-lg font-medium flex items-center justify-center gap-2" disabled={!selectedProject.thumbnail}><Download className="w-5 h-5" />이미지 다운로드</button>
                             </div>
                             <button onClick={() => setSelectedProject(null)} className="w-full mt-3 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium">닫기</button>
                         </div>
