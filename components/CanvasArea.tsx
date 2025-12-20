@@ -142,21 +142,35 @@ export const CanvasArea: React.FC<Props> = (props) => {
     }
 
     try {
-      // 동적 import로 압축 유틸 사용
-      const { compressImage } = await import('../utils/imageUtils');
-      const compressedDataUrl = await compressImage(file, {
-        maxWidth: 1200,
-        maxHeight: 1200,
-        quality: 0.8,
-        maxSizeKB: 500
-      });
+      let imageUrl: string;
+
+      // Cloudinary 사용 시
+      const { uploadToCloudinary, isCloudinaryConfigured } = await import('../services/cloudinaryService');
+
+      if (isCloudinaryConfigured()) {
+        const result = await uploadToCloudinary(file, {
+          folder: 'muru-assets/user-uploads',
+          tags: ['user-upload', 'drag-drop']
+        });
+        imageUrl = result.secureUrl;
+        console.log(`[Upload] Cloudinary URL: ${imageUrl}`);
+      } else {
+        // Fallback: 로컬 압축
+        const { compressImage } = await import('../utils/imageUtils');
+        imageUrl = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.8,
+          maxSizeKB: 500
+        });
+      }
 
       if (onAddImageElement) {
-        onAddImageElement(compressedDataUrl);
+        onAddImageElement(imageUrl);
       }
     } catch (error) {
-      console.error('Image compression failed:', error);
-      alert('이미지 처리에 실패했습니다.');
+      console.error('Image upload failed:', error);
+      alert('이미지 업로드에 실패했습니다.');
     }
   }, [onAddImageElement]);
 

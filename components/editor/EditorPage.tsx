@@ -10,6 +10,7 @@ import { TabType, ProjectData } from '../../types';
 import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save, Smartphone, Monitor } from 'lucide-react';
 import { printCanvas } from '../../utils/exportUtils';
 import { compressImage, isImageFile, isFileTooLarge } from '../../utils/imageUtils';
+import { uploadToCloudinary, isCloudinaryConfigured } from '../../services/cloudinaryService';
 import { storageService } from '../../services/storageService';
 import { ExportModal } from '../ExportModal';
 
@@ -67,13 +68,25 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     }
 
     try {
-      // 이미지 압축 (최대 1200px, 품질 80%, 최대 500KB)
-      const compressedDataUrl = await compressImage(file, {
-        maxWidth: 1200,
-        maxHeight: 1200,
-        quality: 0.8,
-        maxSizeKB: 500
-      });
+      let imageUrl: string;
+
+      // Cloudinary 사용 가능 시 CDN 업로드, 아니면 Base64
+      if (isCloudinaryConfigured()) {
+        const result = await uploadToCloudinary(file, {
+          folder: 'muru-assets/user-uploads',
+          tags: ['user-upload']
+        });
+        imageUrl = result.secureUrl;
+        console.log(`[Upload] Cloudinary URL: ${imageUrl}`);
+      } else {
+        // Fallback: 로컬 압축
+        imageUrl = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.8,
+          maxSizeKB: 500
+        });
+      }
 
       const img = new Image();
       img.onload = () => {
@@ -86,8 +99,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         if (project.selectedIds.length === 1) {
           const el = project.elements.find(e => e.id === project.selectedIds[0]);
           if (el && (el.type === 'shape' || el.type === 'circle')) {
-            project.updateElement(el.id, { backgroundImage: compressedDataUrl }, true);
-            handleSaveAsset(compressedDataUrl);
+            project.updateElement(el.id, { backgroundImage: imageUrl }, true);
+            handleSaveAsset(imageUrl);
             return;
           }
         }
@@ -99,7 +112,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           id: Math.random().toString(36).substr(2, 9),
           type: 'image' as const,
           x, y, width, height,
-          content: compressedDataUrl,
+          content: imageUrl,
           rotation: 0,
           zIndex: project.elements.length + 1,
           pageId: project.activePageId,
@@ -107,12 +120,12 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         };
         project.updateElements([...project.elements, newEl]);
         project.setSelectedIds([newEl.id]);
-        handleSaveAsset(compressedDataUrl);
+        handleSaveAsset(imageUrl);
       };
-      img.src = compressedDataUrl;
+      img.src = imageUrl;
     } catch (error) {
-      console.error('Image compression failed:', error);
-      alert('이미지 처리에 실패했습니다.');
+      console.error('Image upload failed:', error);
+      alert('이미지 업로드에 실패했습니다.');
     }
     e.target.value = ''; // Reset for same file selection
   };
