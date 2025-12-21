@@ -39,10 +39,11 @@ export const CARD_STYLES: { id: CardStyle; name: string; icon: string }[] = [
 
 /**
  * 캐릭터 타입 옵션 (사진 스타일용)
+ * hasImages: 해당 캐릭터 타입에 이미지가 업로드되었는지 여부
  */
-export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string }[] = [
-    { id: 'boy', name: '남자아이', icon: '👦' },
-    { id: 'girl', name: '여자아이', icon: '👧' },
+export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string; hasImages: boolean }[] = [
+    { id: 'boy', name: '남자아이', icon: '👦', hasImages: true },
+    { id: 'girl', name: '여자아이', icon: '👧', hasImages: false }, // TODO: 이미지 업로드 후 true로 변경
 ];
 
 /**

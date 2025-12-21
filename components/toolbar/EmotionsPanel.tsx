@@ -177,7 +177,16 @@ export const EmotionsPanel: React.FC<Props> = ({
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-4">
-                        {filteredEmotions.length > 0 ? (
+                        {/* photo 스타일에서 해당 캐릭터 타입에 이미지가 없으면 빈 상태 표시 */}
+                        {cardStyle === 'photo' && !CHARACTER_TYPES.find(t => t.id === characterType)?.hasImages ? (
+                            <div className="col-span-2 text-center py-12 text-gray-400">
+                                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center text-2xl">
+                                    👧
+                                </div>
+                                <p className="text-sm font-medium mb-1">이미지 준비 중</p>
+                                <p className="text-xs">곧 추가될 예정입니다</p>
+                            </div>
+                        ) : filteredEmotions.length > 0 ? (
                             filteredEmotions.map((card, idx) => (
                                 <button
                                     key={idx}
