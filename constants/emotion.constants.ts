@@ -51,12 +51,12 @@ export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string }[
  * @param label 감정 라벨 (파일명으로 사용)
  * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
-const getCloudinaryUrl = (style: CardStyle, label: string, characterType?: CharacterType): string => {
-    // photo 스타일은 캐릭터 타입 서브폴더 사용
+const getCloudinaryUrl = (style: CardStyle, emotionId: string, characterType?: CharacterType): string => {
+    // photo 스타일은 캐릭터 타입 서브폴더 사용, 영어 ID를 파일명으로
     if (style === 'photo' && characterType) {
-        return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${characterType}/${encodeURIComponent(label)}.png`;
+        return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${characterType}/${emotionId}.png`;
     }
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${encodeURIComponent(label)}.png`;
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${emotionId}.png`;
 };
 
 /**
@@ -67,16 +67,15 @@ const getTwemojiUrl = (emojiCode: string): string => {
     return `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/${emojiCode}.svg`;
 };
 
-/**
- * 감정 카드 정의
- */
 const EMOTION_CARD_DEFINITIONS = [
-    { id: 'happy', label: "기뻐요", emoji: "1f604" },
+    { id: 'happy', label: "기쁨요", emoji: "1f604" },
     { id: 'sad', label: "슬퍼요", emoji: "1f622" },
     { id: 'angry', label: "화나요", emoji: "1f621" },
     { id: 'surprised', label: "놀라워요", emoji: "1f632" },
-    { id: 'dislike', label: "싫어요", emoji: "1f44e" },
     { id: 'scared', label: "무서워요", emoji: "1f628" },
+    { id: 'comfortable', label: "편안해요", emoji: "1f60c" },
+    { id: 'bad', label: "별로에요", emoji: "1f612" },
+    { id: 'dislike', label: "싫어요", emoji: "1f44e" },
     { id: 'confused', label: "헷갈려요", emoji: "1f615" },
     { id: 'excited', label: "신나요", emoji: "1f929" },
     { id: 'exhausted', label: "힘들어요", emoji: "1f62b" },
@@ -90,7 +89,7 @@ const EMOTION_CARD_DEFINITIONS = [
     { id: 'help', label: "도와주세요", emoji: "1f198" },
     { id: 'curious', label: "궁금해요", emoji: "1f914" },
     { id: 'uncertain', label: "잘 모르겠어요", emoji: "1f937" },
-    { id: 'sleepy', label: "피곤해요", emoji: "1f634" },
+    { id: 'sleepy', label: "피곴해요", emoji: "1f634" },
 ];
 
 /**
@@ -102,7 +101,7 @@ export const getEmotionCardsByStyle = (style: CardStyle, characterType?: Charact
     return EMOTION_CARD_DEFINITIONS.map(def => ({
         id: def.id,
         label: def.label,
-        url: getCloudinaryUrl(style, def.label, characterType),
+        url: getCloudinaryUrl(style, def.id, characterType),
         fallbackUrl: getTwemojiUrl(def.emoji),
     }));
 };
