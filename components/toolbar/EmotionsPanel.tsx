@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Sparkles, Loader2, X, Camera, Palette, Pencil } from 'lucide-react';
 import { CharacterProfile } from '../../types';
-import { getEmotionCardsByStyle, CARD_STYLES, CardStyle } from '../../constants/emotion.constants';
+import { getEmotionCardsByStyle, CARD_STYLES, CardStyle, CHARACTER_TYPES, CharacterType } from '../../constants/emotion.constants';
 import { generateCharacterEmotion, generateTherapyImage } from '../../services/geminiService';
 
 interface Props {
@@ -26,6 +26,7 @@ export const EmotionsPanel: React.FC<Props> = ({
     const [emotionSubTab, setEmotionSubTab] = useState<'presets' | 'my-characters'>('presets');
     const [emotionSearch, setEmotionSearch] = useState('');
     const [cardStyle, setCardStyle] = useState<CardStyle>('illustration');
+    const [characterType, setCharacterType] = useState<CharacterType>('boy');
 
     // Character Generation State
     const [characterName, setCharacterName] = useState('');
@@ -36,8 +37,13 @@ export const EmotionsPanel: React.FC<Props> = ({
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiStyle, setAiStyle] = useState<'character' | 'realistic' | 'emoji'>('character');
 
-    // 스타일별 감정 카드
-    const emotionCards = useMemo(() => getEmotionCardsByStyle(cardStyle), [cardStyle]);
+    // 스타일별 감정 카드 (photo 스타일은 캐릭터 타입 포함)
+    const emotionCards = useMemo(() => {
+        if (cardStyle === 'photo') {
+            return getEmotionCardsByStyle(cardStyle, characterType);
+        }
+        return getEmotionCardsByStyle(cardStyle);
+    }, [cardStyle, characterType]);
 
     const filteredEmotions = emotionCards.filter(card =>
         card.label.includes(emotionSearch)
@@ -142,6 +148,24 @@ export const EmotionsPanel: React.FC<Props> = ({
                             </button>
                         ))}
                     </div>
+
+                    {/* 캐릭터 타입 선택기 (photo 스타일일 때만 표시) */}
+                    {cardStyle === 'photo' && (
+                        <div className="flex gap-1 mb-3">
+                            {CHARACTER_TYPES.map(type => (
+                                <button
+                                    key={type.id}
+                                    onClick={() => setCharacterType(type.id)}
+                                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${characterType === type.id
+                                        ? 'bg-pink-500 text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    {type.icon} {type.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="relative mb-4">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />

@@ -24,6 +24,11 @@ const CLOUDINARY_BASE_FOLDER = 'muru-cards/emotion-cards';
 export type CardStyle = 'photo' | 'illustration' | 'line-drawing';
 
 /**
+ * 캐릭터 타입 (사진 스타일용)
+ */
+export type CharacterType = 'boy' | 'girl';
+
+/**
  * 스타일 옵션 (UI 표시용)
  */
 export const CARD_STYLES: { id: CardStyle; name: string; icon: string }[] = [
@@ -33,11 +38,24 @@ export const CARD_STYLES: { id: CardStyle; name: string; icon: string }[] = [
 ];
 
 /**
+ * 캐릭터 타입 옵션 (사진 스타일용)
+ */
+export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string }[] = [
+    { id: 'boy', name: '남자아이', icon: '👦' },
+    { id: 'girl', name: '여자아이', icon: '👧' },
+];
+
+/**
  * 스타일별 Cloudinary URL 생성
  * @param style 카드 스타일
  * @param label 감정 라벨 (파일명으로 사용)
+ * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
-const getCloudinaryUrl = (style: CardStyle, label: string): string => {
+const getCloudinaryUrl = (style: CardStyle, label: string, characterType?: CharacterType): string => {
+    // photo 스타일은 캐릭터 타입 서브폴더 사용
+    if (style === 'photo' && characterType) {
+        return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${characterType}/${encodeURIComponent(label)}.png`;
+    }
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${encodeURIComponent(label)}.png`;
 };
 
@@ -78,12 +96,13 @@ const EMOTION_CARD_DEFINITIONS = [
 /**
  * 스타일별 감정 카드 URL 가져오기
  * @param style 카드 스타일
+ * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
-export const getEmotionCardsByStyle = (style: CardStyle) => {
+export const getEmotionCardsByStyle = (style: CardStyle, characterType?: CharacterType) => {
     return EMOTION_CARD_DEFINITIONS.map(def => ({
         id: def.id,
         label: def.label,
-        url: getCloudinaryUrl(style, def.label),
+        url: getCloudinaryUrl(style, def.label, characterType),
         fallbackUrl: getTwemojiUrl(def.emoji),
     }));
 };
