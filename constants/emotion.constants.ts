@@ -30,11 +30,12 @@ export type CharacterType = 'boy' | 'girl';
 
 /**
  * 스타일 옵션 (UI 표시용)
+ * hasImages: 해당 스타일에 이미지가 업로드되었는지 여부
  */
-export const CARD_STYLES: { id: CardStyle; name: string; icon: string }[] = [
-    { id: 'photo', name: '실제 사진', icon: '📷' },
-    { id: 'illustration', name: '그림', icon: '🎨' },
-    { id: 'line-drawing', name: '선그림', icon: '✏️' },
+export const CARD_STYLES: { id: CardStyle; name: string; icon: string; hasImages: boolean }[] = [
+    { id: 'photo', name: '실제 사진', icon: '📷', hasImages: true },
+    { id: 'illustration', name: '그림', icon: '🎨', hasImages: true },
+    { id: 'line-drawing', name: '선그림', icon: '✏️', hasImages: false }, // TODO: 이미지 업로드 후 true로 변경
 ];
 
 /**
