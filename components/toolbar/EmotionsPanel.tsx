@@ -157,7 +157,7 @@ export const EmotionsPanel: React.FC<Props> = ({
                                     key={type.id}
                                     onClick={() => setCharacterType(type.id)}
                                     className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${characterType === type.id
-                                        ? 'bg-pink-500 text-white shadow-sm'
+                                        ? 'bg-[#5500FF] text-white shadow-sm'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
