@@ -51,7 +51,7 @@ export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string }[
  * @param label 감정 라벨 (파일명으로 사용)
  * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
-const CACHE_VERSION = 'v3'; // 이미지 업데이트 시 버전 변경
+const CACHE_VERSION = 'v4'; // 이미지 업데이트 시 버전 변경
 const getCloudinaryUrl = (style: CardStyle, emotionId: string, characterType?: CharacterType): string => {
     // photo 스타일은 캐릭터 타입 서브폴더 사용, 영어 ID를 파일명으로
     if (style === 'photo' && characterType) {
@@ -69,7 +69,7 @@ const getTwemojiUrl = (emojiCode: string): string => {
 };
 
 const EMOTION_CARD_DEFINITIONS = [
-    // Cloudinary에 업로드된 감정 (photo 스타일에서 표시) - 12개
+    // Cloudinary에 업로드된 감정 (photo 스타일에서 표시) - 14개
     { id: 'happy', label: "기뻐요", emoji: "1f604", hasPhoto: true },
     { id: 'sad', label: "슬퍼요", emoji: "1f622", hasPhoto: true },
     { id: 'angry', label: "화나요", emoji: "1f621", hasPhoto: true },
@@ -85,14 +85,14 @@ const EMOTION_CARD_DEFINITIONS = [
     // 아직 업로드 안 된 감정 (illustration에서만 표시)
     { id: 'confused', label: "헷갈려요", emoji: "1f615", hasPhoto: false },
     { id: 'excited', label: "신나요", emoji: "1f929", hasPhoto: false },
-    { id: 'annoyed', label: "짜증나요", emoji: "1f624", hasPhoto: false },
+    { id: 'annoyed', label: "짜증나요", emoji: "1f624", hasPhoto: true },
     { id: 'bored', label: "심심해요", emoji: "1f971", hasPhoto: false },
     { id: 'love', label: "사랑해요", emoji: "1f970", hasPhoto: false },
     { id: 'like', label: "좋아요", emoji: "1f44d", hasPhoto: false },
     { id: 'waiting', label: "기다려요", emoji: "23f3", hasPhoto: false },
     { id: 'help', label: "도와주세요", emoji: "1f198", hasPhoto: false },
     { id: 'uncertain', label: "잘 모르겠어요", emoji: "1f937", hasPhoto: false },
-    { id: 'sleepy', label: "피곤해요", emoji: "1f634", hasPhoto: false },
+    { id: 'sleepy', label: "피곤해요", emoji: "1f634", hasPhoto: true },
 ];
 
 /**
