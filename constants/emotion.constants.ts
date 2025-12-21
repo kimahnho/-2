@@ -43,7 +43,7 @@ export const CARD_STYLES: { id: CardStyle; name: string; icon: string }[] = [
  */
 export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string; hasImages: boolean }[] = [
     { id: 'boy', name: '남자아이', icon: '👦', hasImages: true },
-    { id: 'girl', name: '여자아이', icon: '👧', hasImages: false }, // TODO: 이미지 업로드 후 true로 변경
+    { id: 'girl', name: '여자아이', icon: '👧', hasImages: true },
 ];
 
 /**
@@ -52,11 +52,11 @@ export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string; h
  * @param label 감정 라벨 (파일명으로 사용)
  * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
-const CACHE_VERSION = 'v6'; // 이미지 업데이트 시 버전 변경
+const CACHE_VERSION = 'v7'; // 이미지 업데이트 시 버전 변경
 const getCloudinaryUrl = (style: CardStyle, emotionId: string, characterType?: CharacterType): string => {
-    // photo 스타일은 캐릭터 타입 서브폴더 사용, 영어 ID를 파일명으로
+    // photo 스타일은 boy 폴더에 boy_/girl_ 접두사로 파일 구분
     if (style === 'photo' && characterType) {
-        return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${characterType}/${emotionId}.png?${CACHE_VERSION}`;
+        return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/boy/${characterType}_${emotionId}.png?${CACHE_VERSION}`;
     }
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${CLOUDINARY_BASE_FOLDER}/${style}/${emotionId}.png?${CACHE_VERSION}`;
 };
