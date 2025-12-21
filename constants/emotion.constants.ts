@@ -51,7 +51,7 @@ export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string }[
  * @param label 감정 라벨 (파일명으로 사용)
  * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
-const CACHE_VERSION = 'v5'; // 이미지 업데이트 시 버전 변경
+const CACHE_VERSION = 'v6'; // 이미지 업데이트 시 버전 변경
 const getCloudinaryUrl = (style: CardStyle, emotionId: string, characterType?: CharacterType): string => {
     // photo 스타일은 캐릭터 타입 서브폴더 사용, 영어 ID를 파일명으로
     if (style === 'photo' && characterType) {
