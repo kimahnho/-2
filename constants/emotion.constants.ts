@@ -68,28 +68,30 @@ const getTwemojiUrl = (emojiCode: string): string => {
 };
 
 const EMOTION_CARD_DEFINITIONS = [
-    { id: 'happy', label: "기쁨요", emoji: "1f604" },
-    { id: 'sad', label: "슬퍼요", emoji: "1f622" },
-    { id: 'angry', label: "화나요", emoji: "1f621" },
-    { id: 'surprised', label: "놀라워요", emoji: "1f632" },
-    { id: 'scared', label: "무서워요", emoji: "1f628" },
-    { id: 'comfortable', label: "편안해요", emoji: "1f60c" },
-    { id: 'bad', label: "별로에요", emoji: "1f612" },
-    { id: 'dislike', label: "싫어요", emoji: "1f44e" },
-    { id: 'confused', label: "헷갈려요", emoji: "1f615" },
-    { id: 'excited', label: "신나요", emoji: "1f929" },
-    { id: 'exhausted', label: "힘들어요", emoji: "1f62b" },
-    { id: 'disappointed', label: "아쉬워요", emoji: "1f61e" },
-    { id: 'annoyed', label: "짜증나요", emoji: "1f624" },
-    { id: 'sick', label: "아파요", emoji: "1f912" },
-    { id: 'bored', label: "심심해요", emoji: "1f971" },
-    { id: 'love', label: "사랑해요", emoji: "1f970" },
-    { id: 'like', label: "좋아요", emoji: "1f44d" },
-    { id: 'waiting', label: "기다려요", emoji: "23f3" },
-    { id: 'help', label: "도와주세요", emoji: "1f198" },
-    { id: 'curious', label: "궁금해요", emoji: "1f914" },
-    { id: 'uncertain', label: "잘 모르겠어요", emoji: "1f937" },
-    { id: 'sleepy', label: "피곴해요", emoji: "1f634" },
+    // Cloudinary에 업로드된 감정 (photo 스타일에서 표시)
+    { id: 'happy', label: "기뻐요", emoji: "1f604", hasPhoto: true },
+    { id: 'sad', label: "슬퍼요", emoji: "1f622", hasPhoto: true },
+    { id: 'angry', label: "화나요", emoji: "1f621", hasPhoto: true },
+    { id: 'surprised', label: "놀라워요", emoji: "1f632", hasPhoto: true },
+    { id: 'scared', label: "무서워요", emoji: "1f628", hasPhoto: true },
+    { id: 'comfortable', label: "편안해요", emoji: "1f60c", hasPhoto: true },
+    { id: 'bad', label: "별로에요", emoji: "1f612", hasPhoto: true },
+    // 아직 업로드 안 된 감정 (illustration에서만 표시)
+    { id: 'dislike', label: "싫어요", emoji: "1f44e", hasPhoto: false },
+    { id: 'confused', label: "헷갈려요", emoji: "1f615", hasPhoto: false },
+    { id: 'excited', label: "신나요", emoji: "1f929", hasPhoto: false },
+    { id: 'exhausted', label: "힘들어요", emoji: "1f62b", hasPhoto: false },
+    { id: 'disappointed', label: "아쉬워요", emoji: "1f61e", hasPhoto: false },
+    { id: 'annoyed', label: "짜증나요", emoji: "1f624", hasPhoto: false },
+    { id: 'sick', label: "아파요", emoji: "1f912", hasPhoto: false },
+    { id: 'bored', label: "심심해요", emoji: "1f971", hasPhoto: false },
+    { id: 'love', label: "사랑해요", emoji: "1f970", hasPhoto: false },
+    { id: 'like', label: "좋아요", emoji: "1f44d", hasPhoto: false },
+    { id: 'waiting', label: "기다려요", emoji: "23f3", hasPhoto: false },
+    { id: 'help', label: "도와주세요", emoji: "1f198", hasPhoto: false },
+    { id: 'curious', label: "궁금해요", emoji: "1f914", hasPhoto: false },
+    { id: 'uncertain', label: "잘 모르겠어요", emoji: "1f937", hasPhoto: false },
+    { id: 'sleepy', label: "피곤해요", emoji: "1f634", hasPhoto: false },
 ];
 
 /**
@@ -98,7 +100,12 @@ const EMOTION_CARD_DEFINITIONS = [
  * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
 export const getEmotionCardsByStyle = (style: CardStyle, characterType?: CharacterType) => {
-    return EMOTION_CARD_DEFINITIONS.map(def => ({
+    // photo/line-drawing 스타일은 hasPhoto가 true인 것만 필터링
+    const definitions = (style === 'photo' || style === 'line-drawing')
+        ? EMOTION_CARD_DEFINITIONS.filter(def => def.hasPhoto)
+        : EMOTION_CARD_DEFINITIONS;
+
+    return definitions.map(def => ({
         id: def.id,
         label: def.label,
         url: getCloudinaryUrl(style, def.id, characterType),
