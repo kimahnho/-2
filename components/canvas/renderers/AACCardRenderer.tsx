@@ -162,8 +162,8 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                             src={aacData.emoji}
                             alt={aacData.label || ''}
                             style={{
-                                width: size * symbolScale * 1.5,
-                                height: size * symbolScale * 1.5,
+                                width: size * symbolScale,
+                                height: size * symbolScale,
                                 objectFit: 'contain'
                             }}
                         />
