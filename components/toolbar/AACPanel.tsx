@@ -48,10 +48,10 @@ const AAC_CARD_STYLES: { id: AACCardStyle; name: string; icon: React.ReactNode }
 
 // Cloudinary 설정
 const CLOUDINARY_CLOUD_NAME = 'dabbfycew';
-const AAC_CACHE_VERSION = 'v1';
+const AAC_CACHE_VERSION = 'v2';
 const getCloudinaryAACUrl = (cardId: string): string => {
-    // 폴더 구조: muru-cards/emotion-cards/photo/boy/aac_{cardId}.png
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/emotion-cards/photo/boy/aac_${cardId}.png?${AAC_CACHE_VERSION}`;
+    // 폴더 구조: muru-cards/AAC-cards/illustration/aac_{cardId}.png
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/AAC-cards/illustration/aac_${cardId}.png?${AAC_CACHE_VERSION}`;
 };
 
 // AAC 카드 정의
@@ -113,6 +113,7 @@ const AAC_CARD_DEFINITIONS: AACCardDef[] = [
     { id: 'bread', label: '빵', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#D4A574', emoji: '🍞' },
     { id: 'cake', label: '케이크', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F472B6', emoji: '🎂' },
     { id: 'candy', label: '사탕', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#EC4899', emoji: '🍬' },
+    { id: 'noodles', label: '면', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F59E0B', emoji: '🍜' },
 ];
 
 // Cloudinary URL이 포함된 AAC 카드 생성 함수
