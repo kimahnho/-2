@@ -33,14 +33,15 @@ type CategoryType = 'food' | 'animal';
 const CLOUDINARY_CONFIG = {
     cloudName: 'dabbfycew',
     basePathFood: 'muru-cards/AAC-cards/illustration/Food',
-    basePathAnimal: 'muru-cards/AAC-cards/illustration/animal',
+    basePathAnimal: 'AAC-cards/illustration/animal',
+    cacheVersion: 'v5'  // 캐시 버스팅
 } as const;
 
 const getCloudinaryUrl = (cardId: string, category: CategoryType): string => {
     const basePath = category === 'food'
         ? CLOUDINARY_CONFIG.basePathFood
         : CLOUDINARY_CONFIG.basePathAnimal;
-    return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${basePath}/aac_${cardId}.png`;
+    return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${basePath}/aac_${cardId}.png?${CLOUDINARY_CONFIG.cacheVersion}`;
 };
 
 // ========== AAC 카드 데이터 ==========
@@ -100,12 +101,13 @@ const ANIMAL_CARDS: AACCardData[] = [
 const FOOD_CARDS: AACCardData[] = [
     { id: 'apple', label: '사과', emoji: '🍎' },
     { id: 'banana', label: '바나나', emoji: '🍌' },
+    { id: 'beans', label: '콩', emoji: '🫘' },
     { id: 'bread', label: '빵', emoji: '🍞' },
     { id: 'cake', label: '케이크', emoji: '🎂' },
     { id: 'candy', label: '사탕', emoji: '🍬' },
     { id: 'carrot', label: '당근', emoji: '🥕' },
     { id: 'cheese', label: '치즈', emoji: '🧀' },
-    { id: 'chestnut_burr', label: '밤', emoji: '🌰' },
+    { id: 'chestnut', label: '밤', emoji: '🌰' },
     { id: 'chewing_gum', label: '껌', emoji: '🫧' },
     { id: 'chicken_meet', label: '닭고기', emoji: '🍗' },
     { id: 'chips', label: '감자칩', emoji: '🍟' },
@@ -115,24 +117,25 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'cola', label: '콜라', emoji: '🥤' },
     { id: 'cookie', label: '쿠키', emoji: '🍪' },
     { id: 'corn', label: '옥수수', emoji: '🌽' },
+    { id: 'daikon', label: '무', emoji: '🥬' },
     { id: 'donut', label: '도넛', emoji: '🍩' },
     { id: 'egg', label: '계란', emoji: '🥚' },
     { id: 'fish', label: '생선', emoji: '🐟' },
     { id: 'food', label: '음식', emoji: '🍽️' },
     { id: 'fruit', label: '과일', emoji: '🍎' },
-    { id: 'ginger', label: '생강', emoji: '🫚' },
     { id: 'grape_green', label: '청포도', emoji: '🍇' },
     { id: 'grape_purple', label: '포도', emoji: '🍇' },
     { id: 'hamburger', label: '햄버거', emoji: '🍔' },
     { id: 'hotdog', label: '핫도그', emoji: '🌭' },
+    { id: 'hotteok', label: '호떡', emoji: '🥞' },
     { id: 'ice', label: '얼음', emoji: '🧊' },
     { id: 'ice_cream', label: '아이스크림', emoji: '🍦' },
     { id: 'instant_ramen', label: '라면', emoji: '🍜' },
     { id: 'juice', label: '주스', emoji: '🧃' },
     { id: 'kimchi', label: '김치', emoji: '🥬' },
-    { id: 'lemon', label: '레몬', emoji: '🍋' },
+    { id: 'laver', label: '김', emoji: '🍙' },
     { id: 'mandarine', label: '귤', emoji: '🍊' },
-    { id: 'mango', label: '망고', emoji: '🥭' },
+    { id: 'meat', label: '고기', emoji: '🥩' },
     { id: 'melon', label: '멜론', emoji: '🍈' },
     { id: 'milk', label: '우유', emoji: '🥛' },
     { id: 'napa_cabbage', label: '배추', emoji: '🥬' },
@@ -141,8 +144,8 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'peach', label: '복숭아', emoji: '🍑' },
     { id: 'peanuts', label: '땅콩', emoji: '🥜' },
     { id: 'pizza', label: '피자', emoji: '🍕' },
+    { id: 'pumpkin', label: '호박', emoji: '🎃' },
     { id: 'rice', label: '밥', emoji: '🍚' },
-    { id: 'snack', label: '과자', emoji: '🍪' },
     { id: 'spagetti', label: '스파게티', emoji: '🍝' },
     { id: 'strawberry', label: '딸기', emoji: '🍓' },
     { id: 'sugar', label: '설탕', emoji: '🧂' },
