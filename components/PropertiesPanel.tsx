@@ -140,7 +140,7 @@ export const PropertiesPanel: React.FC<Props> = ({
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Local state for sliders (for immediate UI feedback)
-  const [localSymbolScale, setLocalSymbolScale] = useState<number>(45);
+  const [localSymbolScale, setLocalSymbolScale] = useState<number>(4);
   const [localLabelPosition, setLocalLabelPosition] = useState<string>('above');
 
   // Sync local state with first selected element's values
@@ -149,7 +149,7 @@ export const PropertiesPanel: React.FC<Props> = ({
       el => selectedIds.includes(el.id) && el.metadata?.isAACCard
     );
     if (firstAAC?.metadata?.aacData) {
-      setLocalSymbolScale((firstAAC.metadata.aacData.symbolScale || 0.45) * 100);
+      setLocalSymbolScale(Math.round((firstAAC.metadata.aacData.symbolScale || 0.4) * 10));
       setLocalLabelPosition(firstAAC.metadata.aacData.labelPosition || 'above');
     }
   }, [selectedIds, elements]);
@@ -457,14 +457,14 @@ export const PropertiesPanel: React.FC<Props> = ({
                   <div className="flex items-center gap-3">
                     <input
                       type="range"
-                      min="10"
-                      max="85"
-                      step="5"
+                      min="1"
+                      max="8"
+                      step="1"
                       value={localSymbolScale}
                       onChange={(e) => {
                         const val = Number(e.target.value);
                         setLocalSymbolScale(val);
-                        const scale = val / 100;
+                        const scale = val / 10; // 1-8 → 0.1-0.8
 
                         // Build batch updates array for all AAC cards
                         const aacCards = elements.filter(
@@ -486,7 +486,7 @@ export const PropertiesPanel: React.FC<Props> = ({
                         }
                       }}
                       onMouseUp={() => {
-                        const scale = localSymbolScale / 100;
+                        const scale = localSymbolScale / 10; // 1-8 → 0.1-0.8
 
                         // Build batch commits array for all AAC cards
                         const aacCards = elements.filter(
@@ -510,7 +510,7 @@ export const PropertiesPanel: React.FC<Props> = ({
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5500FF]"
                     />
                     <span className="text-xs text-gray-500 w-8 text-right">
-                      {Math.round(localSymbolScale / 10)}
+                      {localSymbolScale}
                     </span>
                   </div>
                 </div>
