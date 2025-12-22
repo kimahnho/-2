@@ -342,7 +342,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     if (sentenceBuilderId) {
       const sentenceArea = project.elements.find(el => el.id === sentenceBuilderId);
       if (sentenceArea?.metadata?.isAACSentenceArea) {
-        addSentenceItem(sentenceBuilderId, card.emoji || '❓', card.label || '');
+        addSentenceItem(sentenceBuilderId, card.cloudinaryUrl || card.emoji || '❓', card.label || '');
         return;
       }
     }
@@ -356,7 +356,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
     // A. 문장 구성 영역 선택 시: 카드 추가 (더블클릭 없이 직접 선택한 경우)
     if (selectedEl.metadata?.isAACSentenceArea) {
-      addSentenceItem(selectedId, card.emoji || '❓', card.label || '');
+      addSentenceItem(selectedId, card.cloudinaryUrl || card.emoji || '❓', card.label || '');
       return;
     }
 
@@ -372,9 +372,10 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
             metadata: {
               ...el.metadata,
               aacData: {
-                emoji: card.emoji || '❓',
+                emoji: card.cloudinaryUrl || card.emoji || '❓',
                 label: card.label,
-                isFilled: true
+                isFilled: true,
+                isCloudinaryImage: !!card.cloudinaryUrl
               }
             }
           };

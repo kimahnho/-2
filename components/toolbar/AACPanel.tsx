@@ -24,6 +24,7 @@ export interface AACCard {
     icon: React.ReactNode;
     backgroundColor: string;
     emoji: string;
+    cloudinaryUrl?: string;
 }
 
 // AAC 카드 카테고리
