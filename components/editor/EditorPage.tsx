@@ -347,7 +347,52 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       }
     }
 
-    if (project.selectedIds.length !== 1) return;
+    // 선택된 요소가 없거나 1개가 아닌 경우: 새 AAC 카드 생성
+    if (project.selectedIds.length !== 1) {
+      // 새 AAC 카드를 캔버스에 추가
+      const cardId = `aac-card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const existingCards = project.elements.filter(
+        el => el.pageId === project.activePageId && el.metadata?.isAACCard
+      ).length;
+      const offset = existingCards * 30;
+
+      const newCard = {
+        id: cardId,
+        type: 'card' as const,
+        x: 100 + offset,
+        y: 100 + offset,
+        width: 100,
+        height: 120,
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        rotation: 0,
+        zIndex: 100 + existingCards,
+        pageId: project.activePageId,
+        metadata: {
+          isAACCard: true,
+          aacRow: 0,
+          aacCol: 0,
+          aacIndex: existingCards,
+          aacData: {
+            emoji: card.cloudinaryUrl || card.emoji || '❓',
+            label: card.label,
+            isFilled: true,
+            isCloudinaryImage: !!card.cloudinaryUrl,
+            fontSize: 20,
+            fontWeight: 400,
+            color: '#000000',
+            symbolScale: 0.45,
+            labelPosition: 'below' as 'above' | 'below' | 'none'
+          }
+        }
+      };
+      project.updateElements([...project.elements, newCard as any]);
+      project.setSelectedIds([cardId]);
+      return;
+    }
+
     const selectedId = project.selectedIds[0];
     const selectedEl = project.elements.find(el => el.id === selectedId);
 
