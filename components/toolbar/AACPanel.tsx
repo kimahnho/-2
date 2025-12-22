@@ -172,7 +172,7 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
 
             {/* 카드 목록 */}
             <div className="grid grid-cols-2 gap-2">
-                {/* 그림 스타일이면 이모지 표시, 아니면 준비중 */}
+                {/* 그림 스타일이면 Cloudinary 이미지 표시, 아니면 준비중 */}
                 {cardStyle === 'illustration' ? (
                     filteredCards.map(card => (
                         <button
@@ -181,10 +181,18 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, t
                             className="flex flex-col items-center p-3 rounded-xl border-2 border-gray-200 hover:border-[#5500FF] hover:shadow-md transition-all group"
                         >
                             <div
-                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-2 group-hover:scale-110 transition-transform overflow-hidden text-2xl"
-                                style={{ backgroundColor: card.backgroundColor }}
+                                className="w-16 h-16 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform overflow-hidden bg-white"
                             >
-                                {card.emoji}
+                                <img
+                                    src={card.cloudinaryUrl}
+                                    alt={card.label}
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        // Cloudinary 이미지 실패시 이모지로 대체
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-3xl">${card.emoji}</span>`;
+                                    }}
+                                />
                             </div>
                             <span className="text-xs font-medium text-gray-700">{card.label}</span>
                         </button>
