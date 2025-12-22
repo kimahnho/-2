@@ -66,6 +66,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
 
     // 문장 영역 아이템 (작은 크기)
     if (isSentenceItem) {
+        const isEmojiUrl = aacData?.emoji?.startsWith('http');
         return (
             <div
                 className="w-full h-full relative overflow-hidden"
@@ -84,9 +85,17 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                     </div>
                 )}
                 <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: aacData?.label ? 8 : 0 }}>
-                    <span style={{ fontSize: size * 0.45, lineHeight: 1 }}>
-                        {aacData?.emoji || '❓'}
-                    </span>
+                    {isEmojiUrl ? (
+                        <img
+                            src={aacData?.emoji}
+                            alt={aacData?.label || ''}
+                            style={{ width: size * 0.6, height: size * 0.6, objectFit: 'contain' }}
+                        />
+                    ) : (
+                        <span style={{ fontSize: size * 0.45, lineHeight: 1 }}>
+                            {aacData?.emoji || '❓'}
+                        </span>
+                    )}
                 </div>
             </div>
         );
@@ -148,9 +157,21 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                 }}
             >
                 {isFilled && aacData?.emoji ? (
-                    <span style={{ fontSize: size * symbolScale }}>
-                        {aacData.emoji}
-                    </span>
+                    aacData.emoji.startsWith('http') ? (
+                        <img
+                            src={aacData.emoji}
+                            alt={aacData.label || ''}
+                            style={{
+                                width: size * symbolScale * 1.5,
+                                height: size * symbolScale * 1.5,
+                                objectFit: 'contain'
+                            }}
+                        />
+                    ) : (
+                        <span style={{ fontSize: size * symbolScale }}>
+                            {aacData.emoji}
+                        </span>
+                    )
                 ) : (
                     <span className="text-gray-300" style={{ fontSize: size * 0.1 }}>
                         카드 추가
