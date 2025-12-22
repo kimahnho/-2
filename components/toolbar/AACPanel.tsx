@@ -3,7 +3,7 @@
  * AAC 템플릿의 카드를 채우기 위한 카드 목록 표시
  * 
  * 카테고리:
- * - 음식 (Food): 54개
+ * - 음식 (Food): 52개
  * - 동물 (Animal): 37개
  */
 
@@ -106,7 +106,7 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'sweet_potato', label: '고구마', emoji: '🍠' },
     { id: 'sugar', label: '설탕', emoji: '🧂' },
 
-    { id: 'spaghetti', label: '스파게티', emoji: '🍝' },
+    { id: 'spagetti', label: '스파게티', emoji: '🍝' },
     { id: 'milk', label: '우유', emoji: '🥛' },
     { id: 'noodles', label: '국수', emoji: '🍜' },
     { id: 'peanuts', label: '땅콩', emoji: '🥜' },
@@ -115,11 +115,11 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'napa_cabbage', label: '배추', emoji: '🥬' },
     { id: 'melon', label: '멜론', emoji: '🍈' },
     { id: 'mandarine', label: '귤', emoji: '🍊' },
-    { id: 'french', label: '감자튀김', emoji: '🍟' },
+
     { id: 'lemon', label: '레몬', emoji: '🍋' },
     { id: 'juice', label: '주스', emoji: '🧃' },
     { id: 'instant_ramen', label: '라면', emoji: '🍜' },
-    { id: 'tteokbbgi', label: '떡볶이', emoji: '🌶️' },
+    { id: 'tteok', label: '떡', emoji: '🍡' },
     { id: 'ice', label: '얼음', emoji: '🧊' },
     { id: 'ice_cream', label: '아이스크림', emoji: '🍦' },
     { id: 'hotdog', label: '핫도그', emoji: '🌭' },
@@ -137,7 +137,7 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'corn', label: '옥수수', emoji: '🌽' },
     { id: 'chips', label: '감자칩', emoji: '🍟' },
     { id: 'chocolate', label: '초콜릿', emoji: '🍫' },
-    { id: 'chicken_meat', label: '치킨', emoji: '🍗' },
+    { id: 'chicken_meet', label: '닭고기', emoji: '🍗' },
     { id: 'cheese', label: '치즈', emoji: '🧀' },
     { id: 'chewing_gum', label: '껌', emoji: '🫧' },
     { id: 'chestnut', label: '밤', emoji: '🌰' },
