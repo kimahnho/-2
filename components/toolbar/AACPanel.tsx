@@ -54,8 +54,8 @@ interface AACCardData {
 
 // 동물 카드 목록 (Cloudinary 이미지 사용) - 41개
 const ANIMAL_CARDS: AACCardData[] = [
-    { id: 'ant', label: '개미', emoji: '🐜' },
     { id: 'animal', label: '동물', emoji: '🐾' },
+    { id: 'ant', label: '개미', emoji: '🐜' },
     { id: 'bear', label: '곰', emoji: '🐻' },
     { id: 'bee', label: '벌', emoji: '🐝' },
     { id: 'bird', label: '새', emoji: '🐦' },
@@ -97,7 +97,7 @@ const ANIMAL_CARDS: AACCardData[] = [
     { id: 'turtle', label: '거북이', emoji: '🐢' },
 ];
 
-// 음식 카드 목록 (Cloudinary 이미지 사용) - 54개
+// 음식 카드 목록 (Cloudinary 이미지 사용) - 55개
 const FOOD_CARDS: AACCardData[] = [
     { id: 'apple', label: '사과', emoji: '🍎' },
     { id: 'banana', label: '바나나', emoji: '🍌' },
@@ -133,7 +133,9 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'juice', label: '주스', emoji: '🧃' },
     { id: 'kimchi', label: '김치', emoji: '🥬' },
     { id: 'laver', label: '김', emoji: '🍙' },
+    { id: 'lemon', label: '레몬', emoji: '🍋' },
     { id: 'mandarine', label: '귤', emoji: '🍊' },
+    { id: 'mango', label: '망고', emoji: '🥭' },
     { id: 'meat', label: '고기', emoji: '🥩' },
     { id: 'melon', label: '멜론', emoji: '🍈' },
     { id: 'milk', label: '우유', emoji: '🥛' },
@@ -145,6 +147,7 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'pizza', label: '피자', emoji: '🍕' },
     { id: 'pumpkin', label: '호박', emoji: '🎃' },
     { id: 'rice', label: '밥', emoji: '🍚' },
+    { id: 'snack', label: '과자', emoji: '🍪' },
     { id: 'spagetti', label: '스파게티', emoji: '🍝' },
     { id: 'strawberry', label: '딸기', emoji: '🍓' },
     { id: 'sugar', label: '설탕', emoji: '🧂' },
@@ -156,7 +159,6 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'yogurt', label: '요거트', emoji: '🥛' },
 ];
 
-// Cloudinary URL이 포함된 AAC 카드 생성
 const getAACCards = (category: CategoryType): AACCard[] => {
     const cards = category === 'food' ? FOOD_CARDS : ANIMAL_CARDS;
     return cards.map(card => ({
@@ -281,4 +283,3 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard }) => {
         </div>
     );
 };
-
