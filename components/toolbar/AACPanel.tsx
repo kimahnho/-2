@@ -27,13 +27,8 @@ export interface AACCard {
     cloudinaryUrl?: string;
 }
 
-// AAC 카드 카테고리
+// AAC 카드 카테고리 (Cloudinary 이미지가 있는 카테고리만)
 const AAC_CATEGORIES = [
-    { id: 'basic', name: '기본', icon: <Grid className="w-4 h-4" /> },
-    { id: 'needs', name: '요구', icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 'feelings', name: '감정', icon: <Heart className="w-4 h-4" /> },
-    { id: 'actions', name: '행동', icon: <Play className="w-4 h-4" /> },
-    { id: 'places', name: '장소', icon: <Home className="w-4 h-4" /> },
     { id: 'food', name: '음식', icon: <Utensils className="w-4 h-4" /> },
 ];
 
@@ -65,49 +60,9 @@ interface AACCardDef {
     emoji: string;
 }
 
-// AAC 카드 목록 (기본 제공) - Cloudinary URL 자동 생성
+// AAC 카드 목록 - Cloudinary 이미지가 있는 음식 카테고리만
 const AAC_CARD_DEFINITIONS: AACCardDef[] = [
-    // 기본
-    { id: 'yes', label: '예', category: 'basic', icon: <ThumbsUp className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '👍' },
-    { id: 'no', label: '아니오', category: 'basic', icon: <ThumbsDown className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '👎' },
-    { id: 'help', label: '도와주세요', category: 'basic', icon: <HelpCircle className="w-8 h-8" />, backgroundColor: '#F59E0B', emoji: '🆘' },
-    { id: 'more', label: '더 주세요', category: 'basic', icon: <Gift className="w-8 h-8" />, backgroundColor: '#8B5CF6', emoji: '🎁' },
-    { id: 'stop', label: '그만', category: 'basic', icon: <Pause className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '🛑' },
-    { id: 'wait', label: '기다려요', category: 'basic', icon: <Clock className="w-8 h-8" />, backgroundColor: '#6366F1', emoji: '⏳' },
-
-    // 요구
-    { id: 'eat', label: '먹고 싶어요', category: 'needs', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F97316', emoji: '🍽️' },
-    { id: 'drink', label: '마시고 싶어요', category: 'needs', icon: <Coffee className="w-8 h-8" />, backgroundColor: '#06B6D4', emoji: '🥤' },
-    { id: 'bathroom', label: '화장실', category: 'needs', icon: <Bath className="w-8 h-8" />, backgroundColor: '#3B82F6', emoji: '🚽' },
-    { id: 'clothes', label: '옷 갈아입기', category: 'needs', icon: <Shirt className="w-8 h-8" />, backgroundColor: '#EC4899', emoji: '👕' },
-    { id: 'sleep', label: '자고 싶어요', category: 'needs', icon: <Moon className="w-8 h-8" />, backgroundColor: '#6366F1', emoji: '😴' },
-    { id: 'outside', label: '밖에 나가요', category: 'needs', icon: <Sun className="w-8 h-8" />, backgroundColor: '#FBBF24', emoji: '☀️' },
-
-    // 감정
-    { id: 'happy', label: '기뻐요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#F472B6', emoji: '😊' },
-    { id: 'sad', label: '슬퍼요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#60A5FA', emoji: '😢' },
-    { id: 'angry', label: '화나요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '😠' },
-    { id: 'scared', label: '무서워요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#A78BFA', emoji: '😨' },
-    { id: 'love', label: '사랑해요', category: 'feelings', icon: <Heart className="w-8 h-8" />, backgroundColor: '#F43F5E', emoji: '❤️' },
-    { id: 'tired', label: '피곤해요', category: 'feelings', icon: <Moon className="w-8 h-8" />, backgroundColor: '#94A3B8', emoji: '😫' },
-
-    // 행동
-    { id: 'play', label: '놀아요', category: 'actions', icon: <Play className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '🎾' },
-    { id: 'read', label: '책 읽어요', category: 'actions', icon: <Book className="w-8 h-8" />, backgroundColor: '#8B5CF6', emoji: '📖' },
-    { id: 'watch', label: 'TV 봐요', category: 'actions', icon: <Tv className="w-8 h-8" />, backgroundColor: '#3B82F6', emoji: '📺' },
-    { id: 'music', label: '음악 들어요', category: 'actions', icon: <Music className="w-8 h-8" />, backgroundColor: '#EC4899', emoji: '🎵' },
-    { id: 'call', label: '전화해요', category: 'actions', icon: <Phone className="w-8 h-8" />, backgroundColor: '#14B8A6', emoji: '📞' },
-    { id: 'drive', label: '차 타요', category: 'actions', icon: <Car className="w-8 h-8" />, backgroundColor: '#F59E0B', emoji: '🚗' },
-
-    // 장소
-    { id: 'home', label: '집', category: 'places', icon: <Home className="w-8 h-8" />, backgroundColor: '#F97316', emoji: '🏠' },
-    { id: 'school', label: '학교', category: 'places', icon: <Book className="w-8 h-8" />, backgroundColor: '#3B82F6', emoji: '🏫' },
-    { id: 'hospital', label: '병원', category: 'places', icon: <HelpCircle className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '🏥' },
-    { id: 'store', label: '마트', category: 'places', icon: <Gift className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '🏪' },
-    { id: 'park', label: '공원', category: 'places', icon: <Sun className="w-8 h-8" />, backgroundColor: '#84CC16', emoji: '🌳' },
-    { id: 'friend', label: '친구 집', category: 'places', icon: <User className="w-8 h-8" />, backgroundColor: '#A855F7', emoji: '🧑‍🤝‍🧑' },
-
-    // 음식 (Cloudinary 이미지 있음 - 55개)
+    // 음식 (Cloudinary 이미지 있음)
     { id: 'watermelon', label: '수박', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '🍉' },
     { id: 'yogurt', label: '요거트', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F472B6', emoji: '🥛' },
     { id: 'tomato', label: '토마토', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '🍅' },
@@ -171,7 +126,7 @@ const getAACCards = () => AAC_CARD_DEFINITIONS.map(card => ({
 }));
 
 export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, totalCards }) => {
-    const [selectedCategory, setSelectedCategory] = React.useState('basic');
+    const [selectedCategory, setSelectedCategory] = React.useState('food');
     const [cardStyle, setCardStyle] = React.useState<AACCardStyle>('illustration');
     const [searchQuery, setSearchQuery] = React.useState('');
 
