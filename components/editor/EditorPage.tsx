@@ -383,7 +383,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
             fontSize: 20,
             fontWeight: 400,
             color: '#000000',
-            symbolScale: 0.55,
+            symbolScale: 0.7,
             labelPosition: 'below' as 'above' | 'below' | 'none'
           }
         }
@@ -530,7 +530,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           fontSize: 20,
           fontWeight: 400,
           color: '#000000',
-          symbolScale: 0.55,
+          symbolScale: 0.7,
           labelPosition: 'below' as 'above' | 'below' | 'none'
         }
       }
