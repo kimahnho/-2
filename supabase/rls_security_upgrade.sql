@@ -25,10 +25,10 @@ ALTER TABLE schedule_items ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth
 -- ⚠️ 아래 'YOUR_USER_ID' 부분을 실제 본인 UUID로 교체하세요!
 -- 예: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
 
-UPDATE students SET user_id = 'YOUR_USER_ID' WHERE user_id IS NULL;
-UPDATE groups SET user_id = 'YOUR_USER_ID' WHERE user_id IS NULL;
-UPDATE projects SET user_id = 'YOUR_USER_ID' WHERE user_id IS NULL;
-UPDATE schedule_items SET user_id = 'YOUR_USER_ID' WHERE user_id IS NULL;
+UPDATE students SET user_id = 'aa7bdcdd-76c7-4bb5-bbb6-1e59df247940' WHERE user_id IS NULL;
+UPDATE groups SET user_id = 'aa7bdcdd-76c7-4bb5-bbb6-1e59df247940' WHERE user_id IS NULL;
+UPDATE projects SET user_id = 'aa7bdcdd-76c7-4bb5-bbb6-1e59df247940' WHERE user_id IS NULL;
+UPDATE schedule_items SET user_id = 'aa7bdcdd-76c7-4bb5-bbb6-1e59df247940' WHERE user_id IS NULL;
 
 -- ============================================
 -- 3단계: 기존 정책 삭제

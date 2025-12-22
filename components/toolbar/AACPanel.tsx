@@ -2,14 +2,13 @@
  * AACPanel - AAC 카드 선택 패널
  * AAC 템플릿의 카드를 채우기 위한 카드 목록 표시
  * 
- * 리팩토링 완료:
- * - 사용되지 않는 imports 제거
- * - 불필요한 icon 필드 제거 (Cloudinary 이미지만 사용)
- * - 단일 카테고리/스타일이므로 선택 UI 제거
+ * 카테고리:
+ * - 음식 (Food): 55개
+ * - 동물 (Animal): 41개
  */
 
 import React from 'react';
-import { Utensils, Search, X } from 'lucide-react';
+import { Utensils, Search, X, PawPrint } from 'lucide-react';
 
 // ========== 타입 정의 ==========
 
@@ -27,16 +26,25 @@ export interface AACCard {
     cloudinaryUrl?: string;
 }
 
+type CategoryType = 'food' | 'animal';
+
 // ========== Cloudinary 설정 ==========
 
 const CLOUDINARY_CONFIG = {
     cloudName: 'dabbfycew',
-    basePath: 'muru-cards/AAC-cards/illustration/Food',
+    basePathFood: 'muru-cards/AAC-cards/illustration/Food',
+    basePathAnimal: 'muru-cards/AAC-cards/illustration/animal',
     cacheVersion: 'v3'
 } as const;
 
-const getCloudinaryUrl = (cardId: string): string =>
-    `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${CLOUDINARY_CONFIG.basePath}/aac_${cardId}.png?${CLOUDINARY_CONFIG.cacheVersion}`;
+const getCloudinaryUrl = (cardId: string, category: CategoryType): string => {
+    const basePath = category === 'food'
+        ? CLOUDINARY_CONFIG.basePathFood
+        : CLOUDINARY_CONFIG.basePathAnimal;
+    // 음식: aac_ prefix, 동물: sor_ prefix (Cloudinary 폴더 구조에 맞춤)
+    const prefix = category === 'food' ? 'aac' : 'sor';
+    return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${basePath}/${prefix}_${cardId}.png?${CLOUDINARY_CONFIG.cacheVersion}`;
+};
 
 // ========== AAC 카드 데이터 ==========
 
@@ -45,6 +53,51 @@ interface AACCardData {
     label: string;
     emoji: string;
 }
+
+// 동물 카드 목록 (Cloudinary 이미지 사용) - 41개
+const ANIMAL_CARDS: AACCardData[] = [
+    { id: 'bear', label: '곰', emoji: '🐻' },
+    { id: 'bee', label: '벌', emoji: '🐝' },
+    { id: 'bird', label: '새', emoji: '🐦' },
+    { id: 'butterfly', label: '나비', emoji: '🦋' },
+    { id: 'camel', label: '낙타', emoji: '🐫' },
+    { id: 'cat', label: '고양이', emoji: '🐱' },
+    { id: 'chick', label: '병아리', emoji: '🐤' },
+    { id: 'chicken', label: '닭', emoji: '🐔' },
+    { id: 'cow', label: '소', emoji: '🐄' },
+    { id: 'crab', label: '게', emoji: '🦀' },
+    { id: 'crocodile', label: '악어', emoji: '🐊' },
+    { id: 'deer', label: '사슴', emoji: '🦌' },
+    { id: 'dinosaur', label: '공룡', emoji: '🦕' },
+    { id: 'dog', label: '강아지', emoji: '🐶' },
+    { id: 'dolphin', label: '돌고래', emoji: '🐬' },
+    { id: 'donkey', label: '당나귀', emoji: '🫏' },
+    { id: 'duck', label: '오리', emoji: '🦆' },
+    { id: 'elephant', label: '코끼리', emoji: '🐘' },
+    { id: 'fish', label: '물고기', emoji: '🐟' },
+    { id: 'fox', label: '여우', emoji: '🦊' },
+    { id: 'frog', label: '개구리', emoji: '🐸' },
+    { id: 'giraffe', label: '기린', emoji: '🦒' },
+    { id: 'goat', label: '염소', emoji: '🐐' },
+    { id: 'hippo', label: '하마', emoji: '🦛' },
+    { id: 'lion', label: '사자', emoji: '🦁' },
+    { id: 'monkey', label: '원숭이', emoji: '🐵' },
+    { id: 'mouse', label: '쥐', emoji: '🐭' },
+    { id: 'owl', label: '부엉이', emoji: '🦉' },
+    { id: 'panda', label: '판다', emoji: '🐼' },
+    { id: 'penguin', label: '펭귄', emoji: '🐧' },
+    { id: 'pig', label: '돼지', emoji: '🐷' },
+    { id: 'pigeon', label: '비둘기', emoji: '🐦' },
+    { id: 'rabbit', label: '토끼', emoji: '🐰' },
+    { id: 'sheep', label: '양', emoji: '🐑' },
+    { id: 'snake', label: '뱀', emoji: '🐍' },
+    { id: 'spider', label: '거미', emoji: '🕷️' },
+    { id: 'squirrel', label: '다람쥐', emoji: '🐿️' },
+    { id: 'tiger', label: '호랑이', emoji: '🐯' },
+    { id: 'turtle', label: '거북이', emoji: '🐢' },
+    { id: 'whale', label: '고래', emoji: '🐋' },
+    { id: 'zebra', label: '얼룩말', emoji: '🦓' },
+];
 
 // 음식 카드 목록 (Cloudinary 이미지 사용)
 const FOOD_CARDS: AACCardData[] = [
@@ -105,20 +158,24 @@ const FOOD_CARDS: AACCardData[] = [
 ];
 
 // Cloudinary URL이 포함된 AAC 카드 생성
-const getAACCards = (): AACCard[] => FOOD_CARDS.map(card => ({
-    id: card.id,
-    label: card.label,
-    category: 'food',
-    emoji: card.emoji,
-    cloudinaryUrl: getCloudinaryUrl(card.id),
-}));
+const getAACCards = (category: CategoryType): AACCard[] => {
+    const cards = category === 'food' ? FOOD_CARDS : ANIMAL_CARDS;
+    return cards.map(card => ({
+        id: card.id,
+        label: card.label,
+        category: category,
+        emoji: card.emoji,
+        cloudinaryUrl: getCloudinaryUrl(card.id, category),
+    }));
+};
 
 // ========== 컴포넌트 ==========
 
 export const AACPanel: React.FC<Props> = ({ onSelectAACCard }) => {
     const [searchQuery, setSearchQuery] = React.useState('');
+    const [activeCategory, setActiveCategory] = React.useState<CategoryType>('food');
 
-    const aacCards = React.useMemo(() => getAACCards(), []);
+    const aacCards = React.useMemo(() => getAACCards(activeCategory), [activeCategory]);
 
     // 검색 필터링
     const filteredCards = React.useMemo(() => {
@@ -137,13 +194,34 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard }) => {
         }
     };
 
+    const categories = [
+        { id: 'food' as CategoryType, label: '음식', icon: Utensils, count: FOOD_CARDS.length },
+        { id: 'animal' as CategoryType, label: '동물', icon: PawPrint, count: ANIMAL_CARDS.length },
+    ];
+
     return (
         <div className="space-y-4">
-            {/* 헤더 */}
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Utensils className="w-4 h-4" />
-                <span>음식 카드</span>
-                <span className="text-gray-400 text-xs">({filteredCards.length}개)</span>
+            {/* 카테고리 탭 */}
+            <div className="flex gap-2">
+                {categories.map(cat => (
+                    <button
+                        key={cat.id}
+                        onClick={() => {
+                            setActiveCategory(cat.id);
+                            setSearchQuery('');
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeCategory === cat.id
+                            ? 'bg-[#5500FF] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                    >
+                        <cat.icon className="w-4 h-4" />
+                        <span>{cat.label}</span>
+                        <span className={`text-xs ${activeCategory === cat.id ? 'text-white/70' : 'text-gray-400'}`}>
+                            {cat.count}
+                        </span>
+                    </button>
+                ))}
             </div>
 
             {/* 검색 */}
@@ -151,7 +229,7 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard }) => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                     type="text"
-                    placeholder="카드 검색..."
+                    placeholder={`${activeCategory === 'food' ? '음식' : '동물'} 검색...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-3 py-2 pl-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5500FF] focus:border-transparent"
@@ -204,3 +282,4 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard }) => {
         </div>
     );
 };
+
