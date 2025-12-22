@@ -97,7 +97,7 @@ const ANIMAL_CARDS: AACCardData[] = [
     { id: 'turtle', label: '거북이', emoji: '🐢' },
 ];
 
-// 음식 카드 목록 (Cloudinary 이미지 사용) - 55개
+// 음식 카드 목록 (Cloudinary 이미지 사용) - 52개
 const FOOD_CARDS: AACCardData[] = [
     { id: 'apple', label: '사과', emoji: '🍎' },
     { id: 'banana', label: '바나나', emoji: '🍌' },
@@ -133,9 +133,7 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'juice', label: '주스', emoji: '🧃' },
     { id: 'kimchi', label: '김치', emoji: '🥬' },
     { id: 'laver', label: '김', emoji: '🍙' },
-    { id: 'lemon', label: '레몬', emoji: '🍋' },
     { id: 'mandarine', label: '귤', emoji: '🍊' },
-    { id: 'mango', label: '망고', emoji: '🥭' },
     { id: 'meat', label: '고기', emoji: '🥩' },
     { id: 'melon', label: '멜론', emoji: '🍈' },
     { id: 'milk', label: '우유', emoji: '🥛' },
