@@ -33,7 +33,7 @@ type CategoryType = 'food' | 'animal';
 const CLOUDINARY_CONFIG = {
     cloudName: 'dabbfycew',
     basePathFood: 'muru-cards/AAC-cards/illustration/Food',
-    basePathAnimal: 'AAC-cards/illustration/animal',
+    basePathAnimal: 'muru-cards/AAC-cards/illustration/animal',
     cacheVersion: 'v5'  // 캐시 버스팅
 } as const;
 
@@ -97,7 +97,7 @@ const ANIMAL_CARDS: AACCardData[] = [
     { id: 'turtle', label: '거북이', emoji: '🐢' },
 ];
 
-// 음식 카드 목록 (Cloudinary 이미지 사용) - 55개
+// 음식 카드 목록 (Cloudinary 이미지 사용) - 54개
 const FOOD_CARDS: AACCardData[] = [
     { id: 'apple', label: '사과', emoji: '🍎' },
     { id: 'banana', label: '바나나', emoji: '🍌' },
@@ -115,7 +115,6 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'cider', label: '사이다', emoji: '🥤' },
     { id: 'coffee', label: '커피', emoji: '☕' },
     { id: 'cola', label: '콜라', emoji: '🥤' },
-    { id: 'cookie', label: '쿠키', emoji: '🍪' },
     { id: 'corn', label: '옥수수', emoji: '🌽' },
     { id: 'daikon', label: '무', emoji: '🥬' },
     { id: 'donut', label: '도넛', emoji: '🍩' },
