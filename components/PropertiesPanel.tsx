@@ -458,8 +458,8 @@ export const PropertiesPanel: React.FC<Props> = ({
                     <input
                       type="range"
                       min="10"
-                      max="200"
-                      step="10"
+                      max="85"
+                      step="5"
                       value={localSymbolScale}
                       onChange={(e) => {
                         const val = Number(e.target.value);
