@@ -32,9 +32,9 @@ type CategoryType = 'food' | 'animal';
 
 const CLOUDINARY_CONFIG = {
     cloudName: 'dabbfycew',
-    basePathFood: 'muru-cards/AAC-cards/illustration/Food',
-    basePathAnimal: 'muru-cards/AAC-cards/illustration/animal',
-    cacheVersion: 'v3'
+    basePathFood: 'AAC-cards/illustration/Food',
+    basePathAnimal: 'AAC-cards/illustration/animal',
+    cacheVersion: 'v4'  // 캐시 버스팅
 } as const;
 
 const getCloudinaryUrl = (cardId: string, category: CategoryType): string => {
