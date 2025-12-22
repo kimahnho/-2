@@ -32,7 +32,6 @@ type CategoryType = 'food' | 'animal';
 
 const CLOUDINARY_CONFIG = {
     cloudName: 'dabbfycew',
-    version: 'v1766406517',
     basePathFood: 'muru-cards/AAC-cards/illustration/Food',
     basePathAnimal: 'muru-cards/AAC-cards/illustration/animal',
 } as const;
@@ -41,8 +40,7 @@ const getCloudinaryUrl = (cardId: string, category: CategoryType): string => {
     const basePath = category === 'food'
         ? CLOUDINARY_CONFIG.basePathFood
         : CLOUDINARY_CONFIG.basePathAnimal;
-    // 모든 카드가 aac_ prefix 사용
-    return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${CLOUDINARY_CONFIG.version}/${basePath}/aac_${cardId}.png`;
+    return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${basePath}/aac_${cardId}.png`;
 };
 
 // ========== AAC 카드 데이터 ==========
