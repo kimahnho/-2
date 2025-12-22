@@ -457,8 +457,9 @@ export const PropertiesPanel: React.FC<Props> = ({
                   <div className="flex items-center gap-3">
                     <input
                       type="range"
-                      min="20"
-                      max="80"
+                      min="10"
+                      max="100"
+                      step="5"
                       value={localSymbolScale}
                       onChange={(e) => {
                         const val = Number(e.target.value);
@@ -508,8 +509,8 @@ export const PropertiesPanel: React.FC<Props> = ({
                       }}
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5500FF]"
                     />
-                    <span className="text-xs text-gray-500 w-10 text-right">
-                      {Math.round(localSymbolScale)}%
+                    <span className="text-xs text-gray-500 w-8 text-right">
+                      {Math.round(localSymbolScale / 10)}
                     </span>
                   </div>
                 </div>
