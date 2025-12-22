@@ -48,10 +48,10 @@ const AAC_CARD_STYLES: { id: AACCardStyle; name: string; icon: React.ReactNode }
 
 // Cloudinary 설정
 const CLOUDINARY_CLOUD_NAME = 'dabbfycew';
-const AAC_CACHE_VERSION = 'v2';
+const AAC_CACHE_VERSION = 'v3';
 const getCloudinaryAACUrl = (cardId: string): string => {
-    // 폴더 구조: muru-cards/AAC-cards/illustration/aac_{cardId}.png
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/AAC-cards/illustration/aac_${cardId}.png?${AAC_CACHE_VERSION}`;
+    // 폴더 구조: muru-cards/AAC-cards/illustration/Food/aac_{cardId}.png
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/AAC-cards/illustration/Food/aac_${cardId}.png?${AAC_CACHE_VERSION}`;
 };
 
 // AAC 카드 정의
