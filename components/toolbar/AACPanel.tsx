@@ -97,7 +97,7 @@ const ANIMAL_CARDS: AACCardData[] = [
     { id: 'turtle', label: '거북이', emoji: '🐢' },
 ];
 
-// 음식 카드 목록 (Cloudinary 이미지 사용) - 52개
+// 음식 카드 목록 (Cloudinary 이미지 사용) - 55개
 const FOOD_CARDS: AACCardData[] = [
     { id: 'apple', label: '사과', emoji: '🍎' },
     { id: 'banana', label: '바나나', emoji: '🍌' },
@@ -109,7 +109,7 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'cheese', label: '치즈', emoji: '🧀' },
     { id: 'chestnut', label: '밤', emoji: '🌰' },
     { id: 'chewing_gum', label: '껌', emoji: '🫧' },
-    { id: 'chicken_meet', label: '닭고기', emoji: '🍗' },
+    { id: 'chicken_meat', label: '닭고기', emoji: '🍗' },
     { id: 'chips', label: '감자칩', emoji: '🍟' },
     { id: 'chocolate', label: '초콜릿', emoji: '🍫' },
     { id: 'cider', label: '사이다', emoji: '🥤' },
@@ -145,7 +145,6 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'pizza', label: '피자', emoji: '🍕' },
     { id: 'pumpkin', label: '호박', emoji: '🎃' },
     { id: 'rice', label: '밥', emoji: '🍚' },
-    { id: 'snack', label: '과자', emoji: '🍪' },
     { id: 'spagetti', label: '스파게티', emoji: '🍝' },
     { id: 'strawberry', label: '딸기', emoji: '🍓' },
     { id: 'sugar', label: '설탕', emoji: '🧂' },
