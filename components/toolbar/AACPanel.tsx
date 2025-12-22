@@ -3,8 +3,8 @@
  * AAC 템플릿의 카드를 채우기 위한 카드 목록 표시
  * 
  * 카테고리:
- * - 음식 (Food): 55개
- * - 동물 (Animal): 41개
+ * - 음식 (Food): 54개
+ * - 동물 (Animal): 37개
  */
 
 import React from 'react';
@@ -51,7 +51,7 @@ interface AACCardData {
     emoji: string;
 }
 
-// 동물 카드 목록 (Cloudinary 이미지 사용) - 41개
+// 동물 카드 목록 (Cloudinary 이미지 사용) - 37개
 const ANIMAL_CARDS: AACCardData[] = [
     { id: 'bear', label: '곰', emoji: '🐻' },
     { id: 'bee', label: '벌', emoji: '🐝' },
@@ -62,12 +62,12 @@ const ANIMAL_CARDS: AACCardData[] = [
     { id: 'chick', label: '병아리', emoji: '🐤' },
     { id: 'chicken', label: '닭', emoji: '🐔' },
     { id: 'cow', label: '소', emoji: '🐄' },
-    { id: 'crab', label: '게', emoji: '🦀' },
+
     { id: 'crocodile', label: '악어', emoji: '🐊' },
     { id: 'deer', label: '사슴', emoji: '🦌' },
     { id: 'dinosaur', label: '공룡', emoji: '🦕' },
     { id: 'dog', label: '강아지', emoji: '🐶' },
-    { id: 'dolphin', label: '돌고래', emoji: '🐬' },
+
     { id: 'donkey', label: '당나귀', emoji: '🫏' },
     { id: 'duck', label: '오리', emoji: '🦆' },
     { id: 'elephant', label: '코끼리', emoji: '🐘' },
@@ -92,8 +92,8 @@ const ANIMAL_CARDS: AACCardData[] = [
     { id: 'squirrel', label: '다람쥐', emoji: '🐿️' },
     { id: 'tiger', label: '호랑이', emoji: '🐯' },
     { id: 'turtle', label: '거북이', emoji: '🐢' },
-    { id: 'whale', label: '고래', emoji: '🐋' },
-    { id: 'zebra', label: '얼룩말', emoji: '🦓' },
+
+
 ];
 
 // 음식 카드 목록 (Cloudinary 이미지 사용)
@@ -105,7 +105,7 @@ const FOOD_CARDS: AACCardData[] = [
     { id: 'pizza', label: '피자', emoji: '🍕' },
     { id: 'sweet_potato', label: '고구마', emoji: '🍠' },
     { id: 'sugar', label: '설탕', emoji: '🧂' },
-    { id: 'potato', label: '감자', emoji: '🥔' },
+
     { id: 'spaghetti', label: '스파게티', emoji: '🍝' },
     { id: 'milk', label: '우유', emoji: '🥛' },
     { id: 'noodles', label: '국수', emoji: '🍜' },
