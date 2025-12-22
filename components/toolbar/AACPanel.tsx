@@ -33,6 +33,7 @@ const AAC_CATEGORIES = [
     { id: 'feelings', name: '감정', icon: <Heart className="w-4 h-4" /> },
     { id: 'actions', name: '행동', icon: <Play className="w-4 h-4" /> },
     { id: 'places', name: '장소', icon: <Home className="w-4 h-4" /> },
+    { id: 'food', name: '음식', icon: <Utensils className="w-4 h-4" /> },
 ];
 
 // 카드 스타일 타입
@@ -47,9 +48,10 @@ const AAC_CARD_STYLES: { id: AACCardStyle; name: string; icon: React.ReactNode }
 
 // Cloudinary 설정
 const CLOUDINARY_CLOUD_NAME = 'dabbfycew';
-const getCloudinaryAACUrl = (style: AACCardStyle, category: string, label: string): string => {
-    // 폴더 구조: muru-cards/aac-cards/{style}/{category}/{label}.png
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/aac-cards/${style}/${category}/${encodeURIComponent(label)}.png`;
+const AAC_CACHE_VERSION = 'v1';
+const getCloudinaryAACUrl = (cardId: string): string => {
+    // 폴더 구조: muru-cards/emotion-cards/photo/boy/aac_{cardId}.png
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/muru-cards/emotion-cards/photo/boy/aac_${cardId}.png?${AAC_CACHE_VERSION}`;
 };
 
 // AAC 카드 정의
@@ -103,19 +105,27 @@ const AAC_CARD_DEFINITIONS: AACCardDef[] = [
     { id: 'store', label: '마트', category: 'places', icon: <Gift className="w-8 h-8" />, backgroundColor: '#22C55E', emoji: '🏪' },
     { id: 'park', label: '공원', category: 'places', icon: <Sun className="w-8 h-8" />, backgroundColor: '#84CC16', emoji: '🌳' },
     { id: 'friend', label: '친구 집', category: 'places', icon: <User className="w-8 h-8" />, backgroundColor: '#A855F7', emoji: '🧑‍🤝‍🧑' },
+
+    // 음식 (Cloudinary 이미지 있음)
+    { id: 'carrot', label: '당근', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F97316', emoji: '🥕' },
+    { id: 'apple', label: '사과', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#EF4444', emoji: '🍎' },
+    { id: 'banana', label: '바나나', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#FBBF24', emoji: '🍌' },
+    { id: 'bread', label: '빵', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#D4A574', emoji: '🍞' },
+    { id: 'cake', label: '케이크', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#F472B6', emoji: '🎂' },
+    { id: 'candy', label: '사탕', category: 'food', icon: <Utensils className="w-8 h-8" />, backgroundColor: '#EC4899', emoji: '🍬' },
 ];
 
 // Cloudinary URL이 포함된 AAC 카드 생성 함수
-const getAACCards = (style: AACCardStyle) => AAC_CARD_DEFINITIONS.map(card => ({
+const getAACCards = () => AAC_CARD_DEFINITIONS.map(card => ({
     ...card,
-    cloudinaryUrl: getCloudinaryAACUrl(style, card.category, card.label),
+    cloudinaryUrl: getCloudinaryAACUrl(card.id),
 }));
 
 export const AACPanel: React.FC<Props> = ({ onSelectAACCard, currentCardIndex, totalCards }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('basic');
     const [cardStyle, setCardStyle] = React.useState<AACCardStyle>('illustration');
 
-    const aacCards = React.useMemo(() => getAACCards(cardStyle), [cardStyle]);
+    const aacCards = React.useMemo(() => getAACCards(), []);
     const filteredCards = aacCards.filter(card => card.category === selectedCategory);
 
     return (
