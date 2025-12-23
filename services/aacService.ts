@@ -13,7 +13,7 @@ export interface AACCard {
 
 const CLOUDINARY_CONFIG = {
     cloudName: 'dabbfycew',
-    cacheVersion: 'v6'
+    cacheVersion: 'v9'
 } as const;
 
 /**
