@@ -5,6 +5,7 @@ import { Page } from '../types';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/canvasUtils';
+import { trackPdfDownloaded, trackEvent } from '../services/mixpanelService';
 
 interface Props {
     pages: Page[];
@@ -117,6 +118,8 @@ export const ExportModal: React.FC<Props> = ({ pages, onClose, projectTitle }) =
 
                 if (pdf) {
                     pdf.save(`${projectTitle || '학습지'}.pdf`);
+                    // Track PDF download (Referral)
+                    trackPdfDownloaded(projectTitle || 'untitled');
                 }
             } else {
                 // Export as separate images
@@ -136,6 +139,8 @@ export const ExportModal: React.FC<Props> = ({ pages, onClose, projectTitle }) =
                     await new Promise(r => setTimeout(r, 300));
                     setProgress(Math.round(((i + 1) / totalPages) * 100));
                 }
+                // Track image export
+                trackEvent('Images Downloaded', { project_title: projectTitle, page_count: selectedPageIndices.length });
             }
 
             onClose();

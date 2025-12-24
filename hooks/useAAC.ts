@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AACCard } from '../components/toolbar/AACPanel';
 import { TabType } from '../types';
+import { trackAACCardSelected } from '../services/mixpanelService';
 
 interface UseAACProps {
     elements: any[];
@@ -197,6 +198,8 @@ export const useAAC = ({
             const sentenceArea = elements.find(el => el.id === sentenceBuilderId);
             if (sentenceArea?.metadata?.isAACSentenceArea) {
                 addSentenceItem(sentenceBuilderId, card.cloudinaryUrl || card.emoji || '❓', card.label || '');
+                // Track AAC card selection
+                trackAACCardSelected(card.id, card.category);
                 return;
             }
         }
@@ -243,6 +246,8 @@ export const useAAC = ({
             };
             updateElements([...elements, newCard as any]);
             setSelectedIds([cardId]);
+            // Track AAC card selection
+            trackAACCardSelected(card.id, card.category);
         };
 
         // 선택된 요소가 없거나 1개가 아닌 경우: 새 AAC 카드 생성

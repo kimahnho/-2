@@ -6,6 +6,7 @@
 import { SavedProjectMetadata, ProjectData } from '../types';
 import { supabase, isSupabaseConfigured, STORAGE_KEYS } from './storageAdapter';
 import { v4 as uuidv4 } from 'uuid';
+import { trackProjectCreated, trackProjectSaved } from './mixpanelService';
 
 // Helper to ensure unique titles
 const getUniqueTitle = async (baseTitle: string, excludeId?: string): Promise<string> => {
@@ -120,6 +121,9 @@ export const projectService = {
                 throw error;
             }
 
+            // Track project created
+            trackProjectCreated(data.id);
+
             return data.id;
         }
 
@@ -168,7 +172,12 @@ export const projectService = {
             }
 
             const { error } = await supabase.from('projects').update(updateData).eq('id', id);
-            if (error) console.error("Failed to save project", error);
+            if (error) {
+                console.error("Failed to save project", error);
+            } else {
+                // Track project saved
+                trackProjectSaved(id);
+            }
             return;
         }
 

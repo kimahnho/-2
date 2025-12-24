@@ -3,6 +3,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { AppRouter } from './AppRouter';
 import { AuthGuard } from './components/auth';
+import { initMixpanel, trackSessionStart } from './services/mixpanelService';
+
+// Initialize Mixpanel
+initMixpanel();
+trackSessionStart();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

@@ -6,6 +6,7 @@
 
 import { supabase, isSupabaseConfigured } from './storageAdapter';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { trackSignUpCompleted, trackLogin, identifyUser, resetUser } from './mixpanelService';
 
 export interface AuthUser {
     id: string;
@@ -96,6 +97,11 @@ export const authService = {
             throw error;
         }
 
+        // Track signup completed
+        if (data.user) {
+            trackSignUpCompleted(data.user.id, 'email');
+        }
+
         return mapUser(data.user);
     },
 
@@ -117,6 +123,15 @@ export const authService = {
             throw error;
         }
 
+        // Track login and identify user
+        if (data.user) {
+            trackLogin('email');
+            identifyUser(data.user.id, {
+                $email: data.user.email,
+                $name: data.user.user_metadata?.name || data.user.email?.split('@')[0],
+            });
+        }
+
         return mapUser(data.user);
     },
 
@@ -133,6 +148,9 @@ export const authService = {
             console.error('Sign out error:', error);
             throw error;
         }
+
+        // Reset Mixpanel user
+        resetUser();
     },
 
     /**
