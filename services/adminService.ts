@@ -161,19 +161,17 @@ export const adminService = {
             return [];
         }
 
-        const { data, error } = await supabase
-            .from('projects')
-            .select('id, title, thumbnail, preview_elements, user_id, created_at, updated_at')
-            .eq('user_id', userId)
-            .is('deleted_at', null)
-            .order('updated_at', { ascending: false });
+        // RLS를 우회하는 SECURITY DEFINER 함수 호출 (관리자만 사용 가능)
+        const { data, error } = await supabase.rpc('get_projects_by_user_admin', {
+            target_user_id: userId
+        });
 
         if (error) {
             console.error('Failed to fetch user projects:', error);
             return [];
         }
 
-        return (data || []).map(p => ({
+        return (data || []).map((p: any) => ({
             id: p.id,
             title: p.title,
             elements: [],
