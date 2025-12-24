@@ -374,18 +374,15 @@ export const adminService = {
             return [];
         }
 
-        const { data, error } = await supabase
-            .from('students')
-            .select('*')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false });
+        // RLS를 우회하는 SECURITY DEFINER 함수 호출 (관리자만 사용 가능)
+        const { data, error } = await supabase.rpc('get_all_students_admin');
 
         if (error) {
             console.error('Failed to fetch all students:', error);
             return [];
         }
 
-        return (data || []).map(s => ({
+        return (data || []).map((s: any) => ({
             id: s.id,
             name: s.name,
             birthYear: s.birth_year,
@@ -410,18 +407,15 @@ export const adminService = {
             return [];
         }
 
-        const { data, error } = await supabase
-            .from('groups')
-            .select('*')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false });
+        // RLS를 우회하는 SECURITY DEFINER 함수 호출 (관리자만 사용 가능)
+        const { data, error } = await supabase.rpc('get_all_groups_admin');
 
         if (error) {
             console.error('Failed to fetch all groups:', error);
             return [];
         }
 
-        return (data || []).map(g => ({
+        return (data || []).map((g: any) => ({
             id: g.id,
             name: g.name,
             description: g.description,
