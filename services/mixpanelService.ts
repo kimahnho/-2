@@ -27,6 +27,7 @@ export const initMixpanel = () => {
         debug: typeof window !== 'undefined' && window.location.hostname === 'localhost',
         track_pageview: true,
         persistence: 'localStorage',
+        record_sessions_percent: 100, // Session Replay: 100% of sessions
     });
 
     isInitialized = true;
