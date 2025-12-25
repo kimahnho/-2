@@ -320,6 +320,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       {showExportModal && (
         <ExportModal
           pages={project.pages}
+          elements={project.elements}
           projectTitle={title}
           onClose={() => setShowExportModal(false)}
         />

@@ -16,6 +16,7 @@ export interface DesignElement {
     height: number;
     rotation: number;
     content?: string;
+    richTextContent?: any[]; // Slate.js Descendant[] 형식
     backgroundColor?: string;
     backgroundImage?: string;
 
@@ -27,6 +28,7 @@ export interface DesignElement {
     fontSize?: number;
     fontFamily?: string;
     fontWeight?: number;
+    textAlign?: 'left' | 'center' | 'right';
     borderRadius?: number;
     borderWidth?: number;
     borderColor?: string;

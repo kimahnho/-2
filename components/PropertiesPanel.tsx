@@ -314,6 +314,42 @@ export const PropertiesPanel: React.FC<Props> = ({
             >
               <span className="text-lg">가나다 ABC 123</span>
             </div>
+
+            {/* 텍스트 정렬 */}
+            <div className="space-y-2 mt-3">
+              <label className="text-xs font-bold text-gray-500">
+                텍스트 정렬{isMultiSelect && ' (일괄 적용)'}
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'left' as const, icon: AlignLeft, label: '왼쪽' },
+                  { value: 'center' as const, icon: AlignCenter, label: '가운데' },
+                  { value: 'right' as const, icon: AlignRight, label: '오른쪽' }
+                ].map(({ value, icon: Icon, label }) => {
+                  const isActive = (element.textAlign || 'left') === value;
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => {
+                        if (isMultiSelect) {
+                          const textElements = selectedElements.filter(el => el.type === 'text');
+                          textElements.forEach(el => onCommit(el.id, { textAlign: value }));
+                        } else {
+                          onCommit(element.id, { textAlign: value });
+                        }
+                      }}
+                      className={`flex-1 py-2 flex items-center justify-center gap-1.5 text-xs font-medium rounded border transition-all ${isActive
+                          ? 'bg-[#5500FF] text-white border-[#5500FF]'
+                          : 'bg-white text-gray-600 border-gray-300 hover:border-[#5500FF] hover:text-[#5500FF]'
+                        }`}
+                      title={label}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 

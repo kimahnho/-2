@@ -99,6 +99,7 @@ export const CanvasElement: React.FC<Props> = ({
                         element={element}
                         isEditing={isEditing}
                         onUpdate={(val) => onUpdate?.(val)}
+                        onUpdateRichText={(val) => onUpdate?.({ richTextContent: val })}
                         onBlur={onBlur}
                         textareaRef={textareaRef}
                     />

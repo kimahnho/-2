@@ -1,19 +1,19 @@
 
 import React, { useState } from 'react';
 import { X, Download, FileImage, FileText, CheckSquare, Square, Loader2 } from 'lucide-react';
-import { Page } from '../types';
+import { Page, DesignElement } from '../types';
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../utils/canvasUtils';
 import { trackPdfDownloaded, trackEvent } from '../services/mixpanelService';
+import { exportToPdfHybrid } from '../services/pdfExportService';
 
 interface Props {
     pages: Page[];
+    elements: DesignElement[];
     onClose: () => void;
     projectTitle: string;
 }
 
-export const ExportModal: React.FC<Props> = ({ pages, onClose, projectTitle }) => {
+export const ExportModal: React.FC<Props> = ({ pages, elements, onClose, projectTitle }) => {
     const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set(pages.map((_, i) => i)));
     const [exportFormat, setExportFormat] = useState<'pdf' | 'images'>('pdf');
     const [isExporting, setIsExporting] = useState(false);
@@ -33,6 +33,7 @@ export const ExportModal: React.FC<Props> = ({ pages, onClose, projectTitle }) =
         setSelectedPages(new Set(pages.map((_, i) => i)));
     };
 
+
     const deselectAll = () => {
         setSelectedPages(new Set());
     };
@@ -48,20 +49,62 @@ export const ExportModal: React.FC<Props> = ({ pages, onClose, projectTitle }) =
         const selectionElements = target.querySelectorAll('[class*="border-[#5500FF]"]');
         selectionElements.forEach(el => (el as HTMLElement).style.visibility = 'hidden');
 
+        // 폰트가 완전히 로드될 때까지 대기
+        await document.fonts.ready;
+
+        // 추가 대기시간 (폰트 렌더링 안정화)
+        await new Promise(r => setTimeout(r, 200));
+
         try {
             const canvas = await html2canvas(target, {
-                scale: 2,
+                scale: 1.75, // 텍스트 품질 향상
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff',
                 logging: false,
-                onclone: (clonedDoc: Document) => {
-                    const style = clonedDoc.createElement('style');
-                    style.innerHTML = `
-            * { font-family: 'Gowun Dodum', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important; }
-            .print-container * { visibility: visible !important; }
-          `;
-                    clonedDoc.head.appendChild(style);
+                imageTimeout: 15000,
+                // 정확한 크기 사용
+                width: target.offsetWidth,
+                height: target.offsetHeight,
+                onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
+                    // Google Fonts 링크 추가
+                    const fontLink = clonedDoc.createElement('link');
+                    fontLink.rel = 'stylesheet';
+                    fontLink.href = "https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Cute+Font&family=Do+Hyeon&family=Fredoka:wght@300;400;500;600&family=Gaegu&family=Gowun+Batang&family=Gowun+Dodum&family=Inter:wght@400;500;600&family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;500;700&family=Sunflower:wght@300;500;700&display=swap";
+                    clonedDoc.head.appendChild(fontLink);
+
+                    // 원본 요소들의 computed style을 클론된 요소에 강제 적용
+                    const originalElements = target.querySelectorAll('*');
+                    const clonedElements = clonedElement.querySelectorAll('*');
+
+                    originalElements.forEach((origEl, index) => {
+                        const clonedEl = clonedElements[index] as HTMLElement;
+                        if (!clonedEl) return;
+
+                        const computedStyle = window.getComputedStyle(origEl);
+
+                        // 폰트 관련 스타일 강제 적용
+                        clonedEl.style.fontFamily = computedStyle.fontFamily;
+                        clonedEl.style.fontSize = computedStyle.fontSize;
+                        clonedEl.style.fontWeight = computedStyle.fontWeight;
+                        clonedEl.style.lineHeight = computedStyle.lineHeight;
+                        clonedEl.style.letterSpacing = computedStyle.letterSpacing;
+                        clonedEl.style.textAlign = computedStyle.textAlign;
+
+                        // 위치 관련 스타일 강제 적용
+                        clonedEl.style.position = computedStyle.position;
+                        clonedEl.style.left = computedStyle.left;
+                        clonedEl.style.top = computedStyle.top;
+                        clonedEl.style.width = computedStyle.width;
+                        clonedEl.style.height = computedStyle.height;
+                        clonedEl.style.transform = computedStyle.transform;
+                    });
+
+                    // 이미지 요소들의 크로스오리진 설정
+                    const images = clonedElement.querySelectorAll('img');
+                    images.forEach((img) => {
+                        img.crossOrigin = 'anonymous';
+                    });
                 }
             });
             return canvas;
@@ -86,41 +129,18 @@ export const ExportModal: React.FC<Props> = ({ pages, onClose, projectTitle }) =
             await document.fonts.ready;
 
             if (exportFormat === 'pdf') {
-                // Export as single PDF with multiple pages
-                let pdf: jsPDF | null = null;
+                // 벡터 기반 PDF 내보내기 (하이브리드 모드: 간단한 요소는 벡터, 복잡한 요소는 래스터)
+                await exportToPdfHybrid(
+                    pages,
+                    elements,
+                    selectedPageIndices as number[],
+                    projectTitle,
+                    capturePageCanvas,
+                    (prog) => setProgress(prog)
+                );
 
-                for (let i = 0; i < selectedPageIndices.length; i++) {
-                    const pageIndex = selectedPageIndices[i];
-                    const page = pages[pageIndex];
-                    const canvas = await capturePageCanvas(page.id);
-
-                    if (!canvas) continue;
-
-                    const isLandscape = page.orientation === 'landscape';
-                    const pageWidth = isLandscape ? CANVAS_HEIGHT : CANVAS_WIDTH;
-                    const pageHeight = isLandscape ? CANVAS_WIDTH : CANVAS_HEIGHT;
-
-                    if (!pdf) {
-                        pdf = new jsPDF({
-                            orientation: isLandscape ? 'landscape' : 'portrait',
-                            unit: 'px',
-                            format: [pageWidth, pageHeight]
-                        });
-                    } else {
-                        pdf.addPage([pageWidth, pageHeight], isLandscape ? 'landscape' : 'portrait');
-                    }
-
-                    const imgData = canvas.toDataURL('image/png');
-                    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
-
-                    setProgress(Math.round(((i + 1) / totalPages) * 100));
-                }
-
-                if (pdf) {
-                    pdf.save(`${projectTitle || '학습지'}.pdf`);
-                    // Track PDF download (Referral)
-                    trackPdfDownloaded(projectTitle || 'untitled');
-                }
+                // Track PDF download (Referral)
+                trackPdfDownloaded(projectTitle || 'untitled');
             } else {
                 // Export as separate images
                 for (let i = 0; i < selectedPageIndices.length; i++) {
