@@ -16,7 +16,7 @@ export interface DesignElement {
     height: number;
     rotation: number;
     content?: string;
-    richTextContent?: any[]; // Slate.js Descendant[] 형식
+    richTextHtml?: string; // HTML 형식 리치 텍스트 저장
     backgroundColor?: string;
     backgroundImage?: string;
 
