@@ -44,19 +44,9 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
     // 선택 영역 저장
     const saveSelection = useCallback(() => {
         const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0) {
+        if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
             savedRange.current = selection.getRangeAt(0).cloneRange();
-        }
-    }, []);
-
-    // 선택 영역 복원
-    const restoreSelection = useCallback(() => {
-        if (savedRange.current) {
-            const selection = window.getSelection();
-            if (selection) {
-                selection.removeAllRanges();
-                selection.addRange(savedRange.current);
-            }
+            console.log('[RTE] Selection saved:', savedRange.current.toString());
         }
     }, []);
 
@@ -77,104 +67,76 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
         }
     }, [saveSelection]);
 
-    // 스타일 적용 함수
-    const applyStyle = useCallback((command: string, value?: string) => {
-        restoreSelection();
-        editorRef.current?.focus();
-
-        // execCommand로 스타일 적용
-        document.execCommand(command, false, value);
-
-        // 변경 내용 저장
-        if (editorRef.current) {
-            onChange(editorRef.current.innerHTML);
+    // 저장된 Range에 스타일 적용
+    const applyStyleToSavedRange = useCallback((styleFn: (span: HTMLSpanElement) => void) => {
+        if (!savedRange.current || !editorRef.current) {
+            console.log('[RTE] No saved range');
+            return;
         }
 
-        saveSelection();
-    }, [restoreSelection, saveSelection, onChange]);
+        const range = savedRange.current;
+        console.log('[RTE] Applying style to:', range.toString());
+
+        // 선택 영역을 span으로 감싸기
+        const span = document.createElement('span');
+        styleFn(span);
+
+        try {
+            // 선택 영역 추출 후 span에 넣기
+            const contents = range.extractContents();
+            span.appendChild(contents);
+            range.insertNode(span);
+
+            // 새 Range로 업데이트
+            const newRange = document.createRange();
+            newRange.selectNodeContents(span);
+            savedRange.current = newRange;
+
+            // 선택 영역 복원
+            const selection = window.getSelection();
+            if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+        } catch (error) {
+            console.error('[RTE] Style apply error:', error);
+        }
+
+        onChange(editorRef.current.innerHTML);
+    }, [onChange]);
 
     // 폰트 적용
     const applyFont = useCallback((fontFamily: string) => {
-        restoreSelection();
-        editorRef.current?.focus();
-
-        const selection = window.getSelection();
-        if (selection && !selection.isCollapsed) {
-            // 선택 영역을 span으로 감싸고 폰트 적용
-            const range = selection.getRangeAt(0);
-            const span = document.createElement('span');
+        console.log('[RTE] Apply font:', fontFamily);
+        applyStyleToSavedRange((span) => {
             span.style.fontFamily = fontFamily;
-
-            try {
-                range.surroundContents(span);
-            } catch {
-                // 복잡한 선택의 경우 extractContents 사용
-                const fragment = range.extractContents();
-                span.appendChild(fragment);
-                range.insertNode(span);
-            }
-
-            // 선택 유지
-            selection.removeAllRanges();
-            const newRange = document.createRange();
-            newRange.selectNodeContents(span);
-            selection.addRange(newRange);
-        }
-
-        if (editorRef.current) {
-            onChange(editorRef.current.innerHTML);
-        }
-        saveSelection();
+        });
         setShowFontDropdown(false);
-    }, [restoreSelection, saveSelection, onChange]);
+    }, [applyStyleToSavedRange]);
 
     // 폰트 크기 적용
     const applyFontSize = useCallback((size: number) => {
-        restoreSelection();
-        editorRef.current?.focus();
-
-        const selection = window.getSelection();
-        if (selection && !selection.isCollapsed) {
-            const range = selection.getRangeAt(0);
-            const span = document.createElement('span');
+        console.log('[RTE] Apply font size:', size);
+        applyStyleToSavedRange((span) => {
             span.style.fontSize = `${size}px`;
-
-            try {
-                range.surroundContents(span);
-            } catch {
-                const fragment = range.extractContents();
-                span.appendChild(fragment);
-                range.insertNode(span);
-            }
-
-            selection.removeAllRanges();
-            const newRange = document.createRange();
-            newRange.selectNodeContents(span);
-            selection.addRange(newRange);
-        }
-
-        if (editorRef.current) {
-            onChange(editorRef.current.innerHTML);
-        }
-        saveSelection();
-    }, [restoreSelection, saveSelection, onChange]);
+        });
+    }, [applyStyleToSavedRange]);
 
     // 색상 적용
     const applyColor = useCallback((color: string) => {
-        restoreSelection();
-        editorRef.current?.focus();
-        document.execCommand('foreColor', false, color);
-
-        if (editorRef.current) {
-            onChange(editorRef.current.innerHTML);
-        }
-        saveSelection();
-    }, [restoreSelection, saveSelection, onChange]);
+        console.log('[RTE] Apply color:', color);
+        applyStyleToSavedRange((span) => {
+            span.style.color = color;
+        });
+    }, [applyStyleToSavedRange]);
 
     // 굵게 토글
     const toggleBold = useCallback(() => {
-        applyStyle('bold');
-    }, [applyStyle]);
+        console.log('[RTE] Toggle bold');
+        applyStyleToSavedRange((span) => {
+            span.style.fontWeight = 'bold';
+        });
+    }, [applyStyleToSavedRange]);
 
     return (
         <div className="w-full h-full relative">
@@ -183,13 +145,16 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
                 <div
                     className="fixed z-[9999]"
                     style={{ top: toolbarPosition.top, left: toolbarPosition.left }}
-                    onMouseDown={(e) => e.preventDefault()}
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
                 >
                     <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5">
                         {/* 폰트 선택 */}
                         <div className="relative">
                             <button
-                                onMouseDown={(e) => e.preventDefault()}
+                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 onClick={() => setShowFontDropdown(!showFontDropdown)}
                                 className="px-2 py-1 text-xs border rounded hover:bg-gray-50 min-w-[80px] text-left truncate"
                             >
@@ -199,13 +164,14 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
                                 <>
                                     <div
                                         className="fixed inset-0 z-40"
+                                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                         onClick={() => setShowFontDropdown(false)}
                                     />
                                     <div className="absolute top-full left-0 mt-1 z-50 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto w-40">
                                         {PRESET_FONTS.map(font => (
                                             <button
                                                 key={font.value}
-                                                onMouseDown={(e) => e.preventDefault()}
+                                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                                 onClick={() => applyFont(font.value)}
                                                 className="w-full px-3 py-1.5 text-xs text-left hover:bg-gray-50"
                                                 style={{ fontFamily: font.value }}
@@ -222,7 +188,8 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
                         <input
                             type="number"
                             defaultValue={defaultFontSize}
-                            onMouseDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => {
                                 const size = parseInt(e.target.value) || 16;
                                 applyFontSize(size);
@@ -234,7 +201,7 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
 
                         {/* 굵게 버튼 */}
                         <button
-                            onMouseDown={(e) => e.preventDefault()}
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onClick={toggleBold}
                             className="p-1.5 rounded hover:bg-gray-100"
                         >
@@ -245,7 +212,7 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
                         <input
                             type="color"
                             defaultValue={defaultColor}
-                            onMouseDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             onChange={(e) => applyColor(e.target.value)}
                             className="w-6 h-6 rounded cursor-pointer border"
                         />
@@ -271,7 +238,7 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
                         if (!showToolbar) {
                             onBlur?.();
                         }
-                    }, 100);
+                    }, 200);
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 style={{
