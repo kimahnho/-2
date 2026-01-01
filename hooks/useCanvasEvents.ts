@@ -352,6 +352,39 @@ export const useCanvasEvents = ({
       const scaleX = bbox.width > 0 ? newBboxW / bbox.width : 1;
       const scaleY = bbox.height > 0 ? newBboxH / bbox.height : 1;
 
+      // Helper to calculate minimum text box size
+      const getTextMinSize = (el: DesignElement): { minWidth: number; minHeight: number } => {
+        if (el.type !== 'text' || !el.content) return { minWidth: 50, minHeight: 30 };
+
+        const fontSize = el.fontSize || 24;
+        const lineHeight = fontSize * 1.5;
+        const fontFamily = el.fontFamily || "'Gowun Dodum', sans-serif";
+
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return { minWidth: 50, minHeight: 30 };
+
+          ctx.font = `${fontSize}px ${fontFamily}`;
+
+          // Minimum width: at least fit the longest word
+          const words = el.content.split(/\s+/);
+          let maxWordWidth = 0;
+          for (const word of words) {
+            const w = ctx.measureText(word).width;
+            if (w > maxWordWidth) maxWordWidth = w;
+          }
+          const minWidth = Math.min(maxWordWidth + 20, 300);
+
+          // For height, we need at least one line
+          const minHeight = lineHeight + 10;
+
+          return { minWidth, minHeight };
+        } catch {
+          return { minWidth: 50, minHeight: 30 };
+        }
+      };
+
       // 모든 선택된 요소에 스케일 적용
       const newElements = elements.map(el => {
         const initial = resizeInfo.initialElements![el.id];
@@ -361,11 +394,14 @@ export const useCanvasEvents = ({
         const relX = initial.x - bbox.x;
         const relY = initial.y - bbox.y;
 
+        // Calculate minimum size based on content
+        const { minWidth, minHeight } = getTextMinSize(el);
+
         const updates: Partial<DesignElement> = {
           x: newBboxX + relX * scaleX,
           y: newBboxY + relY * scaleY,
-          width: Math.max(10, initial.width * scaleX),
-          height: Math.max(10, initial.height * scaleY),
+          width: Math.max(minWidth, initial.width * scaleX),
+          height: Math.max(minHeight, initial.height * scaleY),
         };
 
         // backgroundPosition is now stored as relative ratios, no scaling needed
