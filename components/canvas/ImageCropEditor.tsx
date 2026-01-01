@@ -1,4 +1,7 @@
-import React from 'react';
+import * as React from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Group } from 'react-konva';
+import Konva from 'konva';
 import { DesignElement } from '../../types';
 
 const FIGMA_BLUE = '#0099FF';
@@ -7,205 +10,392 @@ interface ImageCropEditorProps {
     element: DesignElement;
     imageUrl: string;
     onUpdate: (update: Partial<DesignElement>) => void;
+    onClose?: () => void;
 }
 
 /**
- * Image Crop Editor
+ * Image Crop Editor - Figma-like experience with Konva
  * 
- * SIMPLE SYSTEM:
- * - backgroundScale: zoom % (100 = fit, 200 = 2x zoom)
- * - backgroundPosition: { x: 0-1, y: 0-1 }
- *   - 0 = left/top edge, 0.5 = center, 1 = right/bottom edge
- * 
- * These are CSS percentages that scale WITH the frame.
+ * Features:
+ * - Shows full image (ghost) so user can see composition
+ * - Frame acts as a "window" into the image
+ * - Free positioning and independent X/Y scaling
+ * - Transform handles on corners and edges
  */
 export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
     element,
     imageUrl,
-    onUpdate
+    onUpdate,
+    onClose
 }) => {
-    const [naturalSize, setNaturalSize] = React.useState({ width: 0, height: 0 });
-    const dragRef = React.useRef<{
-        type: 'pan' | 'scale';
-        startX: number;
-        startY: number;
-        startScale: number;
-        startPos: { x: number; y: number };
-    } | null>(null);
-
-    React.useEffect(() => {
-        const img = new Image();
-        img.onload = () => setNaturalSize({ width: img.naturalWidth, height: img.naturalHeight });
-        img.src = imageUrl;
-    }, [imageUrl]);
+    const [image, setImage] = useState<HTMLImageElement | null>(null);
+    const [isReady, setIsReady] = useState(false);
+    const imageRef = useRef<Konva.Image>(null);
+    const ghostRef = useRef<Konva.Image>(null);
+    const trRef = useRef<Konva.Transformer>(null);
+    const stageRef = useRef<Konva.Stage>(null);
 
     const frameW = element.width;
     const frameH = element.height;
 
-    const scale = element.backgroundScale ?? 100;
+    // Expand stage to show ghost image (3x frame size for generous overflow)
+    const stageW = frameW * 3;
+    const stageH = frameH * 3;
+    const offsetX = frameW; // Center the frame in the expanded stage
+    const offsetY = frameH;
+
+    // Load image
+    useEffect(() => {
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            setImage(img);
+            setIsReady(true);
+        };
+        img.onerror = () => {
+            // Try without crossOrigin for local images
+            const img2 = new window.Image();
+            img2.onload = () => {
+                setImage(img2);
+                setIsReady(true);
+            };
+            img2.src = imageUrl;
+        };
+        img.src = imageUrl;
+    }, [imageUrl]);
+
+    // Attach transformer when image loads
+    useEffect(() => {
+        if (isReady && imageRef.current && trRef.current) {
+            trRef.current.nodes([imageRef.current]);
+            trRef.current.getLayer()?.batchDraw();
+        }
+    }, [isReady, image]);
+
+    // Use independent X/Y scales if available, otherwise fall back to single scale
+    const hasIndependentScale = element.backgroundScaleX !== undefined || element.backgroundScaleY !== undefined;
     const pos = element.backgroundPosition ?? { x: 0.5, y: 0.5 };
 
-    // For visual display, calculate pixel positions
-    const aspect = naturalSize.width > 0 ? naturalSize.width / naturalSize.height : 1;
-    const imgW = frameW * (scale / 100);
-    const imgH = imgW / aspect;
+    // Get image dimensions
+    const naturalW = image?.naturalWidth || 100;
+    const naturalH = image?.naturalHeight || 100;
+    const aspect = naturalW / naturalH;
 
-    // CSS background-position % means: align X% of image with X% of container
-    // To show as pixels: image position relative to frame
-    // When pos.x = 0, left edges align
-    // When pos.x = 1, right edges align
-    // When pos.x = 0.5, centers align
-    const displayX = -(imgW - frameW) * pos.x;
-    const displayY = -(imgH - frameH) * pos.y;
+    // Image dimensions - depends on whether we have independent scales
+    let imgW: number;
+    let imgH: number;
 
-    // === PAN ===
-    const handlePan = (e: React.MouseEvent) => {
+    if (hasIndependentScale) {
+        // New: independent X/Y scaling (values are decimal, e.g., 1.5 = 150%)
+        const scaleX = element.backgroundScaleX ?? 1;
+        const scaleY = element.backgroundScaleY ?? 1;
+        imgW = frameW * scaleX;
+        imgH = frameH * scaleY;
+    } else {
+        // Legacy: single scale, maintains aspect ratio
+        const scale = (element.backgroundScale ?? 100) / 100;
+        imgW = frameW * scale;
+        imgH = imgW / aspect;
+    }
+
+    // Position calculation (0.5 = centered)
+    // Offset by the stage expansion
+    const imgX = offsetX + (-(imgW - frameW) * pos.x);
+    const imgY = offsetY + (-(imgH - frameH) * pos.y);
+
+    // Handle drag - FREE movement without bounds
+    const handleDragMove = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
+        // Ghost follows main image in real-time
+        const node = e.target;
+        if (ghostRef.current) {
+            ghostRef.current.x(node.x());
+            ghostRef.current.y(node.y());
+        }
+    }, []);
+
+    const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
+        const node = e.target;
+        const newX = node.x() - offsetX;
+        const newY = node.y() - offsetY;
+
+        // Calculate new position - NO CLAMPING for free movement
+        const scrollableX = imgW - frameW;
+        const scrollableY = imgH - frameH;
+
+        let newPosX = 0.5;
+        let newPosY = 0.5;
+
+        if (scrollableX !== 0) {
+            newPosX = -newX / scrollableX;
+        }
+        if (scrollableY !== 0) {
+            newPosY = -newY / scrollableY;
+        }
+
+        onUpdate({ backgroundPosition: { x: newPosX, y: newPosY } });
+    }, [imgW, imgH, frameW, frameH, offsetX, offsetY, onUpdate]);
+
+    // Handle transform in real-time (sync ghost during resize)
+    const handleTransformRealtime = useCallback(() => {
+        const node = imageRef.current;
+        if (!node || !ghostRef.current) return;
+
+        const nodeScaleX = node.scaleX();
+        const nodeScaleY = node.scaleY();
+
+        // Update ghost to match current transform
+        ghostRef.current.x(node.x());
+        ghostRef.current.y(node.y());
+        ghostRef.current.width(node.width() * nodeScaleX);
+        ghostRef.current.height(node.height() * nodeScaleY);
+        ghostRef.current.scaleX(1);
+        ghostRef.current.scaleY(1);
+    }, []);
+
+    // Handle transform end (resize) - Independent X/Y scaling
+    const handleTransformEnd = useCallback(() => {
+        const node = imageRef.current;
+        if (!node) return;
+
+        // Get new scales from transformer
+        const nodeScaleX = node.scaleX();
+        const nodeScaleY = node.scaleY();
+        const newImgW = node.width() * nodeScaleX;
+        const newImgH = node.height() * nodeScaleY;
+
+        // Calculate new independent scales
+        const newScaleX = newImgW / frameW;
+        const newScaleY = newImgH / frameH;
+
+        // Final ghost sync
+        if (ghostRef.current) {
+            ghostRef.current.width(newImgW);
+            ghostRef.current.height(newImgH);
+            ghostRef.current.x(node.x());
+            ghostRef.current.y(node.y());
+        }
+
+        // Reset node scale (we store scale in our own property)
+        node.scaleX(1);
+        node.scaleY(1);
+
+        // Calculate new position
+        const newX = node.x() - offsetX;
+        const newY = node.y() - offsetY;
+        const scrollableX = newImgW - frameW;
+        const scrollableY = newImgH - frameH;
+
+        let newPosX = 0.5;
+        let newPosY = 0.5;
+
+        if (scrollableX !== 0) {
+            newPosX = -newX / scrollableX;
+        }
+        if (scrollableY !== 0) {
+            newPosY = -newY / scrollableY;
+        }
+
+        onUpdate({
+            backgroundScaleX: Math.max(0.3, Math.min(5, newScaleX)),
+            backgroundScaleY: Math.max(0.3, Math.min(5, newScaleY)),
+            backgroundPosition: { x: newPosX, y: newPosY }
+        });
+    }, [frameW, frameH, offsetX, offsetY, onUpdate]);
+
+    // Prevent event propagation to parent
+    const handleContainerMouseDown = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        e.preventDefault();
-        dragRef.current = {
-            type: 'pan',
-            startX: e.clientX, startY: e.clientY,
-            startScale: scale, startPos: { ...pos }
-        };
+    }, []);
 
-        const onMove = (ev: MouseEvent) => {
-            if (!dragRef.current) return;
-            const dx = ev.clientX - dragRef.current.startX;
-            const dy = ev.clientY - dragRef.current.startY;
-
-            // Calculate how much we can scroll
-            const currentImgW = frameW * (dragRef.current.startScale / 100);
-            const currentImgH = currentImgW / aspect;
-            const scrollableX = currentImgW - frameW;
-            const scrollableY = currentImgH - frameH;
-
-            // Convert pixel drag to position change
-            let newPosX = dragRef.current.startPos.x;
-            let newPosY = dragRef.current.startPos.y;
-
-            if (scrollableX > 0) {
-                newPosX = Math.max(0, Math.min(1, dragRef.current.startPos.x - dx / scrollableX));
-            }
-            if (scrollableY > 0) {
-                newPosY = Math.max(0, Math.min(1, dragRef.current.startPos.y - dy / scrollableY));
-            }
-
-            onUpdate({ backgroundPosition: { x: newPosX, y: newPosY } });
-        };
-        const onUp = () => {
-            window.removeEventListener('mousemove', onMove);
-            window.removeEventListener('mouseup', onUp);
-            dragRef.current = null;
-        };
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-    };
-
-    // === SCALE ===
-    const handleScale = (e: React.MouseEvent, handle: string) => {
+    const handleContainerClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        e.preventDefault();
-        dragRef.current = {
-            type: 'scale',
-            startX: e.clientX, startY: e.clientY,
-            startScale: scale, startPos: { ...pos }
-        };
+    }, []);
 
-        const onMove = (ev: MouseEvent) => {
-            if (!dragRef.current) return;
-            const dx = ev.clientX - dragRef.current.startX;
-            const dy = ev.clientY - dragRef.current.startY;
-
-            let delta = 0;
-            if (handle === 'se') delta = (dx + dy) / 3;
-            else if (handle === 'sw') delta = (-dx + dy) / 3;
-            else if (handle === 'ne') delta = (dx - dy) / 3;
-            else if (handle === 'nw') delta = (-dx - dy) / 3;
-
-            const newScale = Math.max(100, Math.min(300, dragRef.current.startScale + delta));
-            onUpdate({ backgroundScale: Math.round(newScale) });
-        };
-        const onUp = () => {
-            window.removeEventListener('mousemove', onMove);
-            window.removeEventListener('mouseup', onUp);
-            dragRef.current = null;
-        };
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-    };
-
-    const scaleHandle: React.CSSProperties = {
-        position: 'absolute', width: 12, height: 12,
-        backgroundColor: FIGMA_BLUE, borderRadius: '50%',
-        border: '2px solid white',
-        zIndex: 200, pointerEvents: 'auto', cursor: 'nwse-resize',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-    };
+    if (!image || !isReady) {
+        return (
+            <div
+                className="w-full h-full flex items-center justify-center bg-gray-100"
+                onMouseDown={handleContainerMouseDown}
+                onClick={handleContainerClick}
+            >
+                <span className="text-gray-400">Loading...</span>
+            </div>
+        );
+    }
 
     return (
-        <div className="w-full h-full relative" style={{ overflow: 'visible' }}>
-            {/* GHOST IMAGE */}
+        <div
+            className="relative"
+            style={{
+                width: frameW,
+                height: frameH,
+                overflow: 'visible',
+            }}
+            onMouseDown={handleContainerMouseDown}
+            onClick={handleContainerClick}
+        >
+            {/* Expanded Stage to show ghost image */}
             <div
                 style={{
                     position: 'absolute',
-                    left: displayX, top: displayY,
-                    width: imgW, height: imgH,
-                    backgroundImage: `url(${imageUrl})`,
-                    backgroundSize: '100% 100%',
-                    opacity: 0.25,
-                    pointerEvents: 'none',
-                    zIndex: 1,
-                    border: `2px dashed ${FIGMA_BLUE}`,
-                }}
-            />
-
-            {/* SCALE HANDLES */}
-            <div style={{ ...scaleHandle, left: displayX - 6, top: displayY - 6 }} onMouseDown={e => handleScale(e, 'nw')} />
-            <div style={{ ...scaleHandle, left: displayX + imgW - 6, top: displayY - 6 }} onMouseDown={e => handleScale(e, 'ne')} />
-            <div style={{ ...scaleHandle, left: displayX - 6, top: displayY + imgH - 6 }} onMouseDown={e => handleScale(e, 'sw')} />
-            <div style={{ ...scaleHandle, left: displayX + imgW - 6, top: displayY + imgH - 6 }} onMouseDown={e => handleScale(e, 'se')} />
-
-            {/* CLIP FRAME */}
-            <div
-                style={{
-                    position: 'absolute',
-                    left: 0, top: 0,
-                    width: frameW, height: frameH,
-                    overflow: 'hidden',
-                    border: `2px solid ${FIGMA_BLUE}`,
-                    borderRadius: element.type === 'circle' ? '50%' : element.borderRadius,
-                    zIndex: 50,
-                    boxSizing: 'border-box',
+                    left: -offsetX,
+                    top: -offsetY,
+                    width: stageW,
+                    height: stageH,
+                    pointerEvents: 'auto',
                 }}
             >
-                <div
-                    style={{
-                        position: 'absolute',
-                        left: displayX, top: displayY,
-                        width: imgW, height: imgH,
-                        backgroundImage: `url(${imageUrl})`,
-                        backgroundSize: '100% 100%',
-                        cursor: 'grab',
+                <Stage
+                    ref={stageRef}
+                    width={stageW}
+                    height={stageH}
+                    onClick={(e) => {
+                        // Close if clicked on stage background (not on image)
+                        if (e.target === e.target.getStage()) {
+                            onClose?.();
+                        }
                     }}
-                    onMouseDown={handlePan}
-                />
+                    onTap={(e) => {
+                        if (e.target === e.target.getStage()) {
+                            onClose?.();
+                        }
+                    }}
+                >
+                    <Layer>
+                        {/* Ghost image (semi-transparent, shows full image) */}
+                        <KonvaImage
+                            ref={ghostRef}
+                            image={image}
+                            x={imgX}
+                            y={imgY}
+                            width={imgW}
+                            height={imgH}
+                            opacity={0.3}
+                            listening={false}
+                        />
+
+                        {/* Frame overlay to show bounds (dark outside) */}
+                        {/* Top */}
+                        <Rect
+                            x={0}
+                            y={0}
+                            width={stageW}
+                            height={offsetY}
+                            fill="rgba(0,0,0,0.5)"
+                            onClick={() => onClose?.()}
+                            onTap={() => onClose?.()}
+                        />
+                        {/* Bottom */}
+                        <Rect
+                            x={0}
+                            y={offsetY + frameH}
+                            width={stageW}
+                            height={offsetY}
+                            fill="rgba(0,0,0,0.5)"
+                            onClick={() => onClose?.()}
+                            onTap={() => onClose?.()}
+                        />
+                        {/* Left */}
+                        <Rect
+                            x={0}
+                            y={offsetY}
+                            width={offsetX}
+                            height={frameH}
+                            fill="rgba(0,0,0,0.5)"
+                            onClick={() => onClose?.()}
+                            onTap={() => onClose?.()}
+                        />
+                        {/* Right */}
+                        <Rect
+                            x={offsetX + frameW}
+                            y={offsetY}
+                            width={offsetX}
+                            height={frameH}
+                            fill="rgba(0,0,0,0.5)"
+                            onClick={() => onClose?.()}
+                            onTap={() => onClose?.()}
+                        />
+
+                        {/* Frame border */}
+                        <Rect
+                            x={offsetX}
+                            y={offsetY}
+                            width={frameW}
+                            height={frameH}
+                            stroke={FIGMA_BLUE}
+                            strokeWidth={3}
+                            listening={false}
+                        />
+
+                        {/* Main draggable image (full opacity, only visible inside frame) */}
+                        <Group
+                            clipX={offsetX}
+                            clipY={offsetY}
+                            clipWidth={frameW}
+                            clipHeight={frameH}
+                        >
+                            <KonvaImage
+                                ref={imageRef}
+                                image={image}
+                                x={imgX}
+                                y={imgY}
+                                width={imgW}
+                                height={imgH}
+                                draggable={true}
+                                onDragMove={handleDragMove}
+                                onDragEnd={handleDragEnd}
+                                onTransform={handleTransformRealtime}
+                                onTransformEnd={handleTransformEnd}
+                            />
+                        </Group>
+
+                        {/* Transformer (resize handles) - outside clip group */}
+                        <Transformer
+                            ref={trRef}
+                            enabledAnchors={[
+                                'top-left', 'top-center', 'top-right',
+                                'middle-left', 'middle-right',
+                                'bottom-left', 'bottom-center', 'bottom-right'
+                            ]}
+                            boundBoxFunc={(oldBox, newBox) => {
+                                // Minimum size constraint
+                                if (newBox.width < frameW * 0.3 || newBox.height < frameH * 0.3) {
+                                    return oldBox;
+                                }
+                                return newBox;
+                            }}
+                            keepRatio={false}
+                            rotateEnabled={false}
+                            borderStroke={FIGMA_BLUE}
+                            borderStrokeWidth={2}
+                            anchorFill="white"
+                            anchorStroke={FIGMA_BLUE}
+                            anchorStrokeWidth={2}
+                            anchorSize={14}
+                            anchorCornerRadius={2}
+                        />
+                    </Layer>
+                </Stage>
             </div>
 
-            {/* ZOOM LABEL */}
-            <div style={{
-                position: 'absolute',
-                bottom: -26, left: '50%',
-                transform: 'translateX(-50%)',
-                background: FIGMA_BLUE,
-                color: 'white',
-                padding: '3px 10px',
-                borderRadius: 4,
-                fontSize: 11,
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                zIndex: 100,
-            }}>
-                {scale}%
+            {/* Help Text */}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: -40,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'rgba(0,0,0,0.8)',
+                    color: 'white',
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    whiteSpace: 'nowrap',
+                    zIndex: 100,
+                    pointerEvents: 'none',
+                }}
+            >
+                이미지 드래그 / 핸들로 크기 조절
             </div>
         </div>
     );

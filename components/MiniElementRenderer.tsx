@@ -16,6 +16,7 @@ export const MiniElementRenderer: React.FC<Props> = ({ element }) => {
 
         // 문장 아이템 (작은 카드)
         if (isSentenceItem) {
+            const isEmojiUrl = aacData?.emoji?.startsWith('http') || aacData?.emoji?.startsWith('data:');
             return (
                 <div
                     style={{
@@ -30,9 +31,6 @@ export const MiniElementRenderer: React.FC<Props> = ({ element }) => {
                         border: '1px solid #E5E7EB',
                         borderRadius: element.borderRadius || 6,
                         overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
                     }}
                 >
                     {aacData?.label && (
@@ -50,14 +48,38 @@ export const MiniElementRenderer: React.FC<Props> = ({ element }) => {
                             {aacData.label}
                         </div>
                     )}
-                    <div style={{ fontSize: size * 0.45, lineHeight: 1, marginTop: aacData?.label ? 4 : 0 }}>
-                        {aacData?.emoji || '❓'}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            paddingTop: aacData?.label ? 4 : 0
+                        }}
+                    >
+                        {isEmojiUrl ? (
+                            <img
+                                src={aacData?.emoji}
+                                alt=""
+                                className="object-contain"
+                                style={{ width: size * 0.6, height: size * 0.6 }}
+                            />
+                        ) : (
+                            <div style={{ fontSize: size * 0.45, lineHeight: 1 }}>
+                                {aacData?.emoji || '❓'}
+                            </div>
+                        )}
                     </div>
                 </div>
             );
         }
 
         // 일반 AAC 카드
+        const labelPosition = aacData?.labelPosition || 'above';
+        const symbolScale = aacData?.symbolScale || 0.45;
+        const isEmojiUrl = aacData?.emoji?.startsWith('http') || aacData?.emoji?.startsWith('data:');
+
         return (
             <div
                 style={{
@@ -72,35 +94,68 @@ export const MiniElementRenderer: React.FC<Props> = ({ element }) => {
                     border: element.borderWidth ? `${element.borderWidth}px solid ${element.borderColor}` : '1px solid #E5E7EB',
                     borderRadius: element.borderRadius || 12,
                     overflow: 'hidden',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
                 }}
             >
-                {isFilled && (
+                {isFilled && labelPosition !== 'none' && (
                     <div
                         style={{
                             position: 'absolute',
-                            top: 4, left: 0, right: 0,
+                            left: 0,
+                            right: 0,
+                            top: labelPosition === 'above' ? 4 : 'auto',
+                            bottom: labelPosition === 'below' ? 4 : 'auto',
                             textAlign: 'center',
-                            // 수정: PageManager는 transform scale을 사용하므로 원래 px 값을 써야 함.
                             fontSize: aacData?.fontSize || 20,
                             fontWeight: aacData?.fontWeight || 400,
                             color: aacData?.color || '#000000',
                             whiteSpace: 'nowrap',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            padding: '0 4px',
+                            lineHeight: 1.2
                         }}
                     >
                         {aacData?.label || '라벨'}
                     </div>
                 )}
-                <div style={{
-                    fontSize: size * 0.45,
-                    lineHeight: 1,
-                    marginTop: isFilled && aacData?.label ? 0 : 0,
-                    pointerEvents: 'none'
-                }}>
-                    {isFilled && aacData?.emoji ? aacData.emoji : (!isFilled ? 'Card' : '')}
+
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        pointerEvents: 'none',
+                        paddingTop: labelPosition === 'above' && isFilled ? size * 0.15 : 0,
+                        paddingBottom: labelPosition === 'below' && isFilled ? size * 0.15 : 0
+                    }}
+                >
+                    {isFilled && aacData?.emoji ? (
+                        isEmojiUrl ? (
+                            <img
+                                src={aacData.emoji}
+                                alt={aacData.label || ''}
+                                className="object-contain"
+                                style={{
+                                    width: size * symbolScale,
+                                    height: size * symbolScale
+                                }}
+                            />
+                        ) : (
+                            <div style={{ fontSize: size * symbolScale, lineHeight: 1 }}>
+                                {aacData.emoji}
+                            </div>
+                        )
+                    ) : (
+                        !isFilled && (
+                            <div style={{ fontSize: size * 0.1, color: '#D1D5DB' }}>
+                                Card
+                            </div>
+                        )
+                    )}
                 </div>
             </div>
         );

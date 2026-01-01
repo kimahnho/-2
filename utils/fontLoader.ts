@@ -28,39 +28,33 @@ let fontsLoaded = false;
  * 12. 프레도카 (Fredoka) - 영문
  */
 
-// CDN에서 TTF 파일 로드 (jsDelivr를 통한 Google Fonts mirror)
+// Google Fonts에서 직접 제공하는 TTF 파일 URL (더 안정적)
 const FONT_URLS: Record<string, string> = {
-    // 실제 등록할 한글 폰트들 (TTF 파일)
-    'GowunDodum': 'https://cdn.jsdelivr.net/gh/nicennnnnnnlee/nicennnnnnnlee.github.io@master/fonts/GowunDodum-Regular.ttf',
-    'NotoSansKR': 'https://cdn.jsdelivr.net/gh/nicennnnnnnlee/nicennnnnnnlee.github.io@master/fonts/NotoSansKR-Regular.ttf',
-    'NanumGothic': 'https://cdn.jsdelivr.net/gh/nicennnnnnnlee/nicennnnnnnlee.github.io@master/fonts/NanumGothic-Regular.ttf',
+    // 실제 등록할 한글 폰트들 (TTF 파일) - Google Fonts 직접 URL
+    'NotoSansKR': 'https://fonts.gstatic.com/s/notosanskr/v36/PbykFmXiEBPT4ITbgNA5Cgm20HzDDYgA.ttf',
 };
 
 /**
  * PRESET_FONTS의 value와 jsPDF 폰트 이름 매핑
- * style.constants.ts의 PRESET_FONTS와 정확히 동기화
+ * 모든 한글 폰트를 NotoSansKR로 통일 (안정성 보장)
  */
 const FONT_MAPPING: Record<string, string> = {
-    // 기본 본문용 폰트
-    "gowun dodum": 'GowunDodum',           // 고운 돋움
-    "noto sans kr": 'NotoSansKR',          // 노토 산스 KR
-    "nanum gothic": 'NanumGothic',         // 나눔고딕
-    "nanum myeongjo": 'NanumGothic',       // 나눔명조 → 나눔고딕으로 대체
-
-    // 제목/강조용 폰트
-    "black han sans": 'NotoSansKR',        // 블랙 한 산스 → Noto Sans KR로 대체
-    "do hyeon": 'NotoSansKR',              // 도현 → Noto Sans KR로 대체
-    "sunflower": 'NotoSansKR',             // 조선일보명조 → Noto Sans KR로 대체
-
-    // 손글씨/귀여운 폰트
-    "nanum pen script": 'NanumGothic',     // 나눔손글씨 펜 → 나눔고딕으로 대체
-    "gaegu": 'GowunDodum',                 // 개구쟁이 → 고운 돋움으로 대체
-    "cute font": 'GowunDodum',             // 귀여운 폰트 → 고운 돋움으로 대체
-    "gowun batang": 'GowunDodum',          // 고운 바탕 → 고운 돋움으로 대체
+    // 모든 한글 폰트 → NotoSansKR로 통일
+    "gowun dodum": 'NotoSansKR',
+    "noto sans kr": 'NotoSansKR',
+    "nanum gothic": 'NotoSansKR',
+    "nanum myeongjo": 'NotoSansKR',
+    "black han sans": 'NotoSansKR',
+    "do hyeon": 'NotoSansKR',
+    "sunflower": 'NotoSansKR',
+    "nanum pen script": 'NotoSansKR',
+    "gaegu": 'NotoSansKR',
+    "cute font": 'NotoSansKR',
+    "gowun batang": 'NotoSansKR',
 
     // 영문 폰트
-    "fredoka": 'helvetica',                // 프레도카 → helvetica
-    "inter": 'helvetica',                  // Inter → helvetica
+    "fredoka": 'helvetica',
+    "inter": 'helvetica',
 };
 
 /**
@@ -103,7 +97,7 @@ export async function registerKoreanFont(pdf: jsPDF): Promise<void> {
         for (const [fontName, base64] of fontCache.entries()) {
             try {
                 pdf.addFileToVFS(`${fontName}.ttf`, base64);
-                pdf.addFont(`${fontName}.ttf`, fontName, 'normal');
+                pdf.addFont(`${fontName}.ttf`, fontName, 'normal', 'Identity-H');
             } catch {
                 // 이미 등록된 경우 무시
             }
@@ -116,7 +110,7 @@ export async function registerKoreanFont(pdf: jsPDF): Promise<void> {
         try {
             const base64 = await fetchFontAsBase64(fontName, url);
             pdf.addFileToVFS(`${fontName}.ttf`, base64);
-            pdf.addFont(`${fontName}.ttf`, fontName, 'normal');
+            pdf.addFont(`${fontName}.ttf`, fontName, 'normal', 'Identity-H');
             console.log(`폰트 등록 완료: ${fontName}`);
         } catch (error) {
             console.warn(`폰트 등록 실패 (${fontName}):`, error);

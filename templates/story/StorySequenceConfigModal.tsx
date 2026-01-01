@@ -49,22 +49,7 @@ export const StorySequenceConfigModal: React.FC<Props> = ({ onClose, onApply, on
         const HEADER_HEIGHT = 80;
         const GAP = 20;
 
-        // 제목
-        elements.push({
-            id: generateId(),
-            type: 'text',
-            x: MARGIN,
-            y: MARGIN,
-            width: canvasW - MARGIN * 2,
-            height: 50,
-            content: '이야기 장면 순서 맞추기',
-            fontSize: 32,
-            color: '#1a365d',
-            rotation: 0,
-            zIndex: 1,
-            pageId: '',
-            fontWeight: 700,
-        } as DesignElement);
+
 
         // 그리드 영역 계산
         const gridAreaY = MARGIN + HEADER_HEIGHT;
@@ -311,8 +296,8 @@ export const StorySequenceConfigModal: React.FC<Props> = ({ onClose, onApply, on
                             <button
                                 onClick={() => setFlowDirection('horizontal')}
                                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${flowDirection === 'horizontal'
-                                        ? 'border-blue-500 bg-blue-50 text-blue-600'
-                                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                                    ? 'border-blue-500 bg-blue-50 text-blue-600'
+                                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
                                     }`}
                             >
                                 <ArrowRight className="w-5 h-5" />
@@ -321,8 +306,8 @@ export const StorySequenceConfigModal: React.FC<Props> = ({ onClose, onApply, on
                             <button
                                 onClick={() => setFlowDirection('vertical')}
                                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${flowDirection === 'vertical'
-                                        ? 'border-blue-500 bg-blue-50 text-blue-600'
-                                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                                    ? 'border-blue-500 bg-blue-50 text-blue-600'
+                                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
                                     }`}
                             >
                                 <ArrowDown className="w-5 h-5" />
@@ -338,8 +323,8 @@ export const StorySequenceConfigModal: React.FC<Props> = ({ onClose, onApply, on
                             <button
                                 onClick={() => handleOrientationChange('portrait')}
                                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${orientation === 'portrait'
-                                        ? 'border-blue-500 bg-blue-50 text-blue-600'
-                                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                                    ? 'border-blue-500 bg-blue-50 text-blue-600'
+                                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
                                     }`}
                             >
                                 <Smartphone className="w-5 h-5" />
@@ -348,8 +333,8 @@ export const StorySequenceConfigModal: React.FC<Props> = ({ onClose, onApply, on
                             <button
                                 onClick={() => handleOrientationChange('landscape')}
                                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${orientation === 'landscape'
-                                        ? 'border-blue-500 bg-blue-50 text-blue-600'
-                                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                                    ? 'border-blue-500 bg-blue-50 text-blue-600'
+                                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
                                     }`}
                             >
                                 <Monitor className="w-5 h-5" />

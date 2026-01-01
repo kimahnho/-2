@@ -68,6 +68,28 @@ export const useCanvasEvents = ({
     }
   };
 
+  // 캔버스 배경 클릭 시 처리 (현재 활성화된 페이지 기준으로 좌표 계산)
+  const handleBackgroundMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Only left click
+
+    const pageEl = pageRefs.current[activePageId];
+    if (!pageEl) return;
+
+    const rect = pageEl.getBoundingClientRect();
+    const startX = (e.clientX - rect.left) / zoom;
+    const startY = (e.clientY - rect.top) / zoom;
+
+    setSelectionBox({
+      start: { x: startX, y: startY },
+      end: { x: startX, y: startY },
+      pageId: activePageId
+    });
+
+    onSetSelectedIds([]);
+    onSetEditingId(null);
+    selectionFilterRef.current = null;
+  };
+
   const handleElementMouseDown = (e: React.MouseEvent, id: string) => {
     if (e.button !== 0) return;
     e.stopPropagation();
@@ -75,23 +97,65 @@ export const useCanvasEvents = ({
     // Reset filter ref on element click
     selectionFilterRef.current = null;
 
+    // Prepare Group Selection
     const clickedEl = elements.find(el => el.id === id);
+    if (!clickedEl) return;
+
+    // Group logic: If clicked element is part of a group, select ALL group members
+    let idsToToggle = [id];
+    if (clickedEl.groupId) {
+      // Find all elements in the same group on the same page
+      const groupMembers = elements.filter(el => el.pageId === activePageId && el.groupId === clickedEl.groupId);
+      idsToToggle = groupMembers.map(el => el.id);
+    }
+
     if (clickedEl?.isEmotionPlaceholder) onSetActiveTab('emotions');
     if (clickedEl && clickedEl.pageId !== activePageId && clickedEl.pageId) {
       onSelectPage(clickedEl.pageId);
     }
 
-    const isSelected = selectedIds.includes(id);
-    let newSelectedIds = selectedIds;
+    let newSelectedIds = [...selectedIds];
 
     if (e.shiftKey) {
-      newSelectedIds = isSelected ? selectedIds.filter(sid => sid !== id) : [...selectedIds, id];
-      onSetSelectedIds(newSelectedIds);
-    } else if (!isSelected) {
-      newSelectedIds = [id];
-      onSetSelectedIds(newSelectedIds);
+      // Toggle Logic for Group
+      // If ALL items in the group are already selected, Deselect ALL.
+      // Otherwise, Select ALL.
+      const allSelected = idsToToggle.every(tid => selectedIds.includes(tid));
+
+      if (allSelected) {
+        newSelectedIds = selectedIds.filter(sid => !idsToToggle.includes(sid));
+      } else {
+        // Add ones that aren't there
+        const toAdd = idsToToggle.filter(tid => !selectedIds.includes(tid));
+        newSelectedIds = [...selectedIds, ...toAdd];
+      }
+    } else {
+      // If not Shift, and clicked a group member that is NOT selected -> Select ONLY that group (Replace Selection)
+      // If clicked a group member that IS selected -> Do NOT deselect others yet (might be drag). 
+      // Logic: if already selected, keep selection AS IS (unless it's the only thing selected? No, standard logic)
+
+      const isAlreadySelected = selectedIds.includes(id);
+
+      if (!isAlreadySelected) {
+        newSelectedIds = idsToToggle;
+      } else {
+        // If already selected, we don't change selection on MOUSE DOWN.
+        // We might change it on Mouse Up if it was a simple click (handled by click event?)
+        // But here we set Drag.
+        // Wait, if I have [A, B] selected, and I click A. I want to drag [A, B].
+        // If I click C (unselected), I want to drag [C] (or [C_group]).
+        // So if `!isAlreadySelected`, replace selection.
+        // If `isAlreadySelected`, keep selection? Yes.
+        // BUT: If the user clicked just ONE member of a multi-select group...
+        // Use standard logic logic.
+        newSelectedIds = selectedIds; // Keep existing selection logic for drag prep
+      }
     }
 
+    // Safety: ensure no duplicates
+    newSelectedIds = Array.from(new Set(newSelectedIds));
+
+    onSetSelectedIds(newSelectedIds);
     onSetEditingId(null);
 
     // Prepare Drag
@@ -357,6 +421,7 @@ export const useCanvasEvents = ({
     handleResizeStart,
     handleRotateStart,
     handleMouseMove,
-    handleMouseUp
+    handleMouseUp,
+    handleBackgroundMouseDown
   };
 };

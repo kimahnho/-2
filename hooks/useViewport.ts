@@ -8,8 +8,48 @@ export const useViewport = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Zoom Controls
-  const zoomIn = () => setZoom(p => Math.min(p + 0.1, 3));
-  const zoomOut = () => setZoom(p => Math.max(p - 0.1, 0.1));
+  // Helper to zoom while keeping center
+  const performZoom = useCallback((delta: number) => {
+    setZoom(prevZoom => {
+      const newZoom = Math.min(Math.max(prevZoom + delta, 0.1), 3);
+
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const { scrollLeft, scrollTop, clientWidth, clientHeight } = container;
+
+        // Calculate center point relative to content
+        const centerX = scrollLeft + clientWidth / 2;
+        const centerY = scrollTop + clientHeight / 2;
+
+        // Calculate point in unscaled coordinates
+        const contentX = centerX / prevZoom;
+        const contentY = centerY / prevZoom;
+
+        // Calculate new center in scaled coordinates
+        const newCenterX = contentX * newZoom;
+        const newCenterY = contentY * newZoom;
+
+        // Adjust scroll to keep center fixed
+        // We need to do this AFTER render, but React state updates are async.
+        // However, we can calculate the target scroll and set it.
+        // But since the content size changes with zoom, we might need a layout effect or requestAnimationFrame.
+        // A simple approach is to assume immediate update or use a ref to track pending scroll.
+
+        requestAnimationFrame(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollLeft = newCenterX - clientWidth / 2;
+            scrollContainerRef.current.scrollTop = newCenterY - clientHeight / 2;
+          }
+        });
+      }
+
+      return newZoom;
+    });
+  }, []);
+
+  // Zoom Controls
+  const zoomIn = () => performZoom(0.1);
+  const zoomOut = () => performZoom(-0.1);
   const zoomReset = () => setZoom(1);
   const zoomFit = () => setZoom(Math.min((window.innerHeight - 250) / CANVAS_HEIGHT, 3));
 

@@ -62,6 +62,18 @@ export const projectService = {
     },
 
     getProject: async (id: string): Promise<ProjectData | null> => {
+        // Special case for guest session: always use localStorage
+        if (id === 'guest-session') {
+            try {
+                const json = localStorage.getItem(`${STORAGE_KEYS.PROJECT_DATA_PREFIX}${id}`);
+                if (!json) return null;
+                return JSON.parse(json);
+            } catch (e) {
+                console.error(`Failed to load project ${id}`, e);
+                return null;
+            }
+        }
+
         if (isSupabaseConfigured() && supabase) {
             const { data, error } = await supabase
                 .from('projects')
@@ -152,6 +164,12 @@ export const projectService = {
     },
 
     saveProject: async (id: string, data: ProjectData, title?: string, thumbnail?: string, previewElements?: any[]): Promise<void> => {
+        // Special case for guest session: always use localStorage
+        if (id === 'guest-session') {
+            localStorage.setItem(`${STORAGE_KEYS.PROJECT_DATA_PREFIX}${id}`, JSON.stringify(data));
+            return;
+        }
+
         if (isSupabaseConfigured() && supabase) {
             const updateData: Record<string, unknown> = {
                 elements: data.elements,
@@ -249,5 +267,93 @@ export const projectService = {
         for (const p of groupProjects) {
             await projectService.deleteProject(p.id);
         }
+    },
+
+    duplicateProject: async (id: string, newOwnerId?: string, isGroup: boolean = false): Promise<string> => {
+        const project = await projectService.getProject(id);
+        const projects = await projectService.getAllProjects();
+        const originalProjectMeta = projects.find(p => p.id === id);
+
+        if (!project || !originalProjectMeta) {
+            throw new Error("Project not found");
+        }
+
+        // Naming Logic: Source + (복제) -> Source + (복제)(2) -> ...
+        let baseTitle = `${originalProjectMeta.title} (복제)`;
+        let newTitle = baseTitle;
+        let counter = 2;
+
+        const isTaken = (t: string) => projects.some(p => p.title === t);
+
+        while (isTaken(newTitle)) {
+            newTitle = `${baseTitle}(${counter})`;
+            counter++;
+        }
+
+        if (isSupabaseConfigured() && supabase) {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            const insertData: Record<string, unknown> = {
+                title: newTitle,
+                elements: project.elements,
+                pages: project.pages,
+                user_id: user?.id,
+                thumbnail: originalProjectMeta.thumbnail,
+                preview_elements: originalProjectMeta.previewElements
+            };
+
+            // If newOwnerId is provided (e.g. duplicating to different student), use it.
+            // Otherwise inherit from original if not specified (though usually duplication is in same context).
+            const targetOwnerId = newOwnerId || (isGroup ? originalProjectMeta.groupId : originalProjectMeta.studentId);
+            const targetIsGroup = isGroup || !!originalProjectMeta.groupId;
+
+            if (targetIsGroup && targetOwnerId) {
+                insertData.group_id = targetOwnerId;
+            } else if (targetOwnerId) {
+                insertData.student_id = targetOwnerId;
+            }
+
+            const { data, error } = await supabase
+                .from('projects')
+                .insert(insertData)
+                .select('id')
+                .single();
+
+            if (error) throw error;
+            trackProjectCreated(data.id);
+            return data.id;
+        }
+
+        // localStorage fallback
+        const newId = uuidv4();
+        const now = Date.now();
+
+        const newMetadata: SavedProjectMetadata = {
+            id: newId,
+            title: newTitle,
+            updatedAt: now,
+            createdAt: now,
+            thumbnail: originalProjectMeta.thumbnail,
+            previewElements: originalProjectMeta.previewElements,
+            studentId: originalProjectMeta.studentId, // Default keep same owner
+            groupId: originalProjectMeta.groupId
+        };
+
+        // If specific owner requested
+        if (newOwnerId) {
+            if (isGroup) {
+                newMetadata.groupId = newOwnerId;
+                delete newMetadata.studentId;
+            } else {
+                newMetadata.studentId = newOwnerId;
+                delete newMetadata.groupId;
+            }
+        }
+
+        const updatedProjects = [newMetadata, ...projects];
+        localStorage.setItem(STORAGE_KEYS.PROJECT_INDEX, JSON.stringify(updatedProjects));
+        localStorage.setItem(`${STORAGE_KEYS.PROJECT_DATA_PREFIX}${newId}`, JSON.stringify(project));
+
+        return newId;
     }
 };

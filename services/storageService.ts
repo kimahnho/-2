@@ -106,4 +106,7 @@ export const storageService = {
     projectService.saveProject(id, data, title, thumbnail, previewElements),
 
   deleteProject: (id: string): Promise<void> => projectService.deleteProject(id),
+
+  duplicateProject: (id: string, newOwnerId?: string, isGroup?: boolean): Promise<string> =>
+    projectService.duplicateProject(id, newOwnerId, isGroup),
 };

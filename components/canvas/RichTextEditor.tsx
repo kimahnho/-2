@@ -1,285 +1,457 @@
-import React, { useCallback, useMemo, useState, useRef } from 'react';
-import { createEditor, Descendant, Editor, Range, BaseEditor, Transforms, Selection } from 'slate';
-import { Slate, Editable, withReact, RenderLeafProps, ReactEditor } from 'slate-react';
-import { Bold } from 'lucide-react';
-import { PRESET_FONTS } from '../../constants';
 
-// 커스텀 텍스트 타입 정의
-export interface CustomText {
+import React, { useCallback, useMemo, useEffect, KeyboardEvent } from 'react';
+import { createEditor, Descendant, Editor, Transforms, Text, Element as SlateElement, BaseEditor } from 'slate';
+import { Slate, Editable, withReact, RenderLeafProps, RenderElementProps, ReactEditor } from 'slate-react';
+import { withHistory, HistoryEditor } from 'slate-history';
+import { TextCommand, TextStyle } from '../../types/editor.types';
+
+// 커스텀 타입 정의
+export type CustomText = {
     text: string;
     bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    strikethrough?: boolean;
+    color?: string;
     fontFamily?: string;
     fontSize?: number;
-    color?: string;
-}
+};
 
-export interface CustomElement {
+export type CustomElement = {
     type: 'paragraph';
-    children: CustomText[];
-}
+    align?: 'left' | 'center' | 'right';
+    children: Descendant[];
+};
+
+export type CustomEditor = BaseEditor & ReactEditor & HistoryEditor;
 
 declare module 'slate' {
     interface CustomTypes {
-        Editor: BaseEditor & ReactEditor;
+        Editor: CustomEditor;
         Element: CustomElement;
         Text: CustomText;
     }
 }
 
-// 초기값 생성 헬퍼
-export const createInitialValue = (content: string): Descendant[] => {
-    return [
-        {
-            type: 'paragraph',
-            children: [{ text: content || '' }],
-        },
-    ];
-};
+// HTML <-> Slate 변환 유틸리티
+// (간단한 구현, 실제로는 더 복잡한 파서가 필요할 수 있음)
+const serialize = (node: Descendant): string => {
+    if (Text.isText(node)) {
+        let string = node.text;
+        if (node.bold) string = `<strong>${string}</strong>`;
+        if (node.italic) string = `<em>${string}</em>`;
+        if (node.underline) string = `<u>${string}</u>`;
+        if (node.strikethrough) string = `<s>${string}</s>`;
+        // Span with styles for color/font
+        const styles: string[] = [];
+        if (node.color) styles.push(`color:${node.color}`);
+        if (node.fontFamily) styles.push(`font-family:${node.fontFamily}`);
+        if (node.fontSize) styles.push(`font-size:${node.fontSize}px`);
 
-// Descendant[]를 plain text로 변환
-export const serializeToPlainText = (nodes: Descendant[]): string => {
-    return nodes.map(n => {
-        if ('children' in n) {
-            return (n as CustomElement).children.map(c => c.text).join('');
+        if (styles.length > 0) {
+            string = `<span style="${styles.join(';')}">${string}</span>`;
         }
-        return '';
-    }).join('\n');
+        return string;
+    }
+
+    const element = node as CustomElement;
+    const children = element.children.map(n => serialize(n)).join('');
+
+    switch (element.type) {
+        case 'paragraph':
+            const style = element.align ? `style="text-align:${element.align}"` : '';
+            return `<p ${style}>${children}</p>`;
+        default:
+            return children;
+    }
 };
 
-// Leaf 렌더러 - 폰트, 크기, 색상 적용
-const Leaf = ({ attributes, children, leaf }: RenderLeafProps) => {
-    const style: React.CSSProperties = {
-        fontFamily: leaf.fontFamily || undefined,
-        fontSize: leaf.fontSize ? `${leaf.fontSize}px` : undefined,
-        color: leaf.color || undefined,
-        fontWeight: leaf.bold ? 'bold' : undefined,
+const deserialize = (html: string): Descendant[] => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const body = doc.body;
+
+    const deserializeNode = (el: Node): Descendant[] => {
+        if (el.nodeType === 3) { // Text node
+            return [{ text: el.textContent || '' }];
+        } else if (el.nodeType !== 1) {
+            return [];
+        }
+
+        const node = el as HTMLElement;
+        let children: Descendant[] = Array.from(node.childNodes).flatMap(deserializeNode);
+
+        // 빈 텍스트 노드 처리 ( Slate는 최소 하나의 텍스트 자식 필요)
+        if (children.length === 0) {
+            children = [{ text: '' }];
+        }
+
+        // Apply styles based on tags
+        if (node.nodeName === 'STRONG' || node.nodeName === 'B' || node.style.fontWeight === 'bold' || Number(node.style.fontWeight) >= 700) {
+            children = children.map(c => Text.isText(c) ? { ...c, bold: true } : c);
+        }
+        if (node.nodeName === 'EM' || node.nodeName === 'I' || node.style.fontStyle === 'italic') {
+            children = children.map(c => Text.isText(c) ? { ...c, italic: true } : c);
+        }
+        if (node.nodeName === 'U' || node.style.textDecoration.includes('underline')) {
+            children = children.map(c => Text.isText(c) ? { ...c, underline: true } : c);
+        }
+        if (node.nodeName === 'S' || node.nodeName === 'DEL' || node.nodeName === 'STRIKE' || node.style.textDecoration.includes('line-through')) {
+            children = children.map(c => Text.isText(c) ? { ...c, strikethrough: true } : c);
+        }
+
+        // Style attributes
+        if (node.style.color) {
+            children = children.map(c => Text.isText(c) ? { ...c, color: node.style.color } : c);
+        }
+        if (node.style.fontFamily) {
+            children = children.map(c => Text.isText(c) ? { ...c, fontFamily: node.style.fontFamily.replace(/['"]/g, '') } : c);
+        }
+        if (node.style.fontSize) {
+            const size = parseInt(node.style.fontSize);
+            if (!isNaN(size)) {
+                children = children.map(c => Text.isText(c) ? { ...c, fontSize: size } : c);
+            }
+        }
+
+        // Block elements
+        if (node.nodeName === 'P' || node.nodeName === 'DIV') {
+            return [{
+                type: 'paragraph',
+                align: (node.style.textAlign as any) || undefined,
+                children
+            }];
+        }
+
+        return children;
     };
 
-    return (
-        <span {...attributes} style={style}>
-            {children}
-        </span>
-    );
+    // 만약 빈 내용이면 기본값 반환
+    if (!html.trim()) {
+        return [{ type: 'paragraph', children: [{ text: '' }] }];
+    }
+
+    const nodes = Array.from(body.childNodes).flatMap(deserializeNode);
+    // Ensure standard block structure
+    return nodes.map(n => Text.isText(n) ? { type: 'paragraph', children: [n] } : n);
 };
 
 interface RichTextEditorProps {
-    value: Descendant[];
-    onChange: (value: Descendant[]) => void;
-    onBlur?: () => void;
-    defaultFontFamily?: string;
-    defaultFontSize?: number;
-    defaultColor?: string;
-    textAlign?: 'left' | 'center' | 'right';
+    initialHtml?: string;
+    onChange: (html: string) => void;
+    onBlur?: (html?: string) => void;
+    command?: TextCommand | null;
+    onStyleChange?: (style: TextStyle) => void;
+    defaultFontFamily: string;
+    defaultFontSize: number;
+    defaultColor: string;
+    textAlign: 'left' | 'center' | 'right';
     placeholder?: string;
+    textareaRef?: React.RefObject<any>; // Focus handling
+    onContentSizeChange?: (width: number, height: number) => void; // NEW
+    initialCursorOffset?: number; // NEW
+    onTab?: () => void;
 }
 
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
-    value,
+    initialHtml,
     onChange,
     onBlur,
-    defaultFontFamily = "'Gowun Dodum', sans-serif",
-    defaultFontSize = 16,
-    defaultColor = '#000000',
-    textAlign = 'center',
-    placeholder = '텍스트를 입력하세요'
+    command,
+    onStyleChange,
+    defaultFontFamily,
+    defaultFontSize,
+    defaultColor,
+    textAlign,
+    placeholder,
+    textareaRef,
+    onContentSizeChange,
+    initialCursorOffset,
+    onTab
 }) => {
-    const editor = useMemo(() => withReact(createEditor()), []);
-    const [showToolbar, setShowToolbar] = useState(false);
-    const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
-    const savedSelection = useRef<Selection>(null);
+    // Editor instance
+    const editor = useMemo(() => withHistory(withReact(createEditor())), []);
 
-    const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, []);
-
-    // 선택 영역 저장
-    const saveSelection = useCallback(() => {
-        if (editor.selection) {
-            savedSelection.current = JSON.parse(JSON.stringify(editor.selection));
+    // Initial value memoization
+    const initialValue = useMemo(() => {
+        if (initialHtml) {
+            return deserialize(initialHtml);
         }
-    }, [editor]);
+        // 기본값: 부모 요소 스타일 상속
+        return [{
+            type: 'paragraph',
+            align: textAlign,
+            children: [{
+                text: '',
+                fontFamily: defaultFontFamily,
+                fontSize: defaultFontSize,
+                color: defaultColor
+            }]
+        }] as Descendant[];
+    }, []); // Only once
 
-    // 선택 영역 복원 및 마크 적용
-    const applyMarkToSelection = useCallback((key: keyof CustomText, markValue: any) => {
-        // 저장된 선택 영역 복원
-        if (savedSelection.current) {
-            Transforms.select(editor, savedSelection.current);
+    // NEW: React to external HTML changes (e.g. from Property Panel via resetStylesInHtml)
+    // We need to be careful not to overwrite user typing, but if the prop changes significantly 
+    // (and we are not focusing/typing?), we should update.
+    // Actually, usually in "Selection Mode", the editor is effectively read-only or not active.
+    // If we want to force update from props:
+    // React to external HTML changes
+    useEffect(() => {
+        if (initialHtml !== undefined) {
+            // Check if already focused to prevent "Echo Loop" flicker while typing.
+            // If we are typing, we are the source of truth. We shouldn't accept prop updates 
+            // that are just echoes of our own changes.
+            if (ReactEditor.isFocused(editor)) {
+                return;
+            }
+
+            // Check if content matches to avoid unnecessary resets (and state loss)
+            const currentHtml = editor.children.map(n => serialize(n)).join('');
+
+            if (currentHtml !== initialHtml) {
+                const newDescendants = deserialize(initialHtml);
+                editor.children = newDescendants;
+                // We don't call onChange here to avoid loops, just update internal model
+                editor.onChange();
+            }
         }
+    }, [initialHtml, editor]);
 
-        // 에디터 포커스
-        ReactEditor.focus(editor);
+    // Command Handling
+    useEffect(() => {
+        if (!command) return;
 
-        // 마크 적용
-        Editor.addMark(editor, key, markValue);
-    }, [editor]);
-
-    const toggleBold = useCallback(() => {
-        if (savedSelection.current) {
-            Transforms.select(editor, savedSelection.current);
+        // Apply formatting to selection
+        switch (command.type) {
+            case 'bold':
+                if (command.value === true) Editor.addMark(editor, 'bold', true);
+                else if (command.value === false) Editor.removeMark(editor, 'bold');
+                else {
+                    const isActive = Editor.marks(editor)?.bold;
+                    if (isActive) Editor.removeMark(editor, 'bold');
+                    else Editor.addMark(editor, 'bold', true);
+                }
+                break;
+            case 'italic':
+                if (command.value === true) Editor.addMark(editor, 'italic', true);
+                else if (command.value === false) Editor.removeMark(editor, 'italic');
+                else {
+                    const isActive = Editor.marks(editor)?.italic;
+                    if (isActive) Editor.removeMark(editor, 'italic');
+                    else Editor.addMark(editor, 'italic', true);
+                }
+                break;
+            case 'underline':
+                if (command.value === true) Editor.addMark(editor, 'underline', true);
+                else if (command.value === false) Editor.removeMark(editor, 'underline');
+                else {
+                    const isActive = Editor.marks(editor)?.underline;
+                    if (isActive) Editor.removeMark(editor, 'underline');
+                    else Editor.addMark(editor, 'underline', true);
+                }
+                break;
+            case 'strikethrough':
+                if (command.value === true) Editor.addMark(editor, 'strikethrough', true);
+                else if (command.value === false) Editor.removeMark(editor, 'strikethrough');
+                else {
+                    const isActive = Editor.marks(editor)?.strikethrough;
+                    if (isActive) Editor.removeMark(editor, 'strikethrough');
+                    else Editor.addMark(editor, 'strikethrough', true);
+                }
+                break;
+            case 'foreColor':
+                if (typeof command.value === 'string') {
+                    Editor.addMark(editor, 'color', command.value);
+                }
+                break;
+            case 'fontName':
+                if (typeof command.value === 'string') {
+                    Editor.addMark(editor, 'fontFamily', command.value);
+                }
+                break;
+            case 'fontSize':
+                if (typeof command.value === 'number') {
+                    Editor.addMark(editor, 'fontSize', command.value);
+                }
+                break;
         }
-        ReactEditor.focus(editor);
+    }, [command, editor]);
+
+    // Force focus on mount to ensure user can type immediately
+    useEffect(() => {
+        // Use requestAnimationFrame for better timing with React rendering
+        const focusEditor = () => {
+            if (editor && !ReactEditor.isFocused(editor)) {
+                try {
+                    ReactEditor.focus(editor);
+
+                    // Move cursor
+                    if (initialCursorOffset !== undefined) {
+                        Transforms.select(editor, {
+                            anchor: { path: [0, 0], offset: initialCursorOffset },
+                            focus: { path: [0, 0], offset: initialCursorOffset }
+                        });
+                    } else {
+                        // Move cursor to end by default
+                        Transforms.select(editor, Editor.end(editor, []));
+                    }
+                } catch (e) {
+                    // Fallback to start if end selection fails
+                    try {
+                        Transforms.select(editor, Editor.start(editor, []));
+                    } catch (err) {
+                        // Ignore errors during focus attempts (e.g. unmounted)
+                    }
+                }
+            }
+        };
+
+        // Try immediately, and also with RAF to ensure layout is ready
+        focusEditor();
+        const rafId = requestAnimationFrame(focusEditor);
+
+        return () => cancelAnimationFrame(rafId);
+    }, [editor, initialCursorOffset]);
+
+    // Handle Selection Change -> Report Style
+    const handleSelectionChange = useCallback(() => {
+        if (!editor.selection || !onStyleChange) return;
 
         const marks = Editor.marks(editor);
-        const isBold = marks?.bold || false;
+        // Default values from props if marks are missing
+        const currentStyle: TextStyle = {
+            isBold: marks?.bold === true,
+            isItalic: marks?.italic === true,
+            isUnderline: marks?.underline === true,
+            isStrikethrough: marks?.strikethrough === true,
+            color: marks?.color || defaultColor,
+            fontFamily: marks?.fontFamily || defaultFontFamily,
+            fontSize: marks?.fontSize || defaultFontSize,
+        };
+        onStyleChange(currentStyle);
+    }, [editor, onStyleChange, defaultColor, defaultFontFamily, defaultFontSize]);
 
-        if (isBold) {
-            Editor.removeMark(editor, 'bold');
-        } else {
-            Editor.addMark(editor, 'bold', true);
+    // Old ResizeObserver removed (managed by parent TextRenderer now)
+
+
+    // Renderers
+    const renderLeaf = useCallback((props: RenderLeafProps) => {
+        let { attributes, children, leaf } = props;
+
+        if (leaf.bold) {
+            children = <strong>{children}</strong>;
         }
-    }, [editor]);
-
-    // 선택 영역 변경 시 툴바 표시/위치 업데이트
-    const updateToolbar = useCallback(() => {
-        const { selection } = editor;
-
-        if (selection && !Range.isCollapsed(selection)) {
-            saveSelection();
-            const domSelection = window.getSelection();
-            if (domSelection && domSelection.rangeCount > 0) {
-                const domRange = domSelection.getRangeAt(0);
-                const rect = domRange.getBoundingClientRect();
-                setToolbarPosition({
-                    top: rect.top - 50,
-                    left: Math.max(10, rect.left + rect.width / 2 - 150),
-                });
-                setShowToolbar(true);
-            }
-        } else {
-            setShowToolbar(false);
+        if (leaf.italic) {
+            children = <em>{children}</em>;
         }
-    }, [editor, saveSelection]);
+        if (leaf.underline) {
+            children = <u>{children}</u>;
+        }
+        if (leaf.strikethrough) {
+            children = <s>{children}</s>;
+        }
 
-    // 현재 마크 가져오기
-    const marks = Editor.marks(editor);
-    const currentFont = marks?.fontFamily || defaultFontFamily;
-    const currentSize = marks?.fontSize || defaultFontSize;
-    const currentColor = marks?.color || defaultColor;
-    const isBold = marks?.bold || false;
+        const style: React.CSSProperties = {
+            color: leaf.color,
+            fontFamily: leaf.fontFamily,
+            fontSize: leaf.fontSize ? `${leaf.fontSize}px` : undefined,
+            // Fallback to default if not set? Slate leaf inherits.
+        };
 
-    const [showFontDropdown, setShowFontDropdown] = useState(false);
+        return <span {...attributes} style={style}>{children}</span>;
+    }, []);
+
+    const renderElement = useCallback((props: RenderElementProps) => {
+        const { attributes, children, element } = props;
+        const style = { textAlign: (element as CustomElement).align || textAlign };
+        return <p {...attributes} style={style}>{children}</p>;
+    }, [textAlign]);
+
+    // Key handlers
+    // Key handlers
+    const onKeyDown = (event: KeyboardEvent) => {
+        // Handle Tab
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            onTab?.();
+            return;
+        }
+
+        const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+        // Bold (Ctrl+B)
+        if (event.key.toLowerCase() === 'b' && isCtrlOrCmd) {
+            event.preventDefault();
+            const isActive = Editor.marks(editor)?.bold;
+            if (isActive) Editor.removeMark(editor, 'bold');
+            else Editor.addMark(editor, 'bold', true);
+            return;
+        }
+
+        // Italic (Ctrl+I)
+        if (event.key.toLowerCase() === 'i' && isCtrlOrCmd) {
+            event.preventDefault();
+            const isActive = Editor.marks(editor)?.italic;
+            if (isActive) Editor.removeMark(editor, 'italic');
+            else Editor.addMark(editor, 'italic', true);
+            return;
+        }
+
+        // Underline (Ctrl+U)
+        if (event.key.toLowerCase() === 'u' && isCtrlOrCmd) {
+            event.preventDefault();
+            const isActive = Editor.marks(editor)?.underline;
+            if (isActive) Editor.removeMark(editor, 'underline');
+            else Editor.addMark(editor, 'underline', true);
+            return;
+        }
+
+        // Strikethrough (Ctrl+Shift+X or Ctrl+Shift+S)
+        // Let's support both for convenience
+        if ((event.key.toLowerCase() === 'x' || event.key.toLowerCase() === 's') && isCtrlOrCmd && event.shiftKey) {
+            event.preventDefault();
+            const isActive = Editor.marks(editor)?.strikethrough;
+            if (isActive) Editor.removeMark(editor, 'strikethrough');
+            else Editor.addMark(editor, 'strikethrough', true);
+            return;
+        }
+    };
 
     return (
-        <div className="w-full h-full relative">
-            <Slate
-                editor={editor}
-                initialValue={value}
-                onChange={(newValue) => {
-                    // 실제 콘텐츠 변경 시에만 onChange 호출
-                    const isAstChange = editor.operations.some(
-                        op => op.type !== 'set_selection'
-                    );
-                    if (isAstChange) {
-                        onChange(newValue);
-                    }
-                    updateToolbar();
-                }}
-            >
-                {/* 플로팅 툴바 */}
-                {showToolbar && (
-                    <div
-                        className="fixed z-[9999]"
-                        style={{ top: toolbarPosition.top, left: toolbarPosition.left }}
-                        onMouseDown={(e) => e.preventDefault()}
-                    >
-                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5">
-                            {/* 폰트 선택 */}
-                            <div className="relative">
-                                <button
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    onClick={() => setShowFontDropdown(!showFontDropdown)}
-                                    className="px-2 py-1 text-xs border rounded hover:bg-gray-50 min-w-[80px] text-left truncate"
-                                >
-                                    {PRESET_FONTS.find(f => f.value === currentFont)?.label || '폰트'}
-                                </button>
-                                {showFontDropdown && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setShowFontDropdown(false)} />
-                                        <div className="absolute top-full left-0 mt-1 z-50 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto w-40">
-                                            {PRESET_FONTS.map(font => (
-                                                <button
-                                                    key={font.value}
-                                                    onMouseDown={(e) => e.preventDefault()}
-                                                    onClick={() => {
-                                                        applyMarkToSelection('fontFamily', font.value);
-                                                        setShowFontDropdown(false);
-                                                    }}
-                                                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-gray-50"
-                                                    style={{ fontFamily: font.value }}
-                                                >
-                                                    {font.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* 크기 입력 */}
-                            <input
-                                type="number"
-                                value={currentSize}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) => {
-                                    const size = parseInt(e.target.value) || 16;
-                                    applyMarkToSelection('fontSize', size);
-                                }}
-                                className="w-14 px-1 py-1 text-xs border rounded text-center"
-                                min={8}
-                                max={200}
-                            />
-
-                            {/* 굵게 버튼 */}
-                            <button
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={toggleBold}
-                                className={`p-1.5 rounded ${isBold ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-                            >
-                                <Bold className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* 색상 선택 */}
-                            <input
-                                type="color"
-                                value={currentColor}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onChange={(e) => applyMarkToSelection('color', e.target.value)}
-                                className="w-6 h-6 rounded cursor-pointer border"
-                            />
-                        </div>
-                    </div>
-                )}
-
-                <Editable
-                    renderLeaf={renderLeaf}
-                    placeholder={placeholder}
-                    onBlur={(e) => {
-                        // 툴바 영역 클릭 시 blur 무시
-                        setTimeout(() => {
-                            if (!showToolbar) {
-                                onBlur?.();
-                            }
-                        }, 100);
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onMouseUp={updateToolbar}
-                    onKeyUp={updateToolbar}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        outline: 'none',
-                        fontFamily: defaultFontFamily,
-                        fontSize: `${defaultFontSize}px`,
-                        color: defaultColor,
-                        textAlign: textAlign,
-                        lineHeight: 1.4,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center',
-                    }}
-                />
-            </Slate>
-        </div>
+        <Slate
+            editor={editor}
+            initialValue={initialValue}
+            onChange={(value) => {
+                const isAstChange = editor.operations.some(op => 'set_selection' !== op.type);
+                if (isAstChange) {
+                    const html = value.map(n => serialize(n)).join('');
+                    onChange(html);
+                }
+                handleSelectionChange();
+            }}
+        >
+            <div style={{ padding: 0, height: 'auto', width: '100%', outline: 'none' }} className="rich-editor-container">
+                <div style={{ display: 'inline-block', width: '100%' }}>
+                    <Editable
+                        renderLeaf={renderLeaf}
+                        renderElement={renderElement}
+                        onKeyDown={onKeyDown}
+                        onBlur={() => {
+                            const html = editor.children.map(n => serialize(n)).join('');
+                            onBlur?.(html);
+                        }}
+                        autoFocus
+                        spellCheck={false}
+                        style={{
+                            minHeight: 'auto', // Let content determine height so it can be vertically centered
+                            outline: 'none',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            textAlign: textAlign // Apply text align here
+                        }}
+                        onSelect={() => handleSelectionChange()}
+                    />
+                </div>
+            </div>
+        </Slate>
     );
 };
-
-export default RichTextEditor;

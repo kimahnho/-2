@@ -89,6 +89,16 @@ export const Dashboard: React.FC<Props> = ({
         }
     };
 
+    const handleDuplicateProject = async (id: string) => {
+        try {
+            await storageService.duplicateProject(id);
+            await loadProjects();
+        } catch (error) {
+            console.error("Failed to duplicate project", error);
+            alert("프로젝트 복제에 실패했습니다.");
+        }
+    };
+
     const handleProfileSelect = (type: 'student' | 'group', data: StudentProfile | StudentGroup) => {
         setSearchQuery(''); // Clear search immediately
         if (type === 'student') {
@@ -209,6 +219,7 @@ export const Dashboard: React.FC<Props> = ({
                     onOpenProject={onOpenProject}
                     onNewProject={onNewProject}
                     onDeleteProject={handleDeleteProject}
+                    onDuplicateProject={handleDuplicateProject}
                 />
             </main>
 

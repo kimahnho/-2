@@ -60,9 +60,9 @@ export const useProject = (initialData?: ProjectData) => {
     }
   }, [commitToHistory, updateWithoutCommit, pages]);
 
-  const addElement = (type: ElementType, content?: string, targetPageId?: string) => {
+  const addElement = (type: ElementType, content?: string, options: { targetPageId?: string, borderRadius?: number } = {}) => {
     const id = generateId();
-    const pageId = targetPageId || activePageId;
+    const pageId = options.targetPageId || activePageId;
     const zIndex = elements.length + 1;
 
     const baseDefaults = { id, type, rotation: 0, zIndex, pageId };
@@ -83,7 +83,18 @@ export const useProject = (initialData?: ProjectData) => {
       const width = 200; const height = 200;
       newEl = { ...baseDefaults, x: 0, y: 0, width, height, content: content, borderRadius: 0 } as DesignElement;
     } else if (type === 'shape') {
-      newEl = { ...baseDefaults, x: (CANVAS_WIDTH - 150) / 2, y: (CANVAS_HEIGHT - 150) / 2, width: 150, height: 150, backgroundColor: '#B0C0ff', borderRadius: 0, borderWidth: 0, borderColor: '#000000', opacity: 1 } as DesignElement;
+      newEl = {
+        ...baseDefaults,
+        x: (CANVAS_WIDTH - 150) / 2,
+        y: (CANVAS_HEIGHT - 150) / 2,
+        width: 150,
+        height: 150,
+        backgroundColor: '#B0C0ff',
+        borderRadius: options.borderRadius !== undefined ? options.borderRadius : 0,
+        borderWidth: 0,
+        borderColor: '#000000',
+        opacity: 1
+      } as DesignElement;
     } else if (type === 'card') {
       newEl = { ...baseDefaults, x: (CANVAS_WIDTH - 200) / 2, y: (CANVAS_HEIGHT - 300) / 2, width: 200, height: 300, backgroundColor: '#ffffff', borderRadius: 12, borderWidth: 2, borderColor: '#e5e7eb', opacity: 1 } as DesignElement;
     } else if (type === 'circle') {
@@ -253,9 +264,14 @@ export const useProject = (initialData?: ProjectData) => {
 
   // --- Page CRUD ---
 
-  const addPage = (orientation?: 'portrait' | 'landscape') => {
+  const addPage = (orientation?: 'portrait' | 'landscape', index?: number) => {
     const newPageId = `page-${generateId()}`;
-    const newPages = [...pages, { id: newPageId, orientation: orientation || 'portrait' }];
+    const newPages = [...pages];
+    if (index !== undefined) {
+      newPages.splice(index, 0, { id: newPageId, orientation: orientation || 'portrait' });
+    } else {
+      newPages.push({ id: newPageId, orientation: orientation || 'portrait' });
+    }
     commitToHistory({ elements, pages: newPages });
     setActivePageId(newPageId);
     return newPageId;

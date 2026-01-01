@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Square, Circle, Layout, Minus, MoveRight, Heart, Grid } from 'lucide-react';
+import { Circle, Layout, Minus, MoveRight, Heart, Grid } from 'lucide-react';
 import { ElementType } from '../../types';
 
 interface Props {
-  onAddElement: (type: ElementType, content?: string) => void;
+  onAddElement: (type: ElementType, content?: string, options?: any) => void;
   onAddEmotionCard?: () => void;
   onAddAACCard?: () => void;
 }
@@ -46,7 +46,18 @@ export const ElementsPanel: React.FC<Props> = ({
       <div>
         <h3 className="font-bold text-sm text-gray-700 mb-3">도형 & 선</h3>
         <div className="grid grid-cols-3 gap-3">
-          <ElementButton onClick={() => onAddElement('shape')} icon={<Square />} label="사각형" />
+          <ElementButton onClick={() => onAddElement('shape')} icon={
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="7" y="7" width="13" height="13" className="fill-gray-400" rx="1" />
+              <path d="M4 20V5a1 1 0 0 1 1-1h15" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          } label="사각형" />
+          <ElementButton onClick={() => onAddElement('shape', undefined, { borderRadius: 15 })} icon={
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M7 20V12a5 5 0 0 1 5-5h8v13H7z" className="fill-gray-400" />
+              <path d="M4 20V12a8 8 0 0 1 8-8h8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          } label="둥근 사각형" />
           <ElementButton onClick={() => onAddElement('circle')} icon={<Circle />} label="원" />
           <ElementButton onClick={() => onAddElement('card')} icon={<Layout />} label="카드" />
           <ElementButton onClick={() => onAddElement('line')} icon={<Minus />} label="선" />

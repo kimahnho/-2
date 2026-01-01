@@ -53,7 +53,7 @@ export const CHARACTER_TYPES: { id: CharacterType; name: string; icon: string; h
  * @param label 감정 라벨 (파일명으로 사용)
  * @param characterType 캐릭터 타입 (photo 스타일에서만 사용)
  */
-const CACHE_VERSION = 'v8'; // 이미지 업데이트 시 버전 변경
+const CACHE_VERSION = 'v12'; // 이미지 업데이트 시 버전 변경 (v11 -> v12 tired/exhausted 수정)
 const getCloudinaryUrl = (style: CardStyle, emotionId: string, characterType?: CharacterType): string => {
     // photo 스타일은 boy/boy_ 또는 girl/girl_ 폴더 구조 사용
     if (style === 'photo' && characterType) {
@@ -87,9 +87,10 @@ const EMOTION_CARD_DEFINITIONS = [
     { id: 'curious', label: "궁금해요", emoji: "1f914", hasPhoto: true },
     { id: 'annoyed', label: "짜증나요", emoji: "1f624", hasPhoto: true },
     { id: 'sleepy', label: "피곤해요", emoji: "1f634", hasPhoto: true },
+    { id: 'excited', label: "신나요", emoji: "1f929", hasPhoto: true },
+    { id: 'thanks', label: "고마워요", emoji: "1f64f", hasPhoto: true }, // Added thanks
     // 아직 업로드 안 된 감정 (illustration에서만 표시)
     { id: 'confused', label: "헷갈려요", emoji: "1f615", hasPhoto: false },
-    { id: 'excited', label: "신나요", emoji: "1f929", hasPhoto: false },
     { id: 'bored', label: "심심해요", emoji: "1f971", hasPhoto: false },
     { id: 'love', label: "사랑해요", emoji: "1f970", hasPhoto: false },
     { id: 'like', label: "좋아요", emoji: "1f44d", hasPhoto: false },

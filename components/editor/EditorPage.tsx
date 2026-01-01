@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Toolbar } from '../Toolbar';
 import { PropertiesPanel } from '../PropertiesPanel';
 import { PageManager } from '../PageManager';
 import { CanvasArea } from '../CanvasArea';
-import { TabType, ProjectData } from '../../types';
-import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save, Smartphone, Monitor } from 'lucide-react';
+import { TabType, ProjectData, DesignElement } from '../../types';
+import { TextCommand, TextStyle } from '../../types/editor.types';
+import { Download, Trash2, Printer, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Loader2, Home, Save, Smartphone, Monitor, X } from 'lucide-react';
 import { printCanvas } from '../../utils/exportUtils';
 import { ExportModal } from '../ExportModal';
+import { ContextMenu } from '../ui/ContextMenu';
 
 // Custom Hooks - Logic Layer
 import { useProject } from '../../hooks/useProject';
@@ -42,6 +43,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   const [title, setTitle] = useState(initialTitle || '제목 없는 디자인');
   const [uploadedAssets, setUploadedAssets] = useState<string[]>([]);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showGuestBanner, setShowGuestBanner] = useState(true);
 
   // Simple helper for assets
   const handleSaveAsset = (url: string) => {
@@ -101,7 +103,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
   };
 
   // --- 5. Input Handling (Keyboard) ---
-  useKeyboardShortcuts(project);
+  const { guides: keyboardGuides } = useKeyboardShortcuts(project);
 
   // Wrapper to select page and clear element selection
   const handleSelectPage = (pageId: string) => {
@@ -116,6 +118,251 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     project.setEditingId(null);
   };
 
+  // --- Middleman State for Text Editing ---
+  const [activeTextCommand, setActiveTextCommand] = useState<TextCommand | null>(null);
+  const [activeTextStyle, setActiveTextStyle] = useState<TextStyle | null>(null);
+
+  // Wrapper to intercept properties for text editing
+  const handlePropertyUpdate = (id: string, updates: Partial<DesignElement>, isCommit: boolean) => {
+    // 텍스트 편집 중이고 해당 요소를 업데이트하려 할 때
+    if (id === project.editingId) {
+      const element = project.elements.find(e => e.id === id);
+      if (element?.type === 'text') {
+        const cmdId = Date.now().toString();
+
+        let handled = false;
+        if (updates.fontFamily) {
+          setActiveTextCommand({ type: 'fontName', value: updates.fontFamily, id: cmdId });
+          handled = true;
+        }
+        if (updates.fontSize) {
+          setActiveTextCommand({ type: 'fontSize', value: updates.fontSize, id: cmdId });
+          handled = true;
+        }
+        if (updates.color) {
+          setActiveTextCommand({ type: 'foreColor', value: updates.color, id: cmdId });
+          handled = true;
+        }
+        if (updates.fontWeight !== undefined) {
+          // 600 이상이면 bold
+          setActiveTextCommand({ type: 'bold', value: updates.fontWeight >= 600, id: cmdId });
+          handled = true;
+        }
+
+        if (handled) return;
+      }
+    }
+
+    project.updateElement(id, updates, isCommit);
+  };
+
+  // --- Context Menu & Clipboard Logic ---
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; visible: boolean }>({ x: 0, y: 0, visible: false });
+  const [clipboard, setClipboard] = useState<DesignElement[]>([]);
+
+  // Handle right click
+  const handleContextMenu = (e: React.MouseEvent, type: 'element' | 'canvas', id?: string) => {
+    e.preventDefault();
+    if (readOnly) return;
+
+    // If clicked on an element, ensure it's selected. 
+    // If it's already part of a multi-selection, keep selection.
+    if (type === 'element' && id) {
+      if (!project.selectedIds.includes(id)) {
+        project.setSelectedIds([id]);
+      }
+    } else {
+      // If clicked on canvas background, clear selection
+      project.setSelectedIds([]);
+      project.setEditingId(null);
+    }
+
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      visible: true
+    });
+  };
+
+  const handleCopy = () => {
+    if (project.selectedIds.length === 0) return;
+    const selectedElements = project.elements.filter(el => project.selectedIds.includes(el.id));
+    setClipboard(selectedElements);
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  };
+
+  const handleCut = () => {
+    handleCopy();
+    project.deleteElements(project.selectedIds);
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  };
+
+  // Context Menu Paste Action
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return;
+
+      try {
+        const data = JSON.parse(text);
+        if (data && data.type === 'muru-elements' && Array.isArray(data.data)) {
+          const elementsToPaste = data.data as DesignElement[];
+          const newIds: string[] = [];
+          const newElements = elementsToPaste.map(el => {
+            const newId = Math.random().toString(36).substr(2, 9);
+            newIds.push(newId);
+            return { ...el, id: newId, pageId: project.activePageId, x: el.x + 20, y: el.y + 20 };
+          });
+          project.updateElements([...project.elements, ...newElements]);
+          project.setSelectedIds(newIds);
+        } else {
+          throw new Error('Not muru-elements');
+        }
+      } catch {
+        // Plain text - create text box
+        const newId = Math.random().toString(36).substr(2, 9);
+        const newTextElement: DesignElement = {
+          id: newId, type: 'text', x: 300, y: 400, width: 300, height: 100,
+          content: text, rotation: 0, zIndex: project.elements.length + 1,
+          pageId: project.activePageId, fontFamily: 'Pretendard', fontSize: 24,
+          color: '#000000', textAlign: 'center', verticalAlign: 'middle', fontWeight: 400,
+        } as any;
+        project.updateElements([...project.elements, newTextElement]);
+        project.setSelectedIds([newId]);
+      }
+    } catch (err) {
+      console.error('Clipboard read failed:', err);
+      if (clipboard.length > 0) {
+        const newIds: string[] = [];
+        const newElements = clipboard.map(el => {
+          const newId = Math.random().toString(36).substr(2, 9);
+          newIds.push(newId);
+          return { ...el, id: newId, pageId: project.activePageId, x: el.x + 20, y: el.y + 20 };
+        });
+        project.updateElements([...project.elements, ...newElements]);
+        project.setSelectedIds(newIds);
+      }
+    }
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  };
+
+  // --- Smart Paste Logic (Fixed: Using refs for stale closure avoidance) ---
+  const projectRef = React.useRef(project);
+  React.useEffect(() => { projectRef.current = project; }, [project]);
+
+  // Global Paste Listener
+  React.useEffect(() => {
+    const handleGlobalPaste = async (e: ClipboardEvent) => {
+      // Ignore if input/textarea is focused
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLElement && e.target.isContentEditable) return;
+
+      e.preventDefault();
+      const currentProject = projectRef.current;
+
+      // 1. Check for Files (Images)
+      if (e.clipboardData?.files && e.clipboardData.files.length > 0) {
+        const file = e.clipboardData.files[0];
+        if (file.type.startsWith('image/')) {
+          // Read as Data URL for simplicity (minimal viable paste)
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const dataUrl = ev.target?.result as string;
+            if (!dataUrl) return;
+
+            const img = new Image();
+            img.onload = () => {
+              const maxSize = 400;
+              const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
+              const width = img.width * ratio;
+              const height = img.height * ratio;
+              const x = (800 - width) / 2;
+              const y = (1132 - height) / 2;
+
+              const newEl = {
+                id: Math.random().toString(36).substr(2, 9),
+                type: 'image' as const,
+                x, y, width, height,
+                content: dataUrl,
+                rotation: 0,
+                zIndex: currentProject.elements.length + 1,
+                pageId: currentProject.activePageId,
+                borderRadius: 0,
+              };
+              currentProject.updateElements([...currentProject.elements, newEl]);
+              currentProject.setSelectedIds([newEl.id]);
+            };
+            img.src = dataUrl;
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+      }
+
+      // 2. Check for Text
+      const text = e.clipboardData?.getData('text');
+      if (!text) return;
+
+      try {
+        const data = JSON.parse(text);
+        if (data && data.type === 'muru-elements' && Array.isArray(data.data)) {
+          // 3. Paste Elements
+          const elementsToPaste = data.data as DesignElement[];
+          const newIds: string[] = [];
+          const newElements = elementsToPaste.map(el => {
+            const newId = Math.random().toString(36).substr(2, 9);
+            newIds.push(newId);
+            return {
+              ...el,
+              id: newId,
+              pageId: currentProject.activePageId,
+              x: el.x + 20,
+              y: el.y + 20,
+              zIndex: currentProject.elements.length + newIds.length + 1
+            };
+          });
+          currentProject.updateElements([...currentProject.elements, ...newElements]);
+          currentProject.setSelectedIds(newIds);
+          return;
+        }
+      } catch {
+        // Ignore JSON parse errors - it's plain text
+      }
+
+      // 4. Smart Text Paste
+      const newId = Math.random().toString(36).substr(2, 9);
+      const newTextElement: DesignElement = {
+        id: newId,
+        type: 'text',
+        x: 300,
+        y: 400,
+        width: 300,
+        height: 100,
+        content: text,
+        rotation: 0,
+        zIndex: currentProject.elements.length + 1,
+        pageId: currentProject.activePageId,
+        fontFamily: 'Pretendard',
+        fontSize: 24,
+        color: '#000000',
+        textAlign: 'center',
+        verticalAlign: 'middle',
+        fontWeight: 400,
+      } as any;
+
+      currentProject.updateElements([...currentProject.elements, newTextElement]);
+      currentProject.setSelectedIds([newId]);
+    };
+
+    window.addEventListener('paste', handleGlobalPaste);
+    return () => window.removeEventListener('paste', handleGlobalPaste);
+  }, []); // Empty deps - uses ref for latest state
+
+  const handleDelete = () => {
+    project.deleteElements(project.selectedIds);
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  };
+
   return (
     <div className={`flex h-screen bg-gray-100 overflow-hidden font-sans select-none ${viewport.isPanning ? 'cursor-grabbing' : ''}`}
       onMouseMove={viewport.handlePanMove} onMouseUp={viewport.endPan} onWheel={viewport.handleWheel}
@@ -125,6 +372,20 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       {readOnly && (
         <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 z-50 font-medium text-sm">
           🔒 읽기 전용 모드 - 편집이 비활성화되었습니다
+        </div>
+      )}
+
+      {/* 게스트 모드 경고 배너 */}
+      {!readOnly && isGuest && showGuestBanner && (
+        <div className="fixed top-0 left-0 right-0 bg-indigo-600 text-white text-center py-2 z-50 font-medium text-sm flex justify-center items-center gap-2 px-4 shadow-md transition-all">
+          <span>⚠️ 게스트 모드: 작업 내용이 이 브라우저에만 임시 저장됩니다. 안전한 보관을 위해 로그인을 권장합니다.</span>
+          <button
+            onClick={() => setShowGuestBanner(false)}
+            className="ml-2 p-1 hover:bg-white/20 rounded-full transition-colors"
+            title="닫기"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -152,6 +413,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           onAddEmotionCard={cardInsertion.handleAddEmotionCard}
           onAddAACCard={cardInsertion.handleAddAACCard}
           onUploadImage={imageUpload.handleUploadImage}
+          isGuest={isGuest}
         />
       )}
 
@@ -160,6 +422,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
         {/* Top Navigation Bar */}
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-2 sm:px-4 shrink-0 z-20 no-print gap-2">
+          {/* ... (Header content omitted for brevity, keeping existing structure) ... */}
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-[#5500FF] transition-colors shrink-0" title="뒤로 가기">
               <Home className="w-5 h-5" />
@@ -179,6 +442,7 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
                 autoSave.isSaving ? <><Loader2 className="w-3 h-3 animate-spin" /> 저장 중...</> : <><Save className="w-3 h-3" /> 저장됨</>
               )}
             </div>
+            {/* ... rest of header ... */}
             <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
             <div className="hidden md:flex gap-1">
               <button onClick={project.undo} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600" title="실행 취소 (Ctrl+Z)"><Undo2 className="w-4 h-4" /></button>
@@ -237,6 +501,9 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
             onSetEditingId={readOnly ? () => { } : project.setEditingId}
             onSetActiveTab={setActiveTab}
             readOnly={readOnly}
+            activeTextCommand={activeTextCommand}
+            onStyleChange={setActiveTextStyle}
+            externalGuides={keyboardGuides}
             onAddImageElement={readOnly ? () => { } : (dataUrl) => {
               const img = new Image();
               img.onload = () => {
@@ -262,6 +529,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
               };
               img.src = dataUrl;
             }}
+            onContextMenu={handleContextMenu}
+            onAddPage={project.addPage}
           />
         </div>
 
@@ -295,8 +564,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       {!readOnly && (
         <PropertiesPanel
           elements={project.elements} selectedIds={project.selectedIds}
-          onUpdate={(id, updates) => project.updateElement(id, updates, false)}
-          onCommit={(id, updates) => project.updateElement(id, updates, true)}
+          onUpdate={(id, updates) => handlePropertyUpdate(id, updates, false)}
+          onCommit={(id, updates) => handlePropertyUpdate(id, updates, true)}
           onBatchUpdate={(updates) => project.updateMultipleElements(updates, false)}
           onBatchCommit={(updates) => project.updateMultipleElements(updates, true)}
           onDelete={project.deleteElements} onDuplicate={project.duplicateElements}
@@ -304,6 +573,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           onBringToFront={project.bringToFront} onSendToBack={project.sendToBack}
           onAlign={project.alignSelected} onGenerateImage={handleGuestAiGen}
           onUploadImage={imageUpload.handleUploadImage}
+          activeTextStyle={activeTextStyle}
+          onTextCommand={setActiveTextCommand}
         />
       )}
 
@@ -323,6 +594,48 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           elements={project.elements}
           projectTitle={title}
           onClose={() => setShowExportModal(false)}
+        />
+      )}
+
+      {contextMenu.visible && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
+          onCopy={handleCopy}
+          onCut={handleCut}
+          onPaste={handlePaste}
+          onDelete={handleDelete}
+          hasSelection={project.selectedIds.length > 0}
+          canPaste={clipboard.length > 0}
+
+          // Grouping
+          onGroup={() => {
+            if (project.selectedIds.length < 2) return;
+            const groupId = Math.random().toString(36).substr(2, 9);
+            project.updateElements(project.elements.map(el => {
+              if (project.selectedIds.includes(el.id)) {
+                return { ...el, groupId };
+              }
+              return el;
+            }), true); // Commit history
+            setContextMenu(prev => ({ ...prev, visible: false }));
+          }}
+          onUngroup={() => {
+            project.updateElements(project.elements.map(el => {
+              if (project.selectedIds.includes(el.id)) {
+                const { groupId, ...rest } = el;
+                return rest;
+              }
+              return el;
+            }), true);
+            setContextMenu(prev => ({ ...prev, visible: false }));
+          }}
+          canGroup={project.selectedIds.length >= 2}
+          canUngroup={(() => {
+            // Can ungroup if ANY selected element is part of a group
+            return project.elements.some(el => project.selectedIds.includes(el.id) && el.groupId);
+          })()}
         />
       )}
     </div>

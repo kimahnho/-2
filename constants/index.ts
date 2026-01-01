@@ -9,5 +9,4 @@ export { PRESET_COLORS, PRESET_FONTS } from './style.constants';
 // Emotion Constants
 export { EMOTION_CARDS } from './emotion.constants';
 
-// Template Constants
-export { TEMPLATES } from './template.constants';
+

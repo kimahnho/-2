@@ -30,8 +30,6 @@ export const useAutoSave = ({
     const saveTimeoutRef = useRef<any>(null);
 
     useEffect(() => {
-        if (isGuest) return; // Disable auto-save for guest
-
         // Debounce save
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 

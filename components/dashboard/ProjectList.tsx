@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { SavedProjectMetadata } from '../../types';
-import { Search, Layout, Plus, MoreVertical, Trash2, Clock } from 'lucide-react';
+import { Search, Layout, Plus, MoreVertical, Trash2, Clock, Copy } from 'lucide-react';
 import { MiniElementRenderer } from '../MiniElementRenderer';
 
 interface Props {
@@ -11,6 +10,7 @@ interface Props {
     onOpenProject: (id: string) => void;
     onNewProject: () => void;
     onDeleteProject: (id: string) => void;
+    onDuplicateProject: (id: string) => void;
 }
 
 export const ProjectList: React.FC<Props> = ({
@@ -19,7 +19,8 @@ export const ProjectList: React.FC<Props> = ({
     searchQuery,
     onOpenProject,
     onNewProject,
-    onDeleteProject
+    onDeleteProject,
+    onDuplicateProject
 }) => {
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
@@ -32,6 +33,13 @@ export const ProjectList: React.FC<Props> = ({
     const handleMenuClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         setActiveMenuId(prev => prev === id ? null : id);
+    };
+
+    const handleDuplicate = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setActiveMenuId(null);
+        onDuplicateProject(id);
     };
 
     const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -149,6 +157,13 @@ export const ProjectList: React.FC<Props> = ({
                                         onClick={(e) => e.stopPropagation()}
                                         className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
                                     >
+                                        <button
+                                            onClick={(e) => handleDuplicate(e, project.id)}
+                                            className="w-full text-left px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 font-medium"
+                                        >
+                                            <Copy className="w-3.5 h-3.5" /> 복제하기
+                                        </button>
+                                        <div className="h-px bg-gray-100 my-1" />
                                         <button
                                             onClick={(e) => handleDelete(e, project.id)}
                                             className="w-full text-left px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium"

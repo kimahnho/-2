@@ -173,10 +173,15 @@ const EditorRoute: React.FC<{ user: AuthUser | null }> = ({ user }) => {
 
             // Guest session
             if (projectId === 'guest-session') {
-                setInitialData({
-                    elements: [],
-                    pages: [{ id: 'page-1', elements: [], background: '#ffffff', width: 794, height: 1123 }]
-                });
+                const guestData = await storageService.getProject('guest-session');
+                if (guestData) {
+                    setInitialData(guestData);
+                } else {
+                    setInitialData({
+                        elements: [],
+                        pages: [{ id: 'page-1', elements: [], background: '#ffffff', width: 794, height: 1123 }]
+                    });
+                }
                 setInitialTitle('제목 없는 디자인');
                 setLoading(false);
                 return;

@@ -23,16 +23,23 @@ export interface DesignElement {
     // Image Editing Properties
     backgroundPosition?: { x: number; y: number };
     backgroundScale?: number;
+    backgroundScaleX?: number; // Independent horizontal scale (1 = 100%)
+    backgroundScaleY?: number; // Independent vertical scale (1 = 100%)
 
     color?: string;
     fontSize?: number;
     fontFamily?: string;
     fontWeight?: number;
+    fontStyle?: 'normal' | 'italic';
+    textDecoration?: 'none' | 'underline' | 'line-through' | 'underline line-through';
     textAlign?: 'left' | 'center' | 'right';
+    letterSpacing?: number; // 자간 (em 단위, 0 = 기본, 양수 = 넓게, 음수 = 좁게)
+    lineHeight?: number; // 행간 (비율, 1 = 100%, 1.5 = 150%)
     borderRadius?: number;
     borderWidth?: number;
     borderColor?: string;
     borderStyle?: 'solid' | 'dashed' | 'dotted';
+    borderDashScale?: number; // 점선/파선 간격 비율 (기본 1)
     arrowHeadType?: 'triangle' | 'circle' | 'square' | 'none';
     opacity?: number;
     zIndex: number;
@@ -59,6 +66,7 @@ export interface DesignElement {
         itemCount?: number;
         [key: string]: any;
     };
+    groupId?: string; // Grouping Identifier
 }
 
 export interface Page {
@@ -80,4 +88,20 @@ export interface CharacterProfile {
     baseImageUrl?: string;
     style: 'character' | 'realistic' | 'emoji';
     emotions: EmotionCard[];
+}
+
+export interface TextStyle {
+    fontFamily: string;
+    fontSize: number;
+    color: string;
+    isBold: boolean;
+    isItalic: boolean;
+    isUnderline: boolean;
+    isStrikethrough: boolean;
+}
+
+export interface TextCommand {
+    type: 'fontName' | 'fontSize' | 'foreColor' | 'bold' | 'italic' | 'underline' | 'strikethrough';
+    value?: string | number | boolean;
+    id: string;
 }

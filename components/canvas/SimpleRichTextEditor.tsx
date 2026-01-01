@@ -1,16 +1,29 @@
 /**
  * SimpleRichTextEditor - contenteditable 기반 리치 텍스트 에디터
- * 텍스트 부분 선택 후 폰트/크기/색상 변경 가능
+ * 외부(PropertiesPanel)에서 제어 가능한 구조
  */
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Bold } from 'lucide-react';
-import { PRESET_FONTS } from '../../constants';
+
+export interface TextCommand {
+    type: 'fontName' | 'fontSize' | 'foreColor' | 'bold';
+    value?: string | number | boolean;
+    id: string; // 명령 고유 ID (같은 값 반복 적용을 위해)
+}
+
+export interface TextStyle {
+    fontFamily: string;
+    fontSize: number;
+    color: string;
+    isBold: boolean;
+}
 
 interface SimpleRichTextEditorProps {
     initialHtml: string;
     onChange: (html: string) => void;
     onBlur?: () => void;
+    onStyleChange?: (style: TextStyle) => void; // 선택 영역 스타일 변경 알림
+    command?: TextCommand | null; // 외부에서 내려오는 명령
     defaultFontFamily?: string;
     defaultFontSize?: number;
     defaultColor?: string;
@@ -22,6 +35,8 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
     initialHtml,
     onChange,
     onBlur,
+    onStyleChange,
+    command,
     defaultFontFamily = "'Gowun Dodum', sans-serif",
     defaultFontSize = 16,
     defaultColor = '#000000',
@@ -29,245 +44,173 @@ export const SimpleRichTextEditor: React.FC<SimpleRichTextEditorProps> = ({
     placeholder = '텍스트를 입력하세요'
 }) => {
     const editorRef = useRef<HTMLDivElement>(null);
-    const [showToolbar, setShowToolbar] = useState(false);
-    const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
-    const [showFontDropdown, setShowFontDropdown] = useState(false);
     const savedRange = useRef<Range | null>(null);
 
     // 초기 HTML 설정
     useEffect(() => {
-        if (editorRef.current && initialHtml) {
+        if (editorRef.current && initialHtml && editorRef.current.innerHTML !== initialHtml) {
             editorRef.current.innerHTML = initialHtml;
         }
-    }, []);
+    }, [initialHtml]);
 
     // 선택 영역 저장
     const saveSelection = useCallback(() => {
         const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+        if (selection && selection.rangeCount > 0) {
             savedRange.current = selection.getRangeAt(0).cloneRange();
-            console.log('[RTE] Selection saved:', savedRange.current.toString());
         }
     }, []);
 
-    // 툴바 위치 업데이트
-    const updateToolbar = useCallback(() => {
-        const selection = window.getSelection();
-        if (selection && !selection.isCollapsed && selection.toString().trim()) {
-            saveSelection();
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
-            setToolbarPosition({
-                top: rect.top - 55,
-                left: Math.max(10, rect.left + rect.width / 2 - 150),
-            });
-            setShowToolbar(true);
-        } else {
-            setShowToolbar(false);
-        }
-    }, [saveSelection]);
-
-    // 저장된 Range에 스타일 적용
-    const applyStyleToSavedRange = useCallback((styleFn: (span: HTMLSpanElement) => void) => {
-        if (!savedRange.current || !editorRef.current) {
-            console.log('[RTE] No saved range');
-            return;
-        }
-
-        const range = savedRange.current;
-        console.log('[RTE] Applying style to:', range.toString());
-
-        // 선택 영역을 span으로 감싸기
-        const span = document.createElement('span');
-        styleFn(span);
-
-        try {
-            // 선택 영역 추출 후 span에 넣기
-            const contents = range.extractContents();
-            span.appendChild(contents);
-            range.insertNode(span);
-
-            // 새 Range로 업데이트
-            const newRange = document.createRange();
-            newRange.selectNodeContents(span);
-            savedRange.current = newRange;
-
-            // 선택 영역 복원
+    // 선택 영역 복원
+    const restoreSelection = useCallback(() => {
+        if (savedRange.current) {
             const selection = window.getSelection();
             if (selection) {
                 selection.removeAllRanges();
-                selection.addRange(newRange);
+                selection.addRange(savedRange.current);
             }
-        } catch (error) {
-            console.error('[RTE] Style apply error:', error);
+        }
+    }, []);
+
+    // 현재 캐럿 위치의 스타일 감지
+    const detectCurrentStyle = useCallback(() => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || !editorRef.current) return;
+
+        let node = selection.anchorNode;
+        if (node && node.nodeType === 3 && node.parentNode) {
+            node = node.parentNode;
         }
 
-        onChange(editorRef.current.innerHTML);
-    }, [onChange]);
+        let computedStyle: CSSStyleDeclaration | null = null;
+        if (node instanceof Element) {
+            computedStyle = window.getComputedStyle(node);
+        } else if (editorRef.current) {
+            computedStyle = window.getComputedStyle(editorRef.current);
+        }
 
-    // 폰트 적용
-    const applyFont = useCallback((fontFamily: string) => {
-        console.log('[RTE] Apply font:', fontFamily);
-        applyStyleToSavedRange((span) => {
-            span.style.fontFamily = fontFamily;
-        });
-        setShowFontDropdown(false);
-    }, [applyStyleToSavedRange]);
+        if (computedStyle && onStyleChange) {
+            const fontSize = parseInt(computedStyle.fontSize) || defaultFontSize;
+            const fontFamily = computedStyle.fontFamily.replace(/['"]/g, '') || defaultFontFamily;
+            const color = computedStyle.color;
+            const isBold = parseInt(computedStyle.fontWeight) >= 600 || computedStyle.fontWeight === 'bold';
 
-    // 폰트 크기 적용
-    const applyFontSize = useCallback((size: number) => {
-        console.log('[RTE] Apply font size:', size);
-        applyStyleToSavedRange((span) => {
-            span.style.fontSize = `${size}px`;
-        });
-    }, [applyStyleToSavedRange]);
+            onStyleChange({
+                fontFamily,
+                fontSize,
+                color,
+                isBold
+            });
+        }
+    }, [defaultFontFamily, defaultFontSize, onStyleChange]);
 
-    // 색상 적용
-    const applyColor = useCallback((color: string) => {
-        console.log('[RTE] Apply color:', color);
-        applyStyleToSavedRange((span) => {
-            span.style.color = color;
-        });
-    }, [applyStyleToSavedRange]);
+    // 외부 명령 처리
+    useEffect(() => {
+        if (!command) return;
 
-    // 굵게 토글
-    const toggleBold = useCallback(() => {
-        console.log('[RTE] Toggle bold');
-        applyStyleToSavedRange((span) => {
-            span.style.fontWeight = 'bold';
-        });
-    }, [applyStyleToSavedRange]);
+        console.log('[SimpleRichTextEditor] Execute command:', command);
+        if (editorRef.current) editorRef.current.focus();
+        restoreSelection();
+
+        // execCommand 사용
+        switch (command.type) {
+            case 'bold':
+                document.execCommand('bold', false);
+                break;
+            case 'foreColor':
+                document.execCommand('styleWithCSS', false, 'true');
+                document.execCommand('foreColor', false, command.value as string);
+                break;
+            case 'fontSize':
+                // 임시: execCommand fontSize는 1-7 제한.
+                // 꼼수: insertHTML로 span 삽입
+                const size = command.value;
+                const selection = window.getSelection();
+                if (selection && !selection.isCollapsed) {
+                    const range = selection.getRangeAt(0);
+                    const span = document.createElement('span');
+                    span.style.fontSize = `${size}px`;
+                    try {
+                        range.surroundContents(span);
+                    } catch {
+                        const content = range.extractContents();
+                        span.appendChild(content);
+                        range.insertNode(span);
+                    }
+                }
+                break;
+            case 'fontName':
+                const fontName = command.value as string;
+                const sel = window.getSelection();
+                if (sel && !sel.isCollapsed) {
+                    const range = sel.getRangeAt(0);
+                    const span = document.createElement('span');
+                    span.style.fontFamily = fontName;
+                    try {
+                        range.surroundContents(span);
+                    } catch {
+                        const content = range.extractContents();
+                        span.appendChild(content);
+                        range.insertNode(span);
+                    }
+                }
+                break;
+        }
+
+        if (editorRef.current) {
+            onChange(editorRef.current.innerHTML);
+        }
+        detectCurrentStyle();
+    }, [command]);
 
     return (
-        <div className="w-full h-full relative">
-            {/* 플로팅 툴바 */}
-            {showToolbar && (
-                <div
-                    className="fixed z-[9999]"
-                    style={{ top: toolbarPosition.top, left: toolbarPosition.left }}
-                    onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }}
-                >
-                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5">
-                        {/* 폰트 선택 */}
-                        <div className="relative">
-                            <button
-                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                onClick={() => setShowFontDropdown(!showFontDropdown)}
-                                className="px-2 py-1 text-xs border rounded hover:bg-gray-50 min-w-[80px] text-left truncate"
-                            >
-                                폰트
-                            </button>
-                            {showFontDropdown && (
-                                <>
-                                    <div
-                                        className="fixed inset-0 z-40"
-                                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                        onClick={() => setShowFontDropdown(false)}
-                                    />
-                                    <div className="absolute top-full left-0 mt-1 z-50 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto w-40">
-                                        {PRESET_FONTS.map(font => (
-                                            <button
-                                                key={font.value}
-                                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                                onClick={() => applyFont(font.value)}
-                                                className="w-full px-3 py-1.5 text-xs text-left hover:bg-gray-50"
-                                                style={{ fontFamily: font.value }}
-                                            >
-                                                {font.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {/* 크기 입력 */}
-                        <input
-                            type="number"
-                            defaultValue={defaultFontSize}
-                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onFocus={(e) => e.target.select()}
-                            onChange={(e) => {
-                                const size = parseInt(e.target.value) || 16;
-                                applyFontSize(size);
-                            }}
-                            className="w-14 px-1 py-1 text-xs border rounded text-center"
-                            min={8}
-                            max={200}
-                        />
-
-                        {/* 굵게 버튼 */}
-                        <button
-                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onClick={toggleBold}
-                            className="p-1.5 rounded hover:bg-gray-100"
-                        >
-                            <Bold className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* 색상 선택 */}
-                        <input
-                            type="color"
-                            defaultValue={defaultColor}
-                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onChange={(e) => applyColor(e.target.value)}
-                            className="w-6 h-6 rounded cursor-pointer border"
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* 에디터 영역 */}
-            <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={() => {
-                    if (editorRef.current) {
-                        onChange(editorRef.current.innerHTML);
-                    }
-                }}
-                onMouseUp={updateToolbar}
-                onKeyUp={updateToolbar}
-                onBlur={(e) => {
-                    // 툴바 클릭 시 blur 무시
-                    setTimeout(() => {
-                        if (!showToolbar) {
-                            onBlur?.();
-                        }
-                    }, 200);
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    outline: 'none',
-                    fontFamily: defaultFontFamily,
-                    fontSize: `${defaultFontSize}px`,
-                    color: defaultColor,
-                    textAlign: textAlign,
-                    lineHeight: 1.4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center',
-                }}
-                data-placeholder={placeholder}
-            />
-        </div>
+        <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={() => {
+                if (editorRef.current) {
+                    onChange(editorRef.current.innerHTML);
+                }
+            }}
+            onBlur={onBlur}
+            onMouseUp={() => {
+                saveSelection();
+                detectCurrentStyle();
+            }}
+            onKeyUp={() => {
+                saveSelection();
+                detectCurrentStyle();
+            }}
+            onClick={() => {
+                saveSelection();
+                detectCurrentStyle();
+            }}
+            style={{
+                width: '100%',
+                height: '100%',
+                outline: 'none',
+                fontFamily: defaultFontFamily,
+                fontSize: `${defaultFontSize}px`,
+                color: defaultColor,
+                textAlign: textAlign,
+                lineHeight: 1.4,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center',
+            }}
+            data-placeholder={placeholder}
+        />
     );
 };
 
-// HTML을 plain text로 변환
+// 유틸리티 함수 export
 export const htmlToPlainText = (html: string): string => {
     const div = document.createElement('div');
     div.innerHTML = html;
     return div.textContent || div.innerText || '';
 };
 
-// plain text를 HTML로 변환
 export const plainTextToHtml = (text: string): string => {
     return text.replace(/\n/g, '<br>');
 };

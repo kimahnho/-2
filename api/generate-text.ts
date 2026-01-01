@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { checkRateLimit, setRateLimitHeaders, rateLimitExceeded } from './rateLimit';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 // Rate limit: 20 requests per minute per IP (text is cheaper than images)
 const RATE_LIMIT_CONFIG = { windowMs: 60000, maxRequests: 20 };
@@ -43,48 +43,48 @@ interface GenerateTextRequest {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const origin = req.headers.origin;
-    const referer = req.headers.referer;
-
-    // CORS headers for allowed origins
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    // CSRF Protection: Verify origin or referer
-    const isOriginValid = origin && ALLOWED_ORIGINS.includes(origin);
-    const isRefererValid = referer && ALLOWED_ORIGINS.some(allowed => referer.startsWith(allowed));
-
-    if (!isOriginValid && !isRefererValid) {
-        console.warn('CSRF blocked:', { origin, referer });
-        return res.status(403).json({ error: 'Forbidden: Invalid origin' });
-    }
-
-    // Rate limiting check
-    const rateLimitResult = checkRateLimit(req, RATE_LIMIT_CONFIG);
-    setRateLimitHeaders(res, rateLimitResult, RATE_LIMIT_CONFIG.maxRequests);
-
-    if (!rateLimitResult.allowed) {
-        return rateLimitExceeded(res, rateLimitResult);
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.error('GEMINI_API_KEY is not configured');
-        return res.status(500).json({ error: 'API key not configured' });
-    }
-
     try {
+        const origin = req.headers.origin;
+        const referer = req.headers.referer;
+
+        // CORS headers for allowed origins
+        if (origin && ALLOWED_ORIGINS.includes(origin)) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+        }
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+        if (req.method === 'OPTIONS') {
+            return res.status(200).end();
+        }
+
+        if (req.method !== 'POST') {
+            return res.status(405).json({ error: 'Method not allowed' });
+        }
+
+        // CSRF Protection: Verify origin or referer
+        const isOriginValid = origin && ALLOWED_ORIGINS.includes(origin);
+        const isRefererValid = referer && ALLOWED_ORIGINS.some(allowed => referer.startsWith(allowed));
+
+        if (!isOriginValid && !isRefererValid) {
+            console.warn('CSRF blocked:', { origin, referer });
+            return res.status(403).json({ error: 'Forbidden: Invalid origin' });
+        }
+
+        // Rate limiting check
+        const rateLimitResult = checkRateLimit(req, RATE_LIMIT_CONFIG);
+        setRateLimitHeaders(res, rateLimitResult, RATE_LIMIT_CONFIG.maxRequests);
+
+        if (!rateLimitResult.allowed) {
+            return rateLimitExceeded(res, rateLimitResult);
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            console.error('GEMINI_API_KEY is not configured');
+            return res.status(500).json({ error: 'API key not configured in server environment' });
+        }
+
         const body: GenerateTextRequest = req.body;
         const { topic, type } = body;
 
@@ -139,7 +139,7 @@ SECURITY RULES (NEVER VIOLATE):
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Gemini API error:', errorText);
-            return res.status(response.status).json({ error: 'Gemini API error' });
+            return res.status(response.status).json({ error: 'Gemini API error', details: errorText });
         }
 
         const data = await response.json();
@@ -147,8 +147,11 @@ SECURITY RULES (NEVER VIOLATE):
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '텍스트를 생성할 수 없습니다.';
 
         return res.status(200).json({ text });
-    } catch (error) {
-        console.error('Generate text error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+    } catch (error: any) {
+        console.error('API Handler Error:', error);
+        return res.status(500).json({
+            error: 'Server encountered an error',
+            details: error.message || 'Unknown error'
+        });
     }
 }

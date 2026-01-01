@@ -6,10 +6,14 @@ interface LineRendererProps {
 }
 
 export const LineRenderer: React.FC<LineRendererProps> = ({ element }) => {
+    const dashScale = element.borderDashScale || 1;
+    const width = element.borderWidth || 2;
+
+    // SVG strokeDasharray: "dashLength, gapLength"
     const dashArray = element.borderStyle === 'dashed'
-        ? `${(element.borderWidth || 2) * 4}, ${(element.borderWidth || 2) * 2}`
+        ? `${width * 4 * dashScale}, ${width * 2 * dashScale}`
         : element.borderStyle === 'dotted'
-            ? `${element.borderWidth || 2}, ${(element.borderWidth || 2) * 2}`
+            ? `${width * dashScale}, ${width * 2 * dashScale}` // Dotted: dot length is usually small (width), gap is wider
             : undefined;
 
     const strokeColor = element.borderColor || '#000000';

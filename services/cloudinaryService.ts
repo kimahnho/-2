@@ -66,8 +66,8 @@ export const uploadToCloudinary = async (
         formData.append('tags', tags.join(','));
     }
 
-    // 업로드 시 자동 최적화 (크기 제한)
-    formData.append('eager', 'w_1200,h_1200,c_limit,q_auto');
+    // NOTE: 'eager' 파라미터는 unsigned upload에서 사용 불가
+    // 업로드 후 클라이언트에서 getTransformedUrl()로 변환 적용 가능
 
     try {
         const response = await fetch(UPLOAD_URL, {

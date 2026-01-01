@@ -1,9 +1,8 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Sparkles, Loader2, X, Camera, Palette, Pencil } from 'lucide-react';
 import { CharacterProfile } from '../../types';
 import { getEmotionCardsByStyle, CARD_STYLES, CardStyle, CHARACTER_TYPES, CharacterType } from '../../constants/emotion.constants';
-import { generateCharacterEmotion, generateTherapyImage } from '../../services/geminiService';
+import { generateCharacterEmotion, generateTherapyImage, getDailyUsageCount, DAILY_LIMIT } from '../../services/geminiService';
 
 interface Props {
     onAddElement: (type: any, content?: string) => void;
@@ -16,12 +15,14 @@ interface Props {
     onAddEmotionToCharacter: (charId: string, label: string, imageUrl: string) => void;
     onDeleteEmotionFromCharacter?: (charId: string, emotionId: string) => void;
     onUpdateEmotionLabel?: (charId: string, emotionId: string, newLabel: string) => void;
+    isGuest?: boolean;
 }
 
 export const EmotionsPanel: React.FC<Props> = ({
     onAddElement, onApplyEmotion, onSaveAsset,
     characters, onAddCharacter, onDeleteCharacter,
-    onAddEmotionToCharacter, onDeleteEmotionFromCharacter, onUpdateEmotionLabel
+    onAddEmotionToCharacter, onDeleteEmotionFromCharacter, onUpdateEmotionLabel,
+    isGuest = false
 }) => {
     const [emotionSubTab, setEmotionSubTab] = useState<'presets' | 'my-characters'>('presets');
     const [emotionSearch, setEmotionSearch] = useState('');
@@ -36,6 +37,18 @@ export const EmotionsPanel: React.FC<Props> = ({
     const [emotionInput, setEmotionInput] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiStyle, setAiStyle] = useState<'character' | 'realistic' | 'emoji'>('character');
+    const [dailyUsage, setDailyUsage] = useState<number>(0);
+
+    // Initial usage check
+    useEffect(() => {
+        const checkUsage = async () => {
+            const count = await getDailyUsageCount();
+            setDailyUsage(count);
+        };
+        checkUsage();
+    }, [isCreatingCharacter, isGenerating]); // Re-check when generation activities change
+
+    const isLimitReached = dailyUsage >= DAILY_LIMIT;
 
     // 스타일별 감정 카드 (photo 스타일은 캐릭터 타입 포함)
     const emotionCards = useMemo(() => {
@@ -71,9 +84,13 @@ export const EmotionsPanel: React.FC<Props> = ({
 
             setCharacterName('');
             setCharacterDesc('');
-        } catch (error) {
+
+            // Usage update
+            const newCount = await getDailyUsageCount();
+            setDailyUsage(newCount);
+        } catch (error: any) {
             console.error(error);
-            alert("캐릭터 생성에 실패했습니다.");
+            alert(`캐릭터 생성에 실패했습니다: ${error?.message || "알 수 없는 오류"}`);
         } finally {
             setIsCreatingCharacter(false);
         }
@@ -100,8 +117,12 @@ export const EmotionsPanel: React.FC<Props> = ({
             // The user must click the generated card to add it.
 
             setEmotionInput('');
-        } catch (error) {
-            alert("감정 생성 실패");
+
+            // Usage update
+            const newCount = await getDailyUsageCount();
+            setDailyUsage(newCount);
+        } catch (error: any) {
+            alert(`감정 생성 실패: ${error?.message || "알 수 없는 오류"}`);
         } finally {
             setIsGenerating(false);
         }
@@ -237,7 +258,11 @@ export const EmotionsPanel: React.FC<Props> = ({
                     {/* 1. Character List / Add */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-bold text-xs text-gray-600">내 캐릭터 목록</h3>
+                            <h3 className="font-bold text-xs text-gray-600">내 캐릭터 목록
+                                {/* <span className="ml-2 text-[10px] bg-[#5500FF]/10 text-[#5500FF] px-1.5 py-0.5 rounded-full font-normal">
+                                    오늘 생성 {dailyUsage}/{DAILY_LIMIT}
+                                </span> */}
+                            </h3>
                             <button onClick={() => setSelectedCharId(null)} className="text-[10px] text-[#5500FF] bg-[#5500FF]/10 px-2 py-0.5 rounded hover:bg-[#5500FF]/20">+ 새 캐릭터</button>
                         </div>
 
@@ -274,78 +299,106 @@ export const EmotionsPanel: React.FC<Props> = ({
 
                     {/* 2. Character Form or Emotion Generator */}
                     {!selectedCharId ? (
-                        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                            <h3 className="font-bold text-sm mb-3">새 캐릭터 등록 (AI 생성)</h3>
-                            <div className="space-y-3">
-                                <input
-                                    value={characterName}
-                                    onChange={e => setCharacterName(e.target.value)}
-                                    placeholder="캐릭터 이름 (예: 민수)"
-                                    className="w-full p-2 text-xs border rounded focus:border-[#5500FF] outline-none"
-                                />
-                                <textarea
-                                    value={characterDesc}
-                                    onChange={e => setCharacterDesc(e.target.value)}
-                                    placeholder="외모 묘사 (예: 파란 모자를 쓴 갈색 머리 소년, 노란 티셔츠)"
-                                    className="w-full p-2 text-xs border rounded h-20 resize-none focus:border-[#5500FF] outline-none"
-                                />
-                                <select
-                                    value={aiStyle}
-                                    onChange={(e) => setAiStyle(e.target.value as any)}
-                                    className="w-full p-2 text-xs border rounded bg-white"
-                                >
-                                    <option value="character">일러스트 스타일</option>
-                                    <option value="realistic">실사 스타일</option>
-                                    <option value="emoji">이모지 스타일</option>
-                                </select>
-                                <button
-                                    onClick={handleRegisterCharacter}
-                                    disabled={!characterName || !characterDesc || isCreatingCharacter}
-                                    className="w-full py-2 bg-gray-900 text-white rounded text-xs font-bold hover:bg-black disabled:bg-gray-300 flex items-center justify-center gap-2"
-                                >
-                                    {isCreatingCharacter ? (
-                                        <>
-                                            <Loader2 className="w-3 h-3 animate-spin" />
-                                            캐릭터 생성 중...
-                                        </>
-                                    ) : '캐릭터 생성 및 등록'}
-                                </button>
-                                <p className="text-[10px] text-gray-500 text-center">등록 시 기본 캐릭터 이미지가 AI로 생성됩니다.</p>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                            {isGuest && (
+                                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-4 text-center">
+                                    <p className="text-sm font-bold text-gray-800 mb-2">로그인 후 사용 가능합니다</p>
+                                    <p className="text-xs text-gray-500 mb-4">나만의 캐릭터 생성은 회원 전용입니다.</p>
+                                    <button
+                                        onClick={() => window.location.href = '/login'}
+                                        className="bg-[#5500FF] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#4400cc] transition-colors"
+                                    >
+                                        로그인 하러가기
+                                    </button>
+                                </div>
+                            )}
+                            <div className={isGuest ? 'opacity-20 pointer-events-none' : ''}>
+                                <h3 className="font-bold text-sm mb-3">새 캐릭터 등록 (AI 생성)</h3>
+                                <div className="space-y-3">
+                                    <input
+                                        value={characterName}
+                                        onChange={e => setCharacterName(e.target.value)}
+                                        placeholder="캐릭터 이름 (예: 민수)"
+                                        className="w-full p-2 text-xs border rounded focus:border-[#5500FF] outline-none"
+                                    />
+                                    <textarea
+                                        value={characterDesc}
+                                        onChange={e => setCharacterDesc(e.target.value)}
+                                        placeholder="외모 묘사 (예: 파란 모자를 쓴 갈색 머리 소년, 노란 티셔츠)"
+                                        className="w-full p-2 text-xs border rounded h-20 resize-none focus:border-[#5500FF] outline-none"
+                                    />
+                                    <select
+                                        value={aiStyle}
+                                        onChange={(e) => setAiStyle(e.target.value as any)}
+                                        className="w-full p-2 text-xs border rounded bg-white"
+                                    >
+                                        <option value="character">일러스트 스타일</option>
+                                        <option value="realistic">실사 스타일</option>
+                                        <option value="emoji">이모지 스타일</option>
+                                    </select>
+                                    <button
+                                        onClick={handleRegisterCharacter}
+                                        disabled={!characterName || !characterDesc || isCreatingCharacter || isLimitReached}
+                                        className="w-full py-2 bg-gray-900 text-white rounded text-xs font-bold hover:bg-black disabled:bg-gray-300 flex items-center justify-center gap-2"
+                                    >
+                                        {isCreatingCharacter ? (
+                                            <>
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                캐릭터 생성 중...
+                                            </>
+                                        ) : isLimitReached ? `생성 한도 초과 (내일 다시 생성)` : '캐릭터 생성 및 등록'}
+                                    </button>
+                                    <p className="text-[10px] text-gray-500 text-center">등록 시 기본 캐릭터 이미지가 AI로 생성됩니다.</p>
+                                </div>
                             </div>
                         </div>
                     ) : (
                         <>
                             {/* Generator */}
-                            <div className="bg-[#5500FF]/5 p-4 rounded-xl border border-[#5500FF]/10">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="text-xs font-bold text-[#5500FF]">{activeCharacter?.name}의 감정 만들기</h3>
-                                    <button onClick={() => onDeleteCharacter(selectedCharId)} className="text-[10px] text-red-400 hover:text-red-600">삭제</button>
+                            <div className="bg-[#5500FF]/5 p-4 rounded-xl border border-[#5500FF]/10 relative overflow-hidden">
+                                {isGuest && (
+                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-4 text-center">
+                                        <p className="text-sm font-bold text-gray-800 mb-2">로그인 후 사용 가능합니다</p>
+                                        <p className="text-xs text-gray-500 mb-4">AI 감정 생성은 회원 전용 기능입니다.</p>
+                                        <button
+                                            onClick={() => window.location.href = '/login'}
+                                            className="bg-[#5500FF] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#4400cc] transition-colors"
+                                        >
+                                            로그인 하러가기
+                                        </button>
+                                    </div>
+                                )}
+                                <div className={isGuest ? 'opacity-20 pointer-events-none' : ''}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-xs font-bold text-[#5500FF]">{activeCharacter?.name}의 감정 만들기</h3>
+                                        <button onClick={() => onDeleteCharacter(selectedCharId)} className="text-[10px] text-red-400 hover:text-red-600">삭제</button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            value={emotionInput}
+                                            onChange={e => setEmotionInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    if (e.nativeEvent.isComposing) return;
+                                                    e.preventDefault();
+                                                    handleGenerateEmotion();
+                                                }
+                                            }}
+                                            placeholder="감정 입력 (예: 기쁨)"
+                                            className="flex-1 p-2 text-xs border rounded focus:border-[#5500FF] outline-none bg-white"
+                                        />
+                                        <button
+                                            onClick={handleGenerateEmotion}
+                                            disabled={isGenerating || !emotionInput || isLimitReached}
+                                            className="px-3 bg-[#5500FF] text-white rounded text-xs font-bold hover:bg-[#4400cc] disabled:bg-gray-300"
+                                        >
+                                            {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : isLimitReached ? '한도초과' : '생성'}
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-[#5500FF]/70 mt-2">
+                                        * 기본 캐릭터 이미지를 참조하여 일관성 있게 생성합니다.
+                                    </p>
                                 </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        value={emotionInput}
-                                        onChange={e => setEmotionInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                if (e.nativeEvent.isComposing) return;
-                                                e.preventDefault();
-                                                handleGenerateEmotion();
-                                            }
-                                        }}
-                                        placeholder="감정 입력 (예: 기쁨)"
-                                        className="flex-1 p-2 text-xs border rounded focus:border-[#5500FF] outline-none bg-white"
-                                    />
-                                    <button
-                                        onClick={handleGenerateEmotion}
-                                        disabled={isGenerating || !emotionInput}
-                                        className="px-3 bg-[#5500FF] text-white rounded text-xs font-bold hover:bg-[#4400cc] disabled:bg-gray-300"
-                                    >
-                                        {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : '생성'}
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-[#5500FF]/70 mt-2">
-                                    * 기본 캐릭터 이미지를 참조하여 일관성 있게 생성합니다.
-                                </p>
                             </div>
 
                             {/* Saved Emotions for Character */}

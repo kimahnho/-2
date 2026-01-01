@@ -20,7 +20,7 @@ import { AACPanel, AACCard } from './toolbar/AACPanel';
 interface Props {
     activeTab: TabType | null;
     onTabChange: (tab: TabType | null) => void;
-    onAddElement: (type: ElementType, content?: string) => void;
+    onAddElement: (type: ElementType, content?: string, options?: any) => void;
     onLoadTemplate: (elements: DesignElement[]) => void;
     onUpdatePageOrientation?: (orientation: 'portrait' | 'landscape') => void;
     uploadedAssets: string[];
@@ -45,7 +45,9 @@ interface Props {
     onAddEmotionCard?: () => void;
     onAddAACCard?: () => void;
     // 파일 업로드
+    // 파일 업로드
     onUploadImage?: () => void;
+    isGuest?: boolean;
 }
 
 export const Toolbar: React.FC<Props> = ({
@@ -70,7 +72,8 @@ export const Toolbar: React.FC<Props> = ({
     totalAACCards,
     onAddEmotionCard,
     onAddAACCard,
-    onUploadImage
+    onUploadImage,
+    isGuest = false
 }) => {
 
     const toggleTab = (tab: TabType) => {
@@ -143,7 +146,7 @@ export const Toolbar: React.FC<Props> = ({
                 {activeTab && (
                     <div className="h-full flex flex-col min-w-[340px]">
                         {/* Panel Header */}
-                        <div className="h-14 border-b border-gray-100 flex items-center justify-between px-5 shrink-0">
+                        <div className="h-14 border-b border-gray-100 flex items-center justify-center px-5 shrink-0 relative">
                             <h2 className="font-bold text-lg text-gray-800">
                                 {activeTab === 'design' && 'AI 생성'}
                                 {activeTab === 'templates' && '템플릿'}
@@ -153,7 +156,7 @@ export const Toolbar: React.FC<Props> = ({
                                 {activeTab === 'uploads' && '내 파일'}
                                 {activeTab === 'aac' && 'AAC 카드'}
                             </h2>
-                            <button onClick={() => onTabChange(null)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+                            <button onClick={() => onTabChange(null)} className="absolute right-4 p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
                         </div>
@@ -167,6 +170,7 @@ export const Toolbar: React.FC<Props> = ({
                                     onAddElementWithCaption={onAddElementWithCaption}
                                     onSaveAsset={onSaveAsset}
                                     characters={characters}
+                                    isGuest={isGuest}
                                 />
                             )}
 
@@ -196,6 +200,7 @@ export const Toolbar: React.FC<Props> = ({
                                     onAddEmotionToCharacter={onAddEmotionToCharacter}
                                     onDeleteEmotionFromCharacter={onDeleteEmotionFromCharacter}
                                     onUpdateEmotionLabel={onUpdateEmotionLabel}
+                                    isGuest={isGuest}
                                 />
                             )}
 

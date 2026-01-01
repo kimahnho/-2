@@ -3,7 +3,7 @@
  * MECE: 파일 선택, 검증, 업로드, 요소 생성만 담당
  */
 
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { compressImage, isImageFile, isFileTooLarge } from '../utils/imageUtils';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../services/cloudinaryService';
 
@@ -53,18 +53,28 @@ export const useImageUpload = ({
         }
 
         try {
-            let imageUrl: string;
+            let imageUrl: string = '';
+            let uploadSuccess = false;
 
-            // Cloudinary 사용 가능 시 CDN 업로드, 아니면 Base64
+            // 1. Try Cloudinary if configured
             if (isCloudinaryConfigured()) {
-                const result = await uploadToCloudinary(file, {
-                    folder: 'muru-assets/user-uploads',
-                    tags: ['user-upload']
-                });
-                imageUrl = result.secureUrl;
-                console.log(`[Upload] Cloudinary URL: ${imageUrl}`);
-            } else {
-                // Fallback: 로컬 압축
+                try {
+                    console.log('[Upload] Attempting Cloudinary upload...');
+                    const result = await uploadToCloudinary(file, {
+                        folder: 'muru-assets/user-uploads',
+                        tags: ['user-upload']
+                    });
+                    imageUrl = result.secureUrl;
+                    uploadSuccess = true;
+                    console.log(`[Upload] Cloudinary success: ${imageUrl}`);
+                } catch (e) {
+                    console.warn('[Upload] Cloudinary failed, falling back to local compression:', e);
+                }
+            }
+
+            // 2. Fallback: Local Compression (if Cloudinary failed or not configured)
+            if (!uploadSuccess) {
+                console.log('[Upload] Using local compression fallback...');
                 imageUrl = await compressImage(file, {
                     maxWidth: 1200,
                     maxHeight: 1200,
@@ -108,11 +118,11 @@ export const useImageUpload = ({
                 onSaveAsset(imageUrl);
             };
             img.src = imageUrl;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Image upload failed:', error);
-            alert('이미지 업로드에 실패했습니다.');
+            alert(`이미지 업로드에 실패했습니다.\n사유: ${error.message || '알 수 없는 오류'}`);
         }
-        e.target.value = ''; // Reset for same file selection
+        if (fileInputRef.current) fileInputRef.current.value = ''; // Reset for same file selection
     };
 
     return {

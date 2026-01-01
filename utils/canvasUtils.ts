@@ -159,39 +159,76 @@ export const calculateSnapping = (
   const boxCenterX = (minX + maxX) / 2;
   const boxCenterY = (minY + maxY) / 2;
 
-  let snapDeltaX = 0;
-  let snapDeltaY = 0;
-  const newGuides: Guide[] = [];
-
   const canvasCenterX = CANVAS_WIDTH / 2;
   const canvasCenterY = CANVAS_HEIGHT / 2;
 
-  // Snap to Canvas Center
-  if (Math.abs(boxCenterX - canvasCenterX) < SNAP_THRESHOLD) {
-    snapDeltaX = canvasCenterX - boxCenterX;
-    newGuides.push({ type: 'vertical', position: canvasCenterX });
-  }
-  if (Math.abs(boxCenterY - canvasCenterY) < SNAP_THRESHOLD) {
-    snapDeltaY = canvasCenterY - boxCenterY;
-    newGuides.push({ type: 'horizontal', position: canvasCenterY });
-  }
+  // Track closest snaps
+  let closestDeltaX = 0;
+  let minDiffX = SNAP_THRESHOLD;
+  let guidesX: Guide[] = [];
 
-  // Snap to Other Elements
+  let closestDeltaY = 0;
+  let minDiffY = SNAP_THRESHOLD;
+  let guidesY: Guide[] = [];
+
+  // Helper to update X snap
+  const checkX = (targetPos: number, myPos: number) => {
+    const diff = Math.abs(targetPos - myPos);
+    const delta = targetPos - myPos;
+
+    if (diff < minDiffX) {
+      // New best snap found
+      minDiffX = diff;
+      closestDeltaX = delta;
+      guidesX = [{ type: 'vertical', position: targetPos }];
+    } else if (diff === minDiffX && diff < SNAP_THRESHOLD) {
+      // Another snap at same distance (add guide if unique)
+      if (!guidesX.some(g => Math.abs(g.position - targetPos) < 0.1)) {
+        guidesX.push({ type: 'vertical', position: targetPos });
+      }
+    }
+  };
+
+  // Helper to update Y snap
+  const checkY = (targetPos: number, myPos: number) => {
+    const diff = Math.abs(targetPos - myPos);
+    const delta = targetPos - myPos;
+
+    if (diff < minDiffY) {
+      minDiffY = diff;
+      closestDeltaY = delta;
+      guidesY = [{ type: 'horizontal', position: targetPos }];
+    } else if (diff === minDiffY && diff < SNAP_THRESHOLD) {
+      if (!guidesY.some(g => Math.abs(g.position - targetPos) < 0.1)) {
+        guidesY.push({ type: 'horizontal', position: targetPos });
+      }
+    }
+  };
+
+  // 1. Snap to Canvas Center
+  checkX(canvasCenterX, boxCenterX);
+  checkY(canvasCenterY, boxCenterY);
+
+  // 2. Snap to Other Elements
   otherElements.forEach(target => {
     const tCx = target.x + target.width / 2;
     const tCy = target.y + target.height / 2;
 
     // Vertical Snaps (X-axis)
-    if (Math.abs(minX - target.x) < SNAP_THRESHOLD) { snapDeltaX = target.x - minX; newGuides.push({ type: 'vertical', position: target.x }); }
-    else if (Math.abs(minX - (target.x + target.width)) < SNAP_THRESHOLD) { snapDeltaX = (target.x + target.width) - minX; newGuides.push({ type: 'vertical', position: target.x + target.width }); }
-    else if (Math.abs(maxX - target.x) < SNAP_THRESHOLD) { snapDeltaX = target.x - maxX; newGuides.push({ type: 'vertical', position: target.x }); }
-    else if (Math.abs(boxCenterX - tCx) < SNAP_THRESHOLD) { snapDeltaX = tCx - boxCenterX; newGuides.push({ type: 'vertical', position: tCx }); }
+    // Left-Left, Left-Right, Right-Left, Right-Right, Center-Center
+    checkX(target.x, minX);
+    checkX(target.x + target.width, minX);
+    checkX(target.x, maxX);
+    checkX(target.x + target.width, maxX);
+    checkX(tCx, boxCenterX);
 
     // Horizontal Snaps (Y-axis)
-    if (Math.abs(minY - target.y) < SNAP_THRESHOLD) { snapDeltaY = target.y - minY; newGuides.push({ type: 'horizontal', position: target.y }); }
-    else if (Math.abs(minY - (target.y + target.height)) < SNAP_THRESHOLD) { snapDeltaY = (target.y + target.height) - minY; newGuides.push({ type: 'horizontal', position: target.y + target.height }); }
-    else if (Math.abs(maxY - target.y) < SNAP_THRESHOLD) { snapDeltaY = target.y - maxY; newGuides.push({ type: 'horizontal', position: target.y }); }
-    else if (Math.abs(boxCenterY - tCy) < SNAP_THRESHOLD) { snapDeltaY = tCy - boxCenterY; newGuides.push({ type: 'horizontal', position: tCy }); }
+    // Top-Top, Top-Bottom, Bottom-Top, Bottom-Bottom, Center-Center
+    checkY(target.y, minY);
+    checkY(target.y + target.height, minY);
+    checkY(target.y, maxY);
+    checkY(target.y + target.height, maxY);
+    checkY(tCy, boxCenterY);
   });
 
   const newPositions: Record<string, Position> = {};
@@ -199,13 +236,18 @@ export const calculateSnapping = (
     const initial = initialPositions[el.id];
     if (initial) {
       newPositions[el.id] = {
-        x: initial.x + deltaX + snapDeltaX,
-        y: initial.y + deltaY + snapDeltaY
+        x: initial.x + deltaX + closestDeltaX,
+        y: initial.y + deltaY + closestDeltaY
       };
     }
   });
 
-  return { snapDeltaX, snapDeltaY, guides: newGuides, newPositions };
+  return {
+    snapDeltaX: closestDeltaX,
+    snapDeltaY: closestDeltaY,
+    guides: [...guidesX, ...guidesY],
+    newPositions
+  };
 };
 
 // --- Layer Sorting ---
