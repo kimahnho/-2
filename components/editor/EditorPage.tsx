@@ -219,14 +219,33 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
           throw new Error('Not muru-elements');
         }
       } catch {
-        // Plain text - create text box
+        // Plain text - create text box with proper measurement
         const newId = Math.random().toString(36).substr(2, 9);
         const fontSize = 24;
-        const lineHeight = fontSize * 1.4;
-        const lineCount = text.split('\n').length;
-        const estimatedHeight = Math.max(lineHeight, lineCount * lineHeight);
+        const lineHeight = fontSize * 1.5;
+        const maxWidth = 500;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx!.font = `${fontSize}px 'Gowun Dodum', sans-serif`;
+
+        const textWidth = ctx!.measureText(text.replace(/\n/g, '')).width;
+        const width = Math.min(Math.max(300, textWidth + 20), maxWidth);
+
+        const words = text.split(/(\s+)/);
+        let currentLineWidth = 0;
+        let lineCount = 1;
+
+        for (const word of words) {
+          if (word === '\n') { lineCount++; currentLineWidth = 0; continue; }
+          const wordWidth = ctx!.measureText(word).width;
+          if (currentLineWidth + wordWidth > width - 10) { lineCount++; currentLineWidth = wordWidth; }
+          else { currentLineWidth += wordWidth; }
+        }
+
+        const height = Math.round(lineCount * lineHeight + 10);
         const newTextElement: DesignElement = {
-          id: newId, type: 'text', x: 300, y: 400, width: 300, height: Math.round(estimatedHeight),
+          id: newId, type: 'text', x: 250, y: 400, width: Math.round(width), height,
           content: text, rotation: 0, zIndex: project.elements.length + 1,
           pageId: project.activePageId, fontFamily: "'Gowun Dodum', sans-serif",
           fontSize, color: '#000000',
@@ -336,19 +355,49 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       // 4. Smart Text Paste
       const newId = Math.random().toString(36).substr(2, 9);
 
-      // Calculate dynamic height based on text content
+      // Calculate dynamic dimensions based on text content using canvas measurement
       const fontSize = 24;
-      const lineHeight = fontSize * 1.4; // Approximate line height
-      const lineCount = text.split('\n').length;
-      const estimatedHeight = Math.max(lineHeight, lineCount * lineHeight);
+      const lineHeight = fontSize * 1.5;
+      const maxWidth = 500; // Wider default for better text wrapping
+
+      // Use canvas to measure text width
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      ctx!.font = `${fontSize}px 'Gowun Dodum', sans-serif`;
+
+      // Calculate required width (capped at maxWidth)
+      const textWidth = ctx!.measureText(text.replace(/\n/g, '')).width;
+      const width = Math.min(Math.max(300, textWidth + 20), maxWidth);
+
+      // Calculate wrapped line count
+      const words = text.split(/(\s+)/);
+      let currentLineWidth = 0;
+      let lineCount = 1;
+
+      for (const word of words) {
+        if (word === '\n') {
+          lineCount++;
+          currentLineWidth = 0;
+          continue;
+        }
+        const wordWidth = ctx!.measureText(word).width;
+        if (currentLineWidth + wordWidth > width - 10) {
+          lineCount++;
+          currentLineWidth = wordWidth;
+        } else {
+          currentLineWidth += wordWidth;
+        }
+      }
+
+      const height = Math.round(lineCount * lineHeight + 10); // Extra padding
 
       const newTextElement: DesignElement = {
         id: newId,
         type: 'text',
-        x: 300,
+        x: 250,
         y: 400,
-        width: 300,
-        height: Math.round(estimatedHeight),
+        width: Math.round(width),
+        height,
         content: text,
         rotation: 0,
         zIndex: currentProject.elements.length + 1,
