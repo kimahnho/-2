@@ -222,10 +222,10 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         // Plain text - create text box
         const newId = Math.random().toString(36).substr(2, 9);
         const newTextElement: DesignElement = {
-          id: newId, type: 'text', x: 300, y: 400, width: 300, height: 100,
+          id: newId, type: 'text', x: 300, y: 400, width: 300, height: 60,
           content: text, rotation: 0, zIndex: project.elements.length + 1,
-          pageId: project.activePageId, fontFamily: 'Pretendard', fontSize: 24,
-          color: '#000000', textAlign: 'center', verticalAlign: 'middle', fontWeight: 400,
+          pageId: project.activePageId, fontFamily: "'Gowun Dodum', sans-serif",
+          fontSize: 24, color: '#000000',
         } as any;
         project.updateElements([...project.elements, newTextElement]);
         project.setSelectedIds([newId]);
@@ -337,17 +337,14 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
         x: 300,
         y: 400,
         width: 300,
-        height: 100,
+        height: 60,
         content: text,
         rotation: 0,
         zIndex: currentProject.elements.length + 1,
         pageId: currentProject.activePageId,
-        fontFamily: 'Pretendard',
+        fontFamily: "'Gowun Dodum', sans-serif",
         fontSize: 24,
         color: '#000000',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        fontWeight: 400,
       } as any;
 
       currentProject.updateElements([...currentProject.elements, newTextElement]);
