@@ -177,16 +177,12 @@ export const calculateSnapping = (
     const delta = targetPos - myPos;
 
     if (diff < minDiffX) {
-      // New best snap found
+      // New best snap found - replace previous
       minDiffX = diff;
       closestDeltaX = delta;
       guidesX = [{ type: 'vertical', position: targetPos }];
-    } else if (diff === minDiffX && diff < SNAP_THRESHOLD) {
-      // Another snap at same distance (add guide if unique)
-      if (!guidesX.some(g => Math.abs(g.position - targetPos) < 0.1)) {
-        guidesX.push({ type: 'vertical', position: targetPos });
-      }
     }
+    // Removed: else-if that added multiple guides at same distance
   };
 
   // Helper to update Y snap
@@ -198,11 +194,8 @@ export const calculateSnapping = (
       minDiffY = diff;
       closestDeltaY = delta;
       guidesY = [{ type: 'horizontal', position: targetPos }];
-    } else if (diff === minDiffY && diff < SNAP_THRESHOLD) {
-      if (!guidesY.some(g => Math.abs(g.position - targetPos) < 0.1)) {
-        guidesY.push({ type: 'horizontal', position: targetPos });
-      }
     }
+    // Removed: else-if that added multiple guides at same distance
   };
 
   // 1. Snap to Canvas Center

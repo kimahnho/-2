@@ -221,11 +221,15 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
       } catch {
         // Plain text - create text box
         const newId = Math.random().toString(36).substr(2, 9);
+        const fontSize = 24;
+        const lineHeight = fontSize * 1.4;
+        const lineCount = text.split('\n').length;
+        const estimatedHeight = Math.max(lineHeight, lineCount * lineHeight);
         const newTextElement: DesignElement = {
-          id: newId, type: 'text', x: 300, y: 400, width: 300, height: 60,
+          id: newId, type: 'text', x: 300, y: 400, width: 300, height: Math.round(estimatedHeight),
           content: text, rotation: 0, zIndex: project.elements.length + 1,
           pageId: project.activePageId, fontFamily: "'Gowun Dodum', sans-serif",
-          fontSize: 24, color: '#000000',
+          fontSize, color: '#000000',
         } as any;
         project.updateElements([...project.elements, newTextElement]);
         project.setSelectedIds([newId]);
@@ -331,19 +335,26 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
 
       // 4. Smart Text Paste
       const newId = Math.random().toString(36).substr(2, 9);
+
+      // Calculate dynamic height based on text content
+      const fontSize = 24;
+      const lineHeight = fontSize * 1.4; // Approximate line height
+      const lineCount = text.split('\n').length;
+      const estimatedHeight = Math.max(lineHeight, lineCount * lineHeight);
+
       const newTextElement: DesignElement = {
         id: newId,
         type: 'text',
         x: 300,
         y: 400,
         width: 300,
-        height: 60,
+        height: Math.round(estimatedHeight),
         content: text,
         rotation: 0,
         zIndex: currentProject.elements.length + 1,
         pageId: currentProject.activePageId,
         fontFamily: "'Gowun Dodum', sans-serif",
-        fontSize: 24,
+        fontSize,
         color: '#000000',
       } as any;
 
