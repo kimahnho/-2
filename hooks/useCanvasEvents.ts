@@ -352,9 +352,9 @@ export const useCanvasEvents = ({
       const scaleX = bbox.width > 0 ? newBboxW / bbox.width : 1;
       const scaleY = bbox.height > 0 ? newBboxH / bbox.height : 1;
 
-      // Helper to calculate minimum text box size
-      const getTextMinSize = (el: DesignElement): { minWidth: number; minHeight: number } => {
-        if (el.type !== 'text' || !el.content) return { minWidth: 50, minHeight: 30 };
+      // Helper to calculate minimum text box height given a width
+      const getTextMinHeight = (el: DesignElement, targetWidth: number): number => {
+        if (el.type !== 'text' || !el.content) return 30;
 
         const fontSize = el.fontSize || 24;
         const lineHeight = fontSize * 1.5;
@@ -363,25 +363,64 @@ export const useCanvasEvents = ({
         try {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          if (!ctx) return { minWidth: 50, minHeight: 30 };
+          if (!ctx) return lineHeight + 10;
 
           ctx.font = `${fontSize}px ${fontFamily}`;
 
-          // Minimum width: at least fit the longest word
+          // Calculate wrapped line count at target width
+          const availableWidth = targetWidth - 10; // padding
+          const lines = el.content.split('\n');
+          let totalLines = 0;
+
+          for (const line of lines) {
+            if (line.trim() === '') {
+              totalLines++; // Empty line
+              continue;
+            }
+            const words = line.split(/\s+/);
+            let currentLineWidth = 0;
+            let linesForThisLine = 1;
+
+            for (const word of words) {
+              const wordWidth = ctx.measureText(word + ' ').width;
+              if (currentLineWidth + wordWidth > availableWidth && currentLineWidth > 0) {
+                linesForThisLine++;
+                currentLineWidth = wordWidth;
+              } else {
+                currentLineWidth += wordWidth;
+              }
+            }
+            totalLines += linesForThisLine;
+          }
+
+          return Math.max(lineHeight + 10, totalLines * lineHeight + 10);
+        } catch {
+          return 30;
+        }
+      };
+
+      // Helper to get minimum width (longest word)
+      const getTextMinWidth = (el: DesignElement): number => {
+        if (el.type !== 'text' || !el.content) return 50;
+
+        const fontSize = el.fontSize || 24;
+        const fontFamily = el.fontFamily || "'Gowun Dodum', sans-serif";
+
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return 50;
+
+          ctx.font = `${fontSize}px ${fontFamily}`;
           const words = el.content.split(/\s+/);
           let maxWordWidth = 0;
           for (const word of words) {
             const w = ctx.measureText(word).width;
             if (w > maxWordWidth) maxWordWidth = w;
           }
-          const minWidth = Math.min(maxWordWidth + 20, 300);
-
-          // For height, we need at least one line
-          const minHeight = lineHeight + 10;
-
-          return { minWidth, minHeight };
+          return Math.min(maxWordWidth + 20, 400);
         } catch {
-          return { minWidth: 50, minHeight: 30 };
+          return 50;
         }
       };
 
@@ -394,14 +433,28 @@ export const useCanvasEvents = ({
         const relX = initial.x - bbox.x;
         const relY = initial.y - bbox.y;
 
-        // Calculate minimum size based on content
-        const { minWidth, minHeight } = getTextMinSize(el);
+        // Calculate proposed new dimensions
+        let proposedWidth = initial.width * scaleX;
+        let proposedHeight = initial.height * scaleY;
+
+        // For text elements, enforce minimum sizes
+        if (el.type === 'text') {
+          const minWidth = getTextMinWidth(el);
+          proposedWidth = Math.max(minWidth, proposedWidth);
+
+          // Calculate minimum height based on the new width
+          const minHeight = getTextMinHeight(el, proposedWidth);
+          proposedHeight = Math.max(minHeight, proposedHeight);
+        } else {
+          proposedWidth = Math.max(20, proposedWidth);
+          proposedHeight = Math.max(20, proposedHeight);
+        }
 
         const updates: Partial<DesignElement> = {
           x: newBboxX + relX * scaleX,
           y: newBboxY + relY * scaleY,
-          width: Math.max(minWidth, initial.width * scaleX),
-          height: Math.max(minHeight, initial.height * scaleY),
+          width: proposedWidth,
+          height: proposedHeight,
         };
 
         // backgroundPosition is now stored as relative ratios, no scaling needed
