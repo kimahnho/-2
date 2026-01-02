@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { adminService, AdminResource } from '../../services/adminService';
 import { Shield, Download, ArrowLeft, FileText, Calendar, Users, ChevronRight, Mail, User, BookOpen, Eye } from 'lucide-react';
 
@@ -41,6 +41,8 @@ type ViewMode = 'list' | 'detail';
 
 export const AdminPanel: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const urlUserId = searchParams.get('userId');
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -71,11 +73,32 @@ export const AdminPanel: React.FC = () => {
         checkAdmin();
     }, [navigate]);
 
-    // 탭 변경 시 데이터 로드
+    // URL에서 userId가 있으면 해당 유저 프로젝트 자동 로드
     useEffect(() => {
-        if (!isAdmin) return;
+        if (!isAdmin || !urlUserId) return;
+
+        const loadUserFromUrl = async () => {
+            // 먼저 유저 목록 로드
+            const allUsers = await adminService.getUsersWithProjects();
+            setUsers(allUsers.sort((a, b) => b.projectCount - a.projectCount));
+
+            // URL의 userId에 해당하는 유저 찾기
+            const targetUser = allUsers.find(u => u.userId === urlUserId);
+            if (targetUser) {
+                setSelectedUser(targetUser);
+                setViewMode('detail');
+                const data = await adminService.getProjectsByUser(targetUser.userId);
+                setProjects(data);
+            }
+        };
+        loadUserFromUrl();
+    }, [isAdmin, urlUserId]);
+
+    // 탭 변경 시 데이터 로드 (URL userId가 없을 때만)
+    useEffect(() => {
+        if (!isAdmin || urlUserId) return;
         loadData();
-    }, [isAdmin, mainTab]);
+    }, [isAdmin, mainTab, urlUserId]);
 
     const loadData = async () => {
         setViewMode('list');
@@ -207,7 +230,7 @@ export const AdminPanel: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 {projects.map((project) => (
                                     <div key={project.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                                        <div className="aspect-video bg-gray-100 relative cursor-pointer" onClick={() => navigate(`/admin/preview/${project.id}`)}>
+                                        <div className="aspect-video bg-gray-100 relative cursor-pointer" onClick={() => navigate(`/admin/preview/${project.id}?userId=${selectedUser?.userId}`)}>
                                             {project.thumbnail ? <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><FileText className="w-8 h-8" /></div>}
                                             <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
                                                 <span className="bg-white px-3 py-1 rounded-full text-sm font-medium shadow">미리보기</span>
@@ -217,7 +240,7 @@ export const AdminPanel: React.FC = () => {
                                             <h3 className="font-medium text-gray-800 mb-2 truncate">{project.title}</h3>
                                             <div className="flex items-center gap-2 text-xs text-gray-500 mb-3"><Calendar className="w-3 h-3" />{new Date(project.submittedAt).toLocaleDateString('ko-KR')}</div>
                                             <div className="flex gap-2">
-                                                <button onClick={() => navigate(`/admin/preview/${project.id}`)} className="flex-1 py-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center justify-center gap-1"><Eye className="w-3 h-3" />미리보기</button>
+                                                <button onClick={() => navigate(`/admin/preview/${project.id}?userId=${selectedUser?.userId}`)} className="flex-1 py-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center justify-center gap-1"><Eye className="w-3 h-3" />미리보기</button>
                                                 <button onClick={() => handleDownloadThumbnail(project)} className="flex-1 py-2 text-xs bg-[#5500FF] hover:bg-[#4400DD] text-white rounded-lg flex items-center justify-center gap-1" disabled={!project.thumbnail}><Download className="w-3 h-3" />다운로드</button>
                                             </div>
                                         </div>

@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { EditorPage } from './components/editor/EditorPage';
 import { Dashboard } from './components/Dashboard';
 import { Landing } from './components/Landing';
@@ -249,6 +249,8 @@ const TemplatesRoute: React.FC<{ user: AuthUser | null; onLogin: () => void }> =
 const AdminPreviewRoute: React.FC = () => {
     const navigate = useNavigate();
     const { projectId } = useParams<{ projectId: string }>();
+    const [searchParams] = useSearchParams();
+    const userId = searchParams.get('userId');
     const [initialData, setInitialData] = useState<ProjectData | undefined>(undefined);
     const [initialTitle, setInitialTitle] = useState('');
     const [loading, setLoading] = useState(true);
@@ -290,7 +292,12 @@ const AdminPreviewRoute: React.FC = () => {
     }, [projectId, navigate]);
 
     const handleBack = () => {
-        navigate('/admin');
+        // If userId exists, go back to that user's project list
+        if (userId) {
+            navigate(`/admin?userId=${userId}`);
+        } else {
+            navigate('/admin');
+        }
     };
 
     if (loading) {
