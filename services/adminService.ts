@@ -188,27 +188,29 @@ export const adminService = {
     },
 
     /**
-     * 프로젝트 상세 데이터 조회 (다운로드용)
+     * 프로젝트 상세 데이터 조회 (다운로드용) - 관리자 RPC 사용
      */
     getProjectData: async (projectId: string): Promise<{ elements: any[]; pages: any[] } | null> => {
         if (!isSupabaseConfigured() || !supabase) {
             return null;
         }
 
-        const { data, error } = await supabase
-            .from('projects')
-            .select('elements, pages')
-            .eq('id', projectId)
-            .single();
+        // RLS를 우회하는 SECURITY DEFINER 함수 호출 (관리자만 사용 가능)
+        const { data, error } = await supabase.rpc('get_project_data_admin', {
+            target_project_id: projectId
+        });
 
         if (error) {
             console.error('Failed to fetch project data:', error);
             return null;
         }
 
+        // RPC returns single row or null
+        const projectData = Array.isArray(data) ? data[0] : data;
+
         return {
-            elements: data?.elements || [],
-            pages: data?.pages || []
+            elements: projectData?.elements || [],
+            pages: projectData?.pages || []
         };
     },
 
