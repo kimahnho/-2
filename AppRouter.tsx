@@ -85,6 +85,54 @@ const LoginRoute: React.FC = () => {
     );
 };
 
+// OAuth Callback Route - handles redirect from Google/Kakao
+const AuthCallbackRoute: React.FC = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Supabase automatically handles the token from URL hash
+        // We just need to wait for the auth state to be updated and redirect
+        const checkAuth = async () => {
+            // Give Supabase time to process the callback
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const user = await authService.getCurrentUser();
+            if (user) {
+                navigate('/dashboard', { replace: true });
+            } else {
+                // If auth failed, go to login
+                navigate('/login', { replace: true });
+            }
+        };
+
+        checkAuth();
+    }, [navigate]);
+
+    return (
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            background: 'white'
+        }}>
+            <div style={{ textAlign: 'center' }}>
+                <div style={{
+                    width: 40,
+                    height: 40,
+                    border: '3px solid #e5e5e5',
+                    borderTop: '3px solid #5500FF',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 16px'
+                }} />
+                <p style={{ color: '#666' }}>로그인 처리 중...</p>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+        </div>
+    );
+};
+
 // Dashboard Route
 const DashboardRoute: React.FC<{ user: AuthUser | null; authLoading?: boolean; onLogin: () => void }> = ({ user, authLoading, onLogin }) => {
     const navigate = useNavigate();
@@ -349,6 +397,7 @@ export const AppRouter: React.FC = () => {
             <Routes>
                 <Route path="/" element={<LandingRoute user={user} onLogin={handleLogin} />} />
                 <Route path="/login" element={<LoginRoute />} />
+                <Route path="/auth/callback" element={<AuthCallbackRoute />} />
                 <Route path="/dashboard" element={<DashboardRoute user={user} authLoading={authLoading} onLogin={handleLogin} />} />
                 <Route path="/editor/:projectId" element={<EditorRoute user={user} />} />
                 <Route path="/pricing" element={<PricingRoute user={user} onLogin={handleLogin} />} />
