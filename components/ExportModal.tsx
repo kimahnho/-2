@@ -57,26 +57,22 @@ export const ExportModal: React.FC<Props> = ({ pages, elements, onClose, project
         const selectionElements = target.querySelectorAll('[class*="border-[#5500FF]"]');
         selectionElements.forEach(el => (el as HTMLElement).style.visibility = 'hidden');
 
-        // ★ FIX 2: 폰트 로딩 - 충분한 대기시간 확보
+        // 폰트 로딩 대기
         await document.fonts.ready;
-        // 모든 폰트가 렌더링에 적용될 때까지 추가 대기
-        await new Promise(r => setTimeout(r, 500));
-
-        // 폰트가 완전히 로드될 때까지 대기
-        await document.fonts.ready;
-        // 추가 대기시간 (폰트 렌더링 안정화)
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 300));
 
         try {
             const canvas = await html2canvas(target, {
                 scale: 2,
                 useCORS: true,
-                allowTaint: true,
+                allowTaint: false,  // ★ taint 비활성화로 보안 모드 사용
                 backgroundColor: '#ffffff',
-                logging: false,
-                imageTimeout: 15000,
+                logging: true,  // ★ 디버깅을 위해 로깅 활성화
+                imageTimeout: 30000,  // ★ 이미지 타임아웃 증가
                 width: canvasW,
                 height: canvasH,
+                // ★ 프록시 URL 설정 - Cloudinary 이미지를 서버를 통해 가져옴
+                proxy: '/api/image-proxy',
                 onclone: (clonedDoc: Document, clonedElement: HTMLElement) => {
                     // 필수: zoom transform 제거 (이미 원본 크기를 지정했으므로)
                     clonedElement.style.transform = 'none';

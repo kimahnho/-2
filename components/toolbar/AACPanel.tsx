@@ -10,7 +10,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Utensils, Search, X, PawPrint, Shirt, Loader2 } from 'lucide-react';
+import { Utensils, Search, X, PawPrint, Shirt, Loader2, Activity } from 'lucide-react';
 import { fetchAACCards } from '../../services/aacService';
 
 // ========== 타입 정의 ==========
@@ -29,7 +29,7 @@ export interface AACCard {
     cloudinaryUrl?: string;
 }
 
-type CategoryType = 'food' | 'animal' | 'clothes';
+type CategoryType = 'food' | 'animal' | 'clothes' | 'verb';
 
 // ========== 컴포넌트 ==========
 
@@ -85,6 +85,7 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard }) => {
         { id: 'food' as CategoryType, label: '음식', icon: Utensils },
         { id: 'animal' as CategoryType, label: '동물', icon: PawPrint },
         { id: 'clothes' as CategoryType, label: '옷', icon: Shirt },
+        { id: 'verb' as CategoryType, label: '행동', icon: Activity },
     ];
 
     return (
@@ -114,7 +115,7 @@ export const AACPanel: React.FC<Props> = ({ onSelectAACCard }) => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                     type="text"
-                    placeholder={`${activeCategory === 'food' ? '음식' : activeCategory === 'animal' ? '동물' : '옷'} 검색...`}
+                    placeholder={`${activeCategory === 'food' ? '음식' : activeCategory === 'animal' ? '동물' : activeCategory === 'clothes' ? '옷' : '행동'} 검색...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-3 py-2 pl-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5500FF] focus:border-transparent"

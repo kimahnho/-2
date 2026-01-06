@@ -89,6 +89,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                         <img
                             src={aacData?.emoji}
                             alt={aacData?.label || ''}
+                            crossOrigin="anonymous"
                             style={{ width: size * 0.6, height: size * 0.6, objectFit: 'contain' }}
                         />
                     ) : (
@@ -161,6 +162,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                         <img
                             src={aacData.emoji}
                             alt={aacData.label || ''}
+                            crossOrigin="anonymous"
                             style={{
                                 width: size * symbolScale,
                                 height: size * symbolScale,

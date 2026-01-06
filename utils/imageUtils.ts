@@ -165,3 +165,44 @@ export const isImageFile = (file: File): boolean => {
 export const isFileTooLarge = (file: File, maxMB: number = 10): boolean => {
     return file.size > maxMB * 1024 * 1024;
 };
+
+/**
+ * Cloudinary URL을 base64 Data URL로 변환
+ * 서버 사이드 프록시를 통해 CORS 문제 해결
+ * @param imageUrl Cloudinary 이미지 URL
+ * @returns base64 Data URL (실패 시 원본 URL)
+ */
+export const convertCloudinaryToBase64 = async (imageUrl: string): Promise<string> => {
+    // 이미 base64면 그대로 반환
+    if (!imageUrl || imageUrl.startsWith('data:')) {
+        return imageUrl;
+    }
+
+    // Cloudinary 이미지가 아니면 그대로 반환
+    if (!imageUrl.includes('cloudinary.com')) {
+        return imageUrl;
+    }
+
+    try {
+        // 서버 사이드 프록시를 통해 이미지 가져오기
+        const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+        const response = await fetch(proxyUrl);
+
+        if (!response.ok) {
+            console.warn(`[ImageUtils] Proxy failed for: ${imageUrl}`);
+            return imageUrl;
+        }
+
+        const data = await response.json();
+
+        if (data.dataUrl) {
+            console.log(`[ImageUtils] Converted to base64: ${imageUrl.slice(0, 50)}...`);
+            return data.dataUrl;
+        }
+
+        return imageUrl;
+    } catch (error) {
+        console.warn(`[ImageUtils] Failed to convert: ${imageUrl}`, error);
+        return imageUrl;
+    }
+};

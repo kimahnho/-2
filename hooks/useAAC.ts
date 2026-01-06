@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AACCard } from '../components/toolbar/AACPanel';
 import { TabType } from '../types';
 import { trackAACCardSelected } from '../services/mixpanelService';
+import { convertCloudinaryToBase64 } from '../utils/imageUtils';
 
 interface UseAACProps {
     elements: any[];
@@ -192,12 +193,18 @@ export const useAAC = ({
     };
 
     // AAC 카드 선택 핸들러
-    const handleSelectAACCard = useCallback((card: AACCard) => {
+    const handleSelectAACCard = useCallback(async (card: AACCard) => {
+        // ★ 이미지를 base64로 미리 변환 (PDF 내보내기 CORS 문제 해결)
+        const imageUrl = card.cloudinaryUrl || card.emoji || '❓';
+        const base64Image = imageUrl.includes('cloudinary.com')
+            ? await convertCloudinaryToBase64(imageUrl)
+            : imageUrl;
+
         // 문장 빌더 모드가 활성화되어 있으면 해당 영역에 카드 추가
         if (sentenceBuilderId) {
             const sentenceArea = elements.find(el => el.id === sentenceBuilderId);
             if (sentenceArea?.metadata?.isAACSentenceArea) {
-                addSentenceItem(sentenceBuilderId, card.cloudinaryUrl || card.emoji || '❓', card.label || '');
+                addSentenceItem(sentenceBuilderId, base64Image, card.label || '');
                 // Track AAC card selection
                 trackAACCardSelected(card.id, card.category);
                 return;
@@ -232,7 +239,7 @@ export const useAAC = ({
                     aacCol: 0,
                     aacIndex: existingCards,
                     aacData: {
-                        emoji: card.cloudinaryUrl || card.emoji || '❓',
+                        emoji: base64Image,  // ★ base64 이미지 사용
                         label: card.label,
                         isFilled: true,
                         isCloudinaryImage: !!card.cloudinaryUrl,
@@ -263,7 +270,7 @@ export const useAAC = ({
 
         // 문장 구성 영역 선택 시: 카드 추가
         if (selectedEl.metadata?.isAACSentenceArea) {
-            addSentenceItem(selectedId, card.cloudinaryUrl || card.emoji || '❓', card.label || '');
+            addSentenceItem(selectedId, base64Image, card.label || '');  // ★ base64 이미지 사용
             return;
         }
 
@@ -286,7 +293,7 @@ export const useAAC = ({
                             ...el.metadata,
                             aacData: {
                                 ...el.metadata?.aacData,
-                                emoji: card.cloudinaryUrl || card.emoji || '❓',
+                                emoji: base64Image,  // ★ base64 이미지 사용
                                 label: card.label,
                                 isFilled: true,
                                 isCloudinaryImage: !!card.cloudinaryUrl
