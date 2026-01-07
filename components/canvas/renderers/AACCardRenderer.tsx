@@ -72,7 +72,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
 
     // 문장 영역 아이템 (작은 크기)
     if (isSentenceItem) {
-        const isEmojiUrl = aacData?.emoji?.startsWith('http') && !imageError;
+        const isImageUrl = (aacData?.emoji?.startsWith('http') || aacData?.emoji?.startsWith('data:image')) && !imageError;
         return (
             <div
                 className="w-full h-full relative overflow-hidden"
@@ -91,7 +91,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                     </div>
                 )}
                 <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: aacData?.label ? 8 : 0 }}>
-                    {isEmojiUrl ? (
+                    {isImageUrl ? (
                         <img
                             src={aacData?.emoji}
                             alt={aacData?.label || ''}
@@ -165,7 +165,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                 }}
             >
                 {isFilled && aacData?.emoji ? (
-                    aacData.emoji.startsWith('http') && !imageError ? (
+                    ((aacData.emoji.startsWith('http') || aacData.emoji.startsWith('data:image')) && !imageError) ? (
                         <img
                             src={aacData.emoji}
                             alt={aacData.label || ''}
