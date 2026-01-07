@@ -59,6 +59,8 @@ export interface DesignElement {
             fontSize?: number;   // 라벨 폰트 크기
             fontWeight?: number; // 라벨 폰트 두께
             color?: string;      // 라벨 폰트 색상
+            labelPosition?: 'above' | 'below' | 'none'; // 라벨 위치
+            symbolScale?: number; // 상징 크기 (0.1 ~ 2.0)
         };
         isAACSentenceArea?: boolean;
         isAACSentenceItem?: boolean;

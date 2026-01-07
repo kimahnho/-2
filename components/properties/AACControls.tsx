@@ -188,7 +188,7 @@ export const AACControls: React.FC<AACControlsProps> = ({
                             <input
                                 type="range"
                                 min="1"
-                                max="8"
+                                max="20"
                                 step="1"
                                 value={localSymbolScale}
                                 onChange={(e) => {
@@ -258,7 +258,7 @@ export const AACControls: React.FC<AACControlsProps> = ({
                                                 changes: {
                                                     metadata: {
                                                         ...card.metadata,
-                                                        aacData: { ...card.metadata?.aacData, labelPosition: option.value }
+                                                        aacData: { ...card.metadata?.aacData, labelPosition: option.value as 'above' | 'below' | 'none' }
                                                     }
                                                 }
                                             }));
