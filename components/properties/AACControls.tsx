@@ -188,7 +188,7 @@ export const AACControls: React.FC<AACControlsProps> = ({
                             <input
                                 type="range"
                                 min="1"
-                                max="30"
+                                max="25"
                                 step="1"
                                 value={localSymbolScale}
                                 onChange={(e) => {
@@ -231,7 +231,7 @@ export const AACControls: React.FC<AACControlsProps> = ({
                                 className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5500FF]"
                             />
                             <span className="text-xs text-gray-500 w-8 text-right">
-                                {localSymbolScale}
+                                {(localSymbolScale / 10).toFixed(1)}x
                             </span>
                         </div>
                     </div>

@@ -75,7 +75,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
         const isImageUrl = (aacData?.emoji?.startsWith('http') || aacData?.emoji?.startsWith('data:image')) && !imageError;
         return (
             <div
-                className="w-full h-full relative"
+                className="w-full h-full relative overflow-visible"
                 style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid #E5E7EB',
@@ -96,7 +96,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                             src={aacData?.emoji}
                             alt={aacData?.label || ''}
                             crossOrigin="anonymous"
-                            className="shrink-0"
+                            className="shrink-0 !max-w-none !max-h-none"
                             style={{
                                 width: size * 0.6,
                                 height: size * 0.6,
@@ -122,7 +122,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
 
     return (
         <div
-            className="w-full h-full relative"
+            className="w-full h-full relative overflow-visible"
             style={{
                 backgroundColor: element.backgroundColor || '#ffffff',
                 border: element.borderWidth ? `${element.borderWidth}px solid ${element.borderColor}` : '2px solid #E5E7EB',
@@ -177,7 +177,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                             src={aacData.emoji}
                             alt={aacData.label || ''}
                             crossOrigin="anonymous"
-                            className="shrink-0"
+                            className="shrink-0 !max-w-none !max-h-none"
                             style={{
                                 width: size * symbolScale,
                                 height: size * symbolScale,
