@@ -194,15 +194,18 @@ export const useAAC = ({
 
     // AAC 카드 선택 핸들러
     const handleSelectAACCard = useCallback(async (card: AACCard) => {
-        // 원본 이모지 (fallback용)
+        // 원본 이모지 (최후의 fallback용)
         const originalEmoji = card.emoji || '❓';
 
-        // ★ 이미지를 base64로 미리 변환 (PDF 내보내기 CORS 문제 해결)
-        // 변환 실패 시 원본 이모지를 사용
+        // ★ 이미지 결정 로직:
+        // 1. base64 변환 시도 (PDF 내보내기용)
+        // 2. 실패 시 원본 Cloudinary URL 사용 (화면 표시는 됨)
+        // 3. URL도 없으면 이모지 사용
         let imageToUse: string;
         if (card.cloudinaryUrl) {
-            const base64Result = await convertCloudinaryToBase64(card.cloudinaryUrl, originalEmoji);
-            imageToUse = base64Result || originalEmoji;
+            const base64Result = await convertCloudinaryToBase64(card.cloudinaryUrl, undefined);
+            // base64 변환 성공하면 사용, 실패하면 원본 URL 사용
+            imageToUse = base64Result || card.cloudinaryUrl;
         } else {
             imageToUse = originalEmoji;
         }
