@@ -138,9 +138,7 @@ export const Main: React.FC = () => {
   // 6. Landing -> Dashboard (Open Storage)
   const handleOpenStorage = () => {
     if (!user) {
-      if (confirm('로그인이 필요한 기능입니다. 로그인하시겠습니까?')) {
-        setShowLoginModal(true);
-      }
+      setShowLoginModal(true);
       return;
     }
     setCurrentStudent(null);

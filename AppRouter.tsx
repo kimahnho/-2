@@ -48,9 +48,7 @@ const LandingRoute: React.FC<{ user: AuthUser | null; onLogin: () => void }> = (
 
     const handleOpenStorage = () => {
         if (!user) {
-            if (confirm('로그인이 필요한 기능입니다. 로그인하시겠습니까?')) {
-                navigate('/login');
-            }
+            navigate('/login');
             return;
         }
         navigate('/dashboard');
