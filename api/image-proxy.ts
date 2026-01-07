@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
  * 이미지 프록시 API - CORS 문제 해결용
- * 외부 이미지를 가져와서 그대로 반환 (CORS 헤더 추가)
+ * 외부 이미지를 가져와서 base64 Data URL로 변환하여 JSON 반환
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // CORS 헤더 설정
@@ -39,10 +39,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const contentType = response.headers.get('content-type') || 'image/png';
         const buffer = await response.arrayBuffer();
 
-        // 이미지 바이너리를 직접 반환 (CORS 헤더와 함께)
-        res.setHeader('Content-Type', contentType);
+        // 바이너리를 base64로 변환
+        const base64 = Buffer.from(buffer).toString('base64');
+        const dataUrl = `data:${contentType};base64,${base64}`;
+
+        // JSON으로 반환 (클라이언트가 기대하는 형식)
         res.setHeader('Cache-Control', 'public, max-age=31536000');
-        return res.status(200).send(Buffer.from(buffer));
+        return res.status(200).json({ dataUrl });
     } catch (error) {
         console.error('Image proxy error:', error);
         return res.status(500).json({ error: 'Internal server error' });
