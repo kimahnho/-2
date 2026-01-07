@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Verify AAC Images V2</title>
+</head>
+
+<body>
+    <h1>Verifying AAC Images V2...</h1>
+    <div id="status">Running...</div>
+    <div id="results"></div>
+    <script>
+        const baseUrl = 'https://res.cloudinary.com/dabbfycew/image/upload/muru-cards/AAC-cards/illustration/verb/aac_';
+
+        // Base valid ones (42)
+        const knownValid = [
+            "break_a_glass", "carry", "close", "cross", "draw", "enter", "finish", "fix", "fly", "go",
+            "go_around", "go_down", "go_out", "have", "help", "hurt", "insert", "knock", "lie", "lift",
+            "listen", "peel", "place", "play", "point", "press", "pull", "pull_out", "put_in",
+            "put_in_candle", "run", "share", "sing", "snap", "spin", "study", "throw", "tickle",
+            "turn", "turn_off", "walk", "wipe"
+        ];
+
+        // Targets to find (Missing 5-ish)
+        // Suspects: Jump, Stop, Stand, Bite, Run_off/Run_stay/Walk_relay...
+        const guesses = [
+            // Jump variations
+            'jump', 'jumping', 'jump_up', 'jump_down', 'jump_off', 'hop', 'leap', 'skip',
+            // Stand variations
+            'stand', 'standing', 'stand_up', 'stay', 'stood',
+            // Stop variations
+            'stop', 'stopped', 'stopping', 'halt', 'wait_stop', 'freeze',
+            // Bite variations
+            'bite', 'biting', 'chew', 'chewing', 'eat_bite', 'mouth',
+            // Run/Walk variations
+            'run_away', 'run_off', 'run_out', 'flee', 'escape', 'chase',
+            'run_place', 'run_in_place', 'run_stay', 'jog', 'jogging',
+            'walk_relay', 'relay', 'pass_baton', 'race', 'walk_race', 'walk_fast', 'march',
+            // Put/Pull variations
+            'put_in_circle', 'put_circle', 'put_shape', 'insert_circle',
+            'pull_hair', 'pull_head', 'hair_pull', 'head_pull',
+            // Open variations
+            'open', 'opening', 'open_door', 'opened',
+            // Cover/Close variations
+            'cover', 'covering', 'hide', 'hiding', 'close_door',
+            // Fight/Hit variations
+            'fight', 'fighting', 'hit', 'hitting', 'punch', 'kick', 'kicking', 'box', 'boxing',
+            // Hug variations
+            'hug', 'hugging', 'embracing', 'hold', 'holding',
+            // Plant variations
+            'plant', 'planting', 'grow', 'growing', 'flower',
+            // Hot/Cold
+            'hot', 'burn', 'burning', 'cold', 'freeze',
+            // Other randoms from visual memory
+            'news', 'newspaper', 'read_news',
+            'mess', 'make_mess', 'spill',
+            'shout', 'yell', 'scream', 'cry', 'crying',
+            'laugh', 'laughing', 'smile', 'smiling',
+            'sleep', 'sleeping', 'nap',
+            'sit', 'sitting', 'sat',
+            'swim', 'swimming',
+            'wash', 'washing',
+            'clean', 'cleaning',
+            'cook', 'cooking',
+            'drink', 'drinking',
+            'wear', 'wearing', 'dress', 'dressing',
+            'undress', 'undressing',
+            'ride', 'riding',
+            'give', 'giving',
+            'receive', 'receiving', 'get', 'getting',
+            'buy', 'buying',
+            'sell', 'selling',
+            'make', 'making',
+            'break', 'breaking',
+            'cut', 'cutting',
+            'stick', 'sticking', 'glue',
+            'push', 'pushing',
+            'catch', 'catching',
+            'see', 'seeing', 'look', 'looking', 'watch', 'watching',
+            'hear', 'hearing',
+            'smell', 'smelling',
+            'taste', 'tasting',
+            'touch', 'touching',
+            'think', 'thinking',
+            'know', 'knowing', 'idea',
+            'want', 'wanting',
+            'love', 'loving',
+            'like', 'liking',
+            'hate', 'hating',
+            'angry', 'mad'
+        ];
+
+        const allCandidates = [...new Set([...knownValid, ...guesses])];
+        const valid = [];
+        const invalid = [];
+        let completed = 0;
+
+        function checkImage(slug) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    valid.push(slug);
+                    resolve(true);
+                };
+                img.onerror = () => {
+                    invalid.push(slug);
+                    resolve(false);
+                };
+                img.src = `${baseUrl}${slug}.png`;
+            });
+        }
+
+        async function runChecks() {
+            const chunkSize = 20;
+            for (let i = 0; i < allCandidates.length; i += chunkSize) {
+                const chunk = allCandidates.slice(i, i + chunkSize);
+                await Promise.all(chunk.map(checkImage));
+                completed += chunk.length;
+                document.getElementById('status').innerText = `Checked ${completed} / ${allCandidates.length}`;
+            }
+
+            document.getElementById('status').innerText = 'Done!';
+            valid.sort();
+            document.getElementById('results').innerHTML = `<pre id="final-list">${JSON.stringify(valid, null, 2)}</pre>`;
+            console.log('Final Invalid:', invalid.sort());
+        }
+
+        runChecks();
+    </script>
+</body>
+
+</html>

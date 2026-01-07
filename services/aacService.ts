@@ -24,11 +24,13 @@ export const getCloudinaryUrl = (imagePath: string): string => {
     return `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${imagePath}?${CLOUDINARY_CONFIG.cacheVersion}`;
 };
 
+
 /**
  * Fetch all AAC cards
  * @param category Optional category to filter
  */
 export const fetchAACCards = async (category?: string): Promise<AACCard[]> => {
+    // DB에서 조회
     let query = supabase
         .from('aac_cards')
         .select('*')

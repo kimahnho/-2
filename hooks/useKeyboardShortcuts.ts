@@ -35,6 +35,9 @@ export const useKeyboardShortcuts = (project: ProjectActions) => {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Prevent repeated events (e.g. holding down key) checks
+            if (e.repeat) return;
+
             // 1. Handle Escape key (Highest Priority)
             if (e.key === 'Escape') {
                 e.preventDefault();

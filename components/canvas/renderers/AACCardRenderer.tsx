@@ -14,9 +14,15 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
 }) => {
     const [isEditingLabel, setIsEditingLabel] = React.useState(false);
     const [labelValue, setLabelValue] = React.useState('');
+    const [imageError, setImageError] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     const aacData = element.metadata?.aacData;
+
+    // Reset image error state when emoji URL changes
+    React.useEffect(() => {
+        setImageError(false);
+    }, [aacData?.emoji]);
     const isFilled = aacData?.isFilled;
     const isSentenceItem = element.metadata?.isAACSentenceItem;
     const size = Math.min(element.width, element.height);
@@ -66,7 +72,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
 
     // 문장 영역 아이템 (작은 크기)
     if (isSentenceItem) {
-        const isEmojiUrl = aacData?.emoji?.startsWith('http');
+        const isEmojiUrl = aacData?.emoji?.startsWith('http') && !imageError;
         return (
             <div
                 className="w-full h-full relative overflow-hidden"
@@ -91,6 +97,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                             alt={aacData?.label || ''}
                             crossOrigin="anonymous"
                             style={{ width: size * 0.6, height: size * 0.6, objectFit: 'contain' }}
+                            onError={() => setImageError(true)}
                         />
                     ) : (
                         <span style={{ fontSize: size * 0.45, lineHeight: 1 }}>
@@ -158,7 +165,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                 }}
             >
                 {isFilled && aacData?.emoji ? (
-                    aacData.emoji.startsWith('http') ? (
+                    aacData.emoji.startsWith('http') && !imageError ? (
                         <img
                             src={aacData.emoji}
                             alt={aacData.label || ''}
@@ -168,6 +175,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                                 height: size * symbolScale,
                                 objectFit: 'contain'
                             }}
+                            onError={() => setImageError(true)}
                         />
                     ) : (
                         <span style={{ fontSize: size * symbolScale }}>

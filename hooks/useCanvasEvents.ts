@@ -156,7 +156,13 @@ export const useCanvasEvents = ({
     newSelectedIds = Array.from(new Set(newSelectedIds));
 
     onSetSelectedIds(newSelectedIds);
-    onSetEditingId(null);
+
+    // If clicking on an already-selected text element, enter editing mode
+    if (clickedEl.type === 'text' && selectedIds.length === 1 && selectedIds[0] === id) {
+      onSetEditingId(id);
+    } else {
+      onSetEditingId(null);
+    }
 
     // Prepare Drag
     const initialPositions: Record<string, { x: number, y: number }> = {};

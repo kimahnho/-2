@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Verify AAC Images</title>
+</head>
+
+<body>
+    <h1>Verifying AAC Images...</h1>
+    <div id="status">Running...</div>
+    <div id="results"></div>
+    <script>
+        const baseUrl = 'https://res.cloudinary.com/dabbfycew/image/upload/muru-cards/AAC-cards/illustration/verb/aac_';
+        const candidates = [
+            // Standard/Likely ones
+            'break_a_glass', 'wipe', 'walk', 'walk_stop', 'wait_stay', 'turn', 'turn_off',
+            'tickle', 'spin', 'study', 'throw', 'snap', 'sing', 'share', 'run',
+            'put_in_candle', 'put_out_candle', 'put_in', 'pull', 'pull_out', 'pull_hair',
+            'press', 'point', 'play', 'place', 'peel', 'listen', 'lift', 'lie',
+            'knock', 'insert', 'hurt', 'help', 'have', 'go', 'go_out', 'go_around',
+            'go_down', 'fly', 'finish', 'fix', 'fall_or_trip_a_brick', 'draw', 'cross',
+            'close', 'enter', 'crawl', 'carry',
+
+            // Previous 49 (some might be valid)
+            'drink', 'eat', 'sleep', 'teach', 'wash', 'read', 'write', 'dance', 'cook', 'clean',
+            'swim', 'jump', 'sit', 'stand', 'wait', 'meet', 'love', 'like', 'hate', 'cry',
+            'laugh', 'angry', 'open', 'wear', 'undress', 'ride', 'get_off', 'give', 'receive',
+            'buy', 'sell', 'make', 'break', 'cut', 'stick', 'push', 'catch', 'kick', 'hit',
+            'see', 'hear', 'smell', 'taste', 'touch', 'think', 'know', 'unknown', 'want',
+
+            // Permutations/Guesses
+            'pick', 'pickle', 'pick_up', 'pen', 'pencil', 'news', 'new', 'mess', 'hot', 'cold',
+            'hug', 'hold', 'fight', 'box', 'run_away', 'run_off', 'run_stay', 'run_stop',
+            'walk_relay', 'relay', 'walk_around', 'turn_on', 'turn_around', 'put_on', 'put_down',
+            'fall', 'trip', 'bite', 'chew'
+        ];
+
+        // Unique candidates
+        const uniqueCandidates = [...new Set(candidates)];
+        const valid = [];
+        const invalid = [];
+        let completed = 0;
+
+        function checkImage(slug) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    valid.push(slug);
+                    resolve(true);
+                };
+                img.onerror = () => {
+                    invalid.push(slug);
+                    resolve(false);
+                };
+                img.src = `${baseUrl}${slug}.png`;
+            });
+        }
+
+        async function runChecks() {
+            // Run in chunks
+            const chunkSize = 10;
+            for (let i = 0; i < uniqueCandidates.length; i += chunkSize) {
+                const chunk = uniqueCandidates.slice(i, i + chunkSize);
+                await Promise.all(chunk.map(checkImage));
+                completed += chunk.length;
+                document.getElementById('status').innerText = `Checked ${completed} / ${uniqueCandidates.length}`;
+            }
+
+            document.getElementById('status').innerText = 'Done!';
+
+            // Display valid list sorted
+            valid.sort();
+            document.getElementById('results').innerHTML = `<pre id="final-list">${JSON.stringify(valid, null, 2)}</pre>`;
+
+            // Also log invalid for debugging
+            console.log('Invalid:', invalid);
+        }
+
+        runChecks();
+    </script>
+</body>
+
+</html>

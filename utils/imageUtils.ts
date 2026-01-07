@@ -170,9 +170,10 @@ export const isFileTooLarge = (file: File, maxMB: number = 10): boolean => {
  * Cloudinary URL을 base64 Data URL로 변환
  * 서버 사이드 프록시를 통해 CORS 문제 해결
  * @param imageUrl Cloudinary 이미지 URL
- * @returns base64 Data URL (실패 시 원본 URL)
+ * @param fallbackEmoji 이미지 로드 실패 시 반환할 이모지 (선택)
+ * @returns base64 Data URL (실패 시 fallbackEmoji 또는 null)
  */
-export const convertCloudinaryToBase64 = async (imageUrl: string): Promise<string> => {
+export const convertCloudinaryToBase64 = async (imageUrl: string, fallbackEmoji?: string): Promise<string | null> => {
     // 이미 base64면 그대로 반환
     if (!imageUrl || imageUrl.startsWith('data:')) {
         return imageUrl;
@@ -189,8 +190,8 @@ export const convertCloudinaryToBase64 = async (imageUrl: string): Promise<strin
         const response = await fetch(proxyUrl);
 
         if (!response.ok) {
-            console.warn(`[ImageUtils] Proxy failed for: ${imageUrl}`);
-            return imageUrl;
+            console.warn(`[ImageUtils] Proxy failed for: ${imageUrl}, status: ${response.status}`);
+            return fallbackEmoji || null;
         }
 
         const data = await response.json();
@@ -200,9 +201,11 @@ export const convertCloudinaryToBase64 = async (imageUrl: string): Promise<strin
             return data.dataUrl;
         }
 
-        return imageUrl;
+        // 이미지 변환 실패 시 fallback 반환
+        console.warn(`[ImageUtils] No dataUrl in response for: ${imageUrl}`);
+        return fallbackEmoji || null;
     } catch (error) {
         console.warn(`[ImageUtils] Failed to convert: ${imageUrl}`, error);
-        return imageUrl;
+        return fallbackEmoji || null;
     }
 };
