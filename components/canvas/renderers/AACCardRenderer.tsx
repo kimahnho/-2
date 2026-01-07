@@ -96,7 +96,14 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                             src={aacData?.emoji}
                             alt={aacData?.label || ''}
                             crossOrigin="anonymous"
-                            style={{ width: size * 0.6, height: size * 0.6, objectFit: 'contain' }}
+                            className="shrink-0"
+                            style={{
+                                width: size * 0.6,
+                                height: size * 0.6,
+                                objectFit: 'contain',
+                                maxWidth: 'none',
+                                maxHeight: 'none'
+                            }}
                             onError={() => setImageError(true)}
                         />
                     ) : (
@@ -170,10 +177,13 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                             src={aacData.emoji}
                             alt={aacData.label || ''}
                             crossOrigin="anonymous"
+                            className="shrink-0"
                             style={{
                                 width: size * symbolScale,
                                 height: size * symbolScale,
-                                objectFit: 'contain'
+                                objectFit: 'contain',
+                                maxWidth: 'none',
+                                maxHeight: 'none'
                             }}
                             onError={() => setImageError(true)}
                         />
