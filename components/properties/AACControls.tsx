@@ -188,7 +188,7 @@ export const AACControls: React.FC<AACControlsProps> = ({
                             <input
                                 type="range"
                                 min="1"
-                                max="20"
+                                max="30"
                                 step="1"
                                 value={localSymbolScale}
                                 onChange={(e) => {

@@ -75,7 +75,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
         const isImageUrl = (aacData?.emoji?.startsWith('http') || aacData?.emoji?.startsWith('data:image')) && !imageError;
         return (
             <div
-                className="w-full h-full relative overflow-hidden"
+                className="w-full h-full relative"
                 style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid #E5E7EB',
@@ -115,7 +115,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
 
     return (
         <div
-            className="w-full h-full relative overflow-hidden"
+            className="w-full h-full relative"
             style={{
                 backgroundColor: element.backgroundColor || '#ffffff',
                 border: element.borderWidth ? `${element.borderWidth}px solid ${element.borderColor}` : '2px solid #E5E7EB',
