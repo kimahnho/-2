@@ -31,8 +31,8 @@ export const useProject = (initialData?: ProjectData) => {
     }
   }, [initialData]);
 
-  const elements = projectData.elements;
-  const pages = projectData.pages;
+  const elements = projectData?.elements || [];
+  const pages = projectData?.pages || [{ id: 'page-1' }];
 
   // Active Page & Selection State
   const [activePageId, setActivePageId] = useState<string>('page-1');

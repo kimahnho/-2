@@ -60,72 +60,82 @@ const serialize = (node: Descendant): string => {
 };
 
 const deserialize = (html: string): Descendant[] => {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const body = doc.body;
+    try {
+        if (!html) return [{ type: 'paragraph', children: [{ text: '' }] }];
 
-    const deserializeNode = (el: Node): Descendant[] => {
-        if (el.nodeType === 3) { // Text node
-            return [{ text: el.textContent || '' }];
-        } else if (el.nodeType !== 1) {
-            return [];
-        }
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const body = doc.body;
 
-        const node = el as HTMLElement;
-        let children: Descendant[] = Array.from(node.childNodes).flatMap(deserializeNode);
-
-        // 빈 텍스트 노드 처리 ( Slate는 최소 하나의 텍스트 자식 필요)
-        if (children.length === 0) {
-            children = [{ text: '' }];
-        }
-
-        // Apply styles based on tags
-        if (node.nodeName === 'STRONG' || node.nodeName === 'B' || node.style.fontWeight === 'bold' || Number(node.style.fontWeight) >= 700) {
-            children = children.map(c => Text.isText(c) ? { ...c, bold: true } : c);
-        }
-        if (node.nodeName === 'EM' || node.nodeName === 'I' || node.style.fontStyle === 'italic') {
-            children = children.map(c => Text.isText(c) ? { ...c, italic: true } : c);
-        }
-        if (node.nodeName === 'U' || node.style.textDecoration.includes('underline')) {
-            children = children.map(c => Text.isText(c) ? { ...c, underline: true } : c);
-        }
-        if (node.nodeName === 'S' || node.nodeName === 'DEL' || node.nodeName === 'STRIKE' || node.style.textDecoration.includes('line-through')) {
-            children = children.map(c => Text.isText(c) ? { ...c, strikethrough: true } : c);
-        }
-
-        // Style attributes
-        if (node.style.color) {
-            children = children.map(c => Text.isText(c) ? { ...c, color: node.style.color } : c);
-        }
-        if (node.style.fontFamily) {
-            children = children.map(c => Text.isText(c) ? { ...c, fontFamily: node.style.fontFamily.replace(/['"]/g, '') } : c);
-        }
-        if (node.style.fontSize) {
-            const size = parseInt(node.style.fontSize);
-            if (!isNaN(size)) {
-                children = children.map(c => Text.isText(c) ? { ...c, fontSize: size } : c);
+        const deserializeNode = (el: Node): Descendant[] => {
+            if (el.nodeType === 3) { // Text node
+                return [{ text: el.textContent || '' }];
+            } else if (el.nodeType !== 1) {
+                return [];
             }
+
+            const node = el as HTMLElement;
+            let children: Descendant[] = Array.from(node.childNodes).flatMap(deserializeNode);
+
+            // 빈 텍스트 노드 처리 ( Slate는 최소 하나의 텍스트 자식 필요)
+            if (children.length === 0) {
+                children = [{ text: '' }];
+            }
+
+            // Apply styles based on tags
+            if (node.nodeName === 'STRONG' || node.nodeName === 'B' || node.style.fontWeight === 'bold' || Number(node.style.fontWeight) >= 700) {
+                children = children.map(c => Text.isText(c) ? { ...c, bold: true } : c);
+            }
+            if (node.nodeName === 'EM' || node.nodeName === 'I' || node.style.fontStyle === 'italic') {
+                children = children.map(c => Text.isText(c) ? { ...c, italic: true } : c);
+            }
+            if (node.nodeName === 'U' || node.style.textDecoration.includes('underline')) {
+                children = children.map(c => Text.isText(c) ? { ...c, underline: true } : c);
+            }
+            if (node.nodeName === 'S' || node.nodeName === 'DEL' || node.nodeName === 'STRIKE' || node.style.textDecoration.includes('line-through')) {
+                children = children.map(c => Text.isText(c) ? { ...c, strikethrough: true } : c);
+            }
+
+            // Style attributes
+            if (node.style.color) {
+                children = children.map(c => Text.isText(c) ? { ...c, color: node.style.color } : c);
+            }
+            if (node.style.fontFamily) {
+                children = children.map(c => Text.isText(c) ? { ...c, fontFamily: node.style.fontFamily.replace(/['"]/g, '') } : c);
+            }
+            if (node.style.fontSize) {
+                const size = parseInt(node.style.fontSize);
+                if (!isNaN(size)) {
+                    children = children.map(c => Text.isText(c) ? { ...c, fontSize: size } : c);
+                }
+            }
+
+            // Block elements
+            if (node.nodeName === 'P' || node.nodeName === 'DIV') {
+                return [{
+                    type: 'paragraph',
+                    align: (node.style.textAlign as any) || undefined,
+                    children
+                }];
+            }
+
+            return children;
+        };
+
+        // 만약 빈 내용이면 기본값 반환
+        if (!html.trim()) {
+            return [{ type: 'paragraph', children: [{ text: '' }] }];
         }
 
-        // Block elements
-        if (node.nodeName === 'P' || node.nodeName === 'DIV') {
-            return [{
-                type: 'paragraph',
-                align: (node.style.textAlign as any) || undefined,
-                children
-            }];
-        }
+        const nodes = Array.from(body.childNodes).flatMap(deserializeNode);
 
-        return children;
-    };
+        // Ensure standard block structure and valid children
+        if (nodes.length === 0) return [{ type: 'paragraph', children: [{ text: '' }] }];
 
-    // 만약 빈 내용이면 기본값 반환
-    if (!html.trim()) {
+        return nodes.map(n => Text.isText(n) ? { type: 'paragraph', children: [n] } : n);
+    } catch (e) {
+        console.error("Failed to deserialize HTML:", e);
         return [{ type: 'paragraph', children: [{ text: '' }] }];
     }
-
-    const nodes = Array.from(body.childNodes).flatMap(deserializeNode);
-    // Ensure standard block structure
-    return nodes.map(n => Text.isText(n) ? { type: 'paragraph', children: [n] } : n);
 };
 
 interface RichTextEditorProps {

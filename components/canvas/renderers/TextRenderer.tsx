@@ -3,6 +3,30 @@ import React from 'react';
 import { DesignElement, TextCommand, TextStyle } from '../../../types/editor.types';
 import { RichTextEditor } from '../RichTextEditor';
 
+class EditorErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+    constructor(props: any) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error("TextEditor Crash:", error, errorInfo);
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div style={{ color: 'red', fontSize: '12px', padding: '8px', border: '1px solid red', background: 'white', zIndex: 1000 }}>
+                    에러 발생: {this.state.error?.message}
+                    <button onClick={() => this.setState({ hasError: false })} style={{ marginLeft: '8px', textDecoration: 'underline', cursor: 'pointer' }}>재시도</button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
 interface TextRendererProps {
     element: DesignElement;
     isEditing: boolean;
@@ -14,6 +38,8 @@ interface TextRendererProps {
     onStyleChange?: (style: TextStyle) => void;
     onTab?: () => void;
 }
+
+
 
 export const TextRenderer: React.FC<TextRendererProps> = (props) => {
     const {
@@ -118,38 +144,40 @@ export const TextRenderer: React.FC<TextRendererProps> = (props) => {
                 {/* Wrap Editor in a div we can measure */}
                 {/* Remove height: '100%' to allow parent (Flex) to vertically center this container */}
                 <div ref={contentRef} style={{ width: '100%' }}>
-                    <RichTextEditor
-                        initialHtml={
-                            element.richTextHtml ||
-                            ((['제목 텍스트 추가', '본문 텍스트 내용을 입력하세요', '본문 텍스트 추가'].includes(element.content || ''))
-                                ? ''
-                                : (element.content === '“○○”을 찾아봐!')
-                                    ? '“ ”을 찾아봐!'
-                                    : element.content || '')
-                        }
-                        onChange={(html) => {
-                            // Atomic update of both content representations
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = html;
-                            const content = tempDiv.textContent || '';
+                    <EditorErrorBoundary>
+                        <RichTextEditor
+                            initialHtml={
+                                element.richTextHtml ||
+                                ((['제목 텍스트 추가', '본문 텍스트 내용을 입력하세요', '본문 텍스트 추가'].includes(element.content || ''))
+                                    ? ''
+                                    : (element.content === '“○○”을 찾아봐!')
+                                        ? '“ ”을 찾아봐!'
+                                        : element.content || '')
+                            }
+                            onChange={(html) => {
+                                // Atomic update of both content representations
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = html;
+                                const content = tempDiv.textContent || '';
 
-                            onUpdate?.({
-                                content,
-                                richTextHtml: html
-                            });
-                        }}
-                        onBlur={onBlur}
-                        command={command}
-                        onStyleChange={onStyleChange}
-                        defaultFontFamily={element.fontFamily || "'Gowun Dodum', sans-serif"}
-                        defaultFontSize={element.fontSize || 16}
-                        defaultColor={element.color || '#000000'}
-                        textAlign={element.textAlign || 'center'}
-                        textareaRef={textareaRef}
-                        initialCursorOffset={element.content === '“○○”을 찾아봐!' ? 2 : undefined}
-                        onTab={props.onTab}
-                    // Removed internal onContentSizeChange, using local ResizeObserver
-                    />
+                                onUpdate?.({
+                                    content,
+                                    richTextHtml: html
+                                });
+                            }}
+                            onBlur={onBlur}
+                            command={command}
+                            onStyleChange={onStyleChange}
+                            defaultFontFamily={element.fontFamily || "'Gowun Dodum', sans-serif"}
+                            defaultFontSize={element.fontSize || 16}
+                            defaultColor={element.color || '#000000'}
+                            textAlign={element.textAlign || 'center'}
+                            textareaRef={textareaRef}
+                            initialCursorOffset={element.content === '“○○”을 찾아봐!' ? 2 : undefined}
+                            onTab={props.onTab}
+                        // Removed internal onContentSizeChange, using local ResizeObserver
+                        />
+                    </EditorErrorBoundary>
                 </div>
             </div>
         );
