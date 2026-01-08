@@ -273,11 +273,11 @@ export const useAAC = ({
                     label: card.label,
                     isFilled: true,
                     isCloudinaryImage: !!card.cloudinaryUrl,
-                    fontSize: 20,
-                    fontWeight: 400,
-                    color: '#000000',
-                    symbolScale: 0.7,
-                    labelPosition: 'below' as 'above' | 'below' | 'none'
+                    fontSize: selectedEl?.metadata?.aacData?.fontSize || 20,
+                    fontWeight: selectedEl?.metadata?.aacData?.fontWeight || 400,
+                    color: selectedEl?.metadata?.aacData?.color || '#000000',
+                    symbolScale: selectedEl?.metadata?.aacData?.symbolScale || 0.7,
+                    labelPosition: (selectedEl?.metadata?.aacData?.labelPosition as 'above' | 'below' | 'none') || 'below'
                 }
             }
         };

@@ -37,7 +37,8 @@ const generateGridRow = (startY: number, rowIndex: number) => {
                     isPlaceholder: true,
                     isFilled: false,
                     label: '',
-                    emoji: ''
+                    emoji: '',
+                    labelPosition: 'none'
                 }
             }
         } as Partial<DesignElement>,

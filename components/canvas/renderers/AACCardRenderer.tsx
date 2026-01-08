@@ -229,7 +229,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                             }}
                         >
                             <span className="text-center text-gray-700 font-medium whitespace-pre-wrap px-2" style={{ fontSize: size * 0.12 }}>
-                                {aacData.emoji || '더블 클릭하여\n이미지를 업로드하세요'}
+                                {aacData.emoji || ''}
                             </span>
                         </div>
                     </>
