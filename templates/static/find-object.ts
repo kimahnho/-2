@@ -1,4 +1,5 @@
-import thumbnailImg from '../../src/assets/images/find-object-thumb.png';
+// @ts-ignore
+import thumbnailImg from '../../src/assets/images/find-object-thumb.svg';
 import { DesignElement } from '../../types';
 import { TemplateDefinition } from '../types';
 
