@@ -23,10 +23,15 @@ export const useProject = (initialData?: ProjectData) => {
   // Effect to reset history when initialData changes (e.g., loading a different project)
   useEffect(() => {
     if (initialData) {
-      resetHistory(initialData);
+      // Ensure initialData has required structure before resetting
+      const safeData = {
+        elements: initialData.elements || [],
+        pages: initialData.pages || [{ id: 'page-1' }]
+      };
+      resetHistory(safeData);
       // Ensure we set active page to the first page of loaded project
-      if (initialData.pages.length > 0) {
-        setActivePageId(initialData.pages[0].id);
+      if (safeData.pages.length > 0) {
+        setActivePageId(safeData.pages[0].id);
       }
     }
   }, [initialData]);
