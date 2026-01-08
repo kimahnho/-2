@@ -321,7 +321,7 @@ export const CanvasArea: React.FC<Props> = (props) => {
                   })}
 
                   {/* Unified Selection Overlay */}
-                  {!readOnly && isActive && (
+                  {!readOnly && isActive && !editingId && (
                     <SelectionOverlay
                       elements={elements}
                       selectedIds={selectedIds}
