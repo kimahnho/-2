@@ -184,9 +184,14 @@ export const TextRenderer: React.FC<TextRendererProps> = (props) => {
     }
 
     // View Mode
-    // No need to strip inline styles - richTextHtml no longer contains them
-    const htmlContent = element.richTextHtml || (element.content ? element.content.replace(/\n/g, '<br/>') : '더블 클릭하여 편집');
-    const isHtml = element.richTextHtml || (element.content && /<[a-z][\s\S]*>/i.test(element.content));
+    // Check if richTextHtml has actual content (not just empty tags like <p></p>)
+    const isRichTextEmpty = !element.richTextHtml ||
+        element.richTextHtml.replace(/<[^>]*>/g, '').trim() === '';
+
+    const htmlContent = isRichTextEmpty
+        ? (element.content ? element.content.replace(/\n/g, '<br/>') : '더블 클릭하여 편집')
+        : element.richTextHtml;
+    const isHtml = !isRichTextEmpty || (element.content && /<[a-z][\s\S]*>/i.test(element.content));
 
     return (
         <div
