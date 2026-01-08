@@ -77,8 +77,9 @@ export const CanvasElement: React.FC<Props> = ({
 
     // Determine which renderer to use
     const isAAC = element.type === 'card' && (element.metadata?.isAACCard || element.metadata?.isAACSentenceItem);
+    const isEmotionCard = element.type === 'card' && element.metadata?.isEmotionCard;
     const isImageOrShape = element.type === 'image' || element.type === 'shape' || element.type === 'circle' ||
-        (element.type === 'card' && !element.metadata?.isAACCard && !element.metadata?.isAACSentenceItem);
+        (element.type === 'card' && !element.metadata?.isAACCard && !element.metadata?.isAACSentenceItem && !element.metadata?.isEmotionCard);
     const isLine = element.type === 'line' || element.type === 'arrow';
     const imageUrl = element.type === 'image' ? element.content : element.backgroundImage;
 
@@ -137,6 +138,39 @@ export const CanvasElement: React.FC<Props> = ({
                         onUpdate={(val) => onUpdate?.(val)}
                         onCommit={(val) => onUpdate?.(val)}
                     />
+                )}
+
+                {/* Emotion Card */}
+                {isEmotionCard && (
+                    <div
+                        className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center"
+                        style={{
+                            backgroundColor: element.backgroundColor || '#FFF0F5',
+                            border: element.borderWidth ? `${element.borderWidth}px solid ${element.borderColor}` : '2px solid #F472B6',
+                            borderRadius: element.borderRadius || 16,
+                        }}
+                    >
+                        {element.metadata?.emotionData?.imageUrl ? (
+                            <>
+                                <img
+                                    src={element.metadata.emotionData.imageUrl}
+                                    alt={element.metadata.emotionData.label || ''}
+                                    className="w-full h-3/4 object-contain"
+                                    crossOrigin="anonymous"
+                                />
+                                {element.metadata.emotionData.label && (
+                                    <div className="text-center text-sm font-medium text-gray-700 mt-1">
+                                        {element.metadata.emotionData.label}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="text-center text-pink-300">
+                                <div className="text-3xl mb-1">😊</div>
+                                <div className="text-xs">감정 선택</div>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Image/Shape - Edit Mode */}
