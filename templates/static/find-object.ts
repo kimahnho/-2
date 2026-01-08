@@ -1,3 +1,4 @@
+import thumbnailImg from '../../src/assets/images/find-object-thumb.png';
 import { DesignElement } from '../../types';
 import { TemplateDefinition } from '../types';
 
@@ -5,7 +6,7 @@ export const FIND_OBJECT_TEMPLATE: TemplateDefinition = {
     id: 't4',
     name: '사물 찾기',
     category: 'cognitive',
-    thumbnail: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=100&h=140&fit=crop',
+    thumbnail: thumbnailImg,
     elements: [
         // 1. Background Shapes (Grid)
         // Row 1
