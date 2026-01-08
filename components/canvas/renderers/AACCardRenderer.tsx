@@ -223,13 +223,13 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                         <div
                             className="w-full h-full flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
                             style={{ backgroundColor: '#B4C6FC' }}
-                            onClick={(e) => {
+                            onDoubleClick={(e) => {
                                 e.stopPropagation();
                                 fileInputRef.current?.click();
                             }}
                         >
                             <span className="text-center text-gray-700 font-medium whitespace-pre-wrap px-2" style={{ fontSize: size * 0.12 }}>
-                                {aacData.emoji || '여기에 목표 어휘\n이미지를 삽입해보세요'}
+                                {aacData.emoji || '더블 클릭하여\n이미지를 업로드하세요'}
                             </span>
                         </div>
                     </>
