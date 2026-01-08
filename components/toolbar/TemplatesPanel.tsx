@@ -151,18 +151,22 @@ export const TemplatesPanel: React.FC<Props> = ({ onLoadTemplate, onUpdatePageOr
                             >
                                 {/* Template Preview or Thumbnail */}
                                 <div className="absolute inset-0 p-1">
-                                    {template.elements ? (
+                                    {template.thumbnail ? (
+                                        <img
+                                            src={template.thumbnail}
+                                            alt={template.name}
+                                            className="w-full h-full object-cover rounded-lg opacity-80"
+                                        />
+                                    ) : template.elements ? (
                                         <TemplatePreview
                                             elements={template.elements as Partial<DesignElement>[]}
                                             width={110}
                                             height={146}
                                         />
                                     ) : (
-                                        <img
-                                            src={template.thumbnail}
-                                            alt={template.name}
-                                            className="w-full h-full object-cover rounded-lg opacity-80"
-                                        />
+                                        <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <span className="text-xs text-gray-400">No Preview</span>
+                                        </div>
                                     )}
                                 </div>
 

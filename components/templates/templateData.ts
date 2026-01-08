@@ -5,8 +5,8 @@ export const aacTemplate: ProjectData = {
         {
             id: 'page-1',
             orientation: 'portrait',
-            width: 794, // A4 pixel width (approx) @ 96dpi
-            height: 1123, // A4 pixel height
+            width: 794,
+            height: 1123,
             background: '#ffffff',
             elements: []
         }
@@ -16,7 +16,7 @@ export const aacTemplate: ProjectData = {
         {
             id: 'title',
             type: 'text',
-            x: 0, // Center aligned later
+            x: 0,
             y: 80,
             width: 794,
             height: 60,
@@ -44,21 +44,21 @@ export const aacTemplate: ProjectData = {
             backgroundColor: '#ffffff',
             borderColor: '#000000',
             borderWidth: 1,
-            borderRadius: 0, // 이미지처럼 직각에 가까움
+            borderRadius: 0,
             metadata: {
                 isAACCard: true,
                 aacData: {
                     emoji: '',
                     label: '목표 어휘',
                     isFilled: false,
-                    isPlaceholder: true, // Placeholder Mode
+                    isPlaceholder: true,
                     labelPosition: 'below',
                     symbolScale: 0.6,
                     fontSize: 24
                 }
             }
         },
-        // Card 2: Filled Example 1 - 기쁘다 (Top Right)
+        // Card 2: Placeholder (Top Right)
         {
             id: 'card-2',
             type: 'card',
@@ -76,16 +76,17 @@ export const aacTemplate: ProjectData = {
             metadata: {
                 isAACCard: true,
                 aacData: {
-                    emoji: 'https://res.cloudinary.com/dabbfycew/image/upload/muru-cards/emotion-cards/illustration/happy.png', // 기쁨 (예시)
-                    label: '기쁘다',
-                    isFilled: true,
+                    emoji: '',
+                    label: '목표 어휘',
+                    isFilled: false,
+                    isPlaceholder: true,
                     labelPosition: 'below',
-                    symbolScale: 0.7,
+                    symbolScale: 0.6,
                     fontSize: 24
                 }
             }
         },
-        // Card 3: Filled Example 2 - 화나다 (Bottom Left)
+        // Card 3: Placeholder (Bottom Left)
         {
             id: 'card-3',
             type: 'card',
@@ -103,11 +104,12 @@ export const aacTemplate: ProjectData = {
             metadata: {
                 isAACCard: true,
                 aacData: {
-                    emoji: 'https://res.cloudinary.com/dabbfycew/image/upload/muru-cards/emotion-cards/illustration/angry.png', // 화남 (예시)
-                    label: '화나다',
-                    isFilled: true,
+                    emoji: '',
+                    label: '목표 어휘',
+                    isFilled: false,
+                    isPlaceholder: true,
                     labelPosition: 'below',
-                    symbolScale: 0.7,
+                    symbolScale: 0.6,
                     fontSize: 24
                 }
             }
