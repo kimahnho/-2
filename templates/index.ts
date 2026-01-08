@@ -7,6 +7,8 @@ import { WORD_PAIR_TEMPLATE } from './static/word-pair';
 import { AAC_TEMPLATE } from './aac';
 import { STORY_SEQUENCE_TEMPLATE } from './story';
 
+import { AAC_LEARNING_TEMPLATE } from './static/aac-learning';
+
 export const ALL_TEMPLATES: TemplateDefinition[] = [
     // Static Templates (Cognitive)
     VISUAL_SCHEDULE_TEMPLATE,
@@ -16,6 +18,9 @@ export const ALL_TEMPLATES: TemplateDefinition[] = [
     // Static Templates (Emotion)
     EMOTION_INFERENCE_TEMPLATE,
     EMOTION_WORKSHEET_TEMPLATE,
+
+    // Static Templates (AAC)
+    AAC_LEARNING_TEMPLATE,
 
     // Dynamic Templates
     AAC_TEMPLATE,
