@@ -1,6 +1,6 @@
 import { TemplateDefinition } from '../types';
 import { aacTemplate } from '../../components/templates/templateData';
-import thumbnailImg from '../../assets/images/aac-template-thumb.png';
+import thumbnailImg from '../../src/assets/images/aac-template-thumb.png';
 
 export const AAC_LEARNING_TEMPLATE: TemplateDefinition = {
     id: 'aac-learning',
