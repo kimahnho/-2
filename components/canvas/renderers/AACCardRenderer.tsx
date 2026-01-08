@@ -16,6 +16,7 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
     const [labelValue, setLabelValue] = React.useState('');
     const [imageError, setImageError] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const aacData = element.metadata?.aacData;
 
@@ -67,6 +68,45 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             handleLabelBlur();
+        }
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            let imageUrl: string;
+            // Dynamic import to avoid circular dependencies or heavy initial load
+            const { uploadToCloudinary, isCloudinaryConfigured } = await import('../../../services/cloudinaryService');
+            const { compressImage } = await import('../../../utils/imageUtils');
+
+            if (isCloudinaryConfigured()) {
+                const result = await uploadToCloudinary(file, { folder: 'muru-assets/user-uploads', tags: ['aac-custom'] });
+                imageUrl = result.secureUrl;
+            } else {
+                imageUrl = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.8 });
+            }
+
+            if (onUpdate && element.metadata && aacData) {
+                onUpdate({
+                    metadata: {
+                        ...element.metadata,
+                        aacData: {
+                            ...aacData,
+                            emoji: imageUrl,
+                            isFilled: true,
+                            isPlaceholder: undefined // Remove placeholder flag
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Image upload failed:', err);
+            alert('이미지 업로드에 실패했습니다.');
+        } finally {
+            // Reset input so same file can be selected again if needed
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -171,7 +211,29 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                     paddingBottom: labelPosition === 'below' && isFilled ? size * 0.15 : 0
                 }}
             >
-                {isFilled && aacData?.emoji ? (
+                {aacData?.isPlaceholder ? (
+                    <>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+                        <div
+                            className="w-full h-full flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
+                            style={{ backgroundColor: '#B4C6FC' }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRef.current?.click();
+                            }}
+                        >
+                            <span className="text-center text-gray-700 font-medium whitespace-pre-wrap px-2" style={{ fontSize: size * 0.12 }}>
+                                {aacData.emoji || '여기에 목표 어휘\n이미지를 삽입해보세요'}
+                            </span>
+                        </div>
+                    </>
+                ) : isFilled && aacData?.emoji ? (
                     ((aacData.emoji.startsWith('http') || aacData.emoji.startsWith('data:image')) && !imageError) ? (
                         <img
                             src={aacData.emoji}

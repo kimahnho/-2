@@ -61,6 +61,7 @@ export interface DesignElement {
             color?: string;      // 라벨 폰트 색상
             labelPosition?: 'above' | 'below' | 'none'; // 라벨 위치
             symbolScale?: number; // 상징 크기 (0.1 ~ 2.0)
+            isPlaceholder?: boolean; // 이미지 삽입 플레이스홀더 여부
         };
         isAACSentenceArea?: boolean;
         isAACSentenceItem?: boolean;
@@ -74,6 +75,10 @@ export interface DesignElement {
 export interface Page {
     id: string;
     orientation?: 'portrait' | 'landscape';
+    width?: number;
+    height?: number;
+    background?: string;
+    elements?: DesignElement[];
 }
 
 export interface EmotionCard {

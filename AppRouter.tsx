@@ -233,6 +233,24 @@ const EditorRoute: React.FC<{ user: AuthUser | null }> = ({ user }) => {
                 return;
             }
 
+            // Template: AAC Card
+            if (projectId === 'template-aac') {
+                const { aacTemplate } = await import('./components/templates/templateData');
+                setInitialData(aacTemplate);
+                setInitialTitle('어휘 학습 카드 제작');
+                setLoading(false);
+                return;
+            }
+
+            // Template: AAC Card
+            if (projectId === 'template-aac') {
+                const { aacTemplate } = await import('./components/templates/templateData');
+                setInitialData(aacTemplate);
+                setInitialTitle('어휘 학습 카드 제작');
+                setLoading(false);
+                return;
+            }
+
             // Load existing project
             const data = await storageService.getProject(projectId);
             const allProjects = await storageService.getAllProjects();

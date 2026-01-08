@@ -25,6 +25,16 @@ interface Template {
 
 const templates: Template[] = [
     {
+        id: 'aac',
+        name: '어휘 학습 카드',
+        description: '이미지와 AAC 상징을 활용한 맞춤형 어휘 학습 카드 만들기',
+        category: '의사소통',
+        price: 0,
+        icon: <Layout className="w-6 h-6" />,
+        popular: true,
+        features: ['이미지 삽입 가이드', 'AAC 상징 활용', '자유로운 편집']
+    },
+    {
         id: 'emotion-card',
         name: '감정 카드',
         description: '다양한 감정을 표현하고 인식하는 활동지',
@@ -134,8 +144,8 @@ export const TemplatesPage: React.FC<Props> = ({ user }) => {
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
                             className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === cat
-                                    ? 'bg-[#5500FF] text-white shadow-lg shadow-[#5500FF]/30'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                ? 'bg-[#5500FF] text-white shadow-lg shadow-[#5500FF]/30'
+                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                 }`}
                         >
                             {cat}
