@@ -5,7 +5,7 @@ export const FIND_OBJECT_TEMPLATE: TemplateDefinition = {
     id: 't4',
     name: '사물 찾기',
     category: 'cognitive',
-    thumbnail: 'https://images.unsplash.com/photo-1596464716127-f9a86255b619?w=100&h=140&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=100&h=140&fit=crop',
     elements: [
         // 1. Background Shapes (Grid)
         // Row 1
