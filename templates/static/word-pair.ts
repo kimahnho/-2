@@ -18,9 +18,9 @@ const generateGridRow = (startY: number, rowIndex: number) => {
             color: '#000000',
             zIndex: 2
         } as Partial<DesignElement>,
-        // Image Placeholder (Middle) - Using gray rect as placeholder for now
+        // Image Placeholder (Middle) - Using AAC Card Placeholder
         {
-            type: 'shape',
+            type: 'card',
             x: x + 35,
             y: startY + 60,
             width: 150,
@@ -28,7 +28,16 @@ const generateGridRow = (startY: number, rowIndex: number) => {
             backgroundColor: '#F0F0F0', // Placeholder gray
             borderRadius: 4,
             rotation: 0,
-            zIndex: 2
+            zIndex: 2,
+            metadata: {
+                isAACCard: true,
+                aacData: {
+                    isPlaceholder: true,
+                    isFilled: false,
+                    label: '',
+                    emoji: ''
+                }
+            }
         } as Partial<DesignElement>,
         // Writing Line (Bottom)
         {
