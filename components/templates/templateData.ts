@@ -76,7 +76,7 @@ export const aacTemplate: ProjectData = {
             metadata: {
                 isAACCard: true,
                 aacData: {
-                    emoji: 'https://res.cloudinary.com/dheikvmsp/image/upload/v1733221971/muru-assets/aac/emotion/happy.png', // 기쁨 (예시)
+                    emoji: 'https://res.cloudinary.com/dabbfycew/image/upload/muru-cards/emotion-cards/illustration/happy.png', // 기쁨 (예시)
                     label: '기쁘다',
                     isFilled: true,
                     labelPosition: 'below',
@@ -103,7 +103,7 @@ export const aacTemplate: ProjectData = {
             metadata: {
                 isAACCard: true,
                 aacData: {
-                    emoji: 'https://res.cloudinary.com/dheikvmsp/image/upload/v1733221966/muru-assets/aac/emotion/angry.png', // 화남 (예시)
+                    emoji: 'https://res.cloudinary.com/dabbfycew/image/upload/muru-cards/emotion-cards/illustration/angry.png', // 화남 (예시)
                     label: '화나다',
                     isFilled: true,
                     labelPosition: 'below',

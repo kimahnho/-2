@@ -234,21 +234,27 @@ export const AACCardRenderer: React.FC<AACCardRendererProps> = ({
                         </div>
                     </>
                 ) : isFilled && aacData?.emoji ? (
-                    ((aacData.emoji.startsWith('http') || aacData.emoji.startsWith('data:image')) && !imageError) ? (
-                        <img
-                            src={aacData.emoji}
-                            alt={aacData.label || ''}
-                            crossOrigin="anonymous"
-                            className="shrink-0 !max-w-none !max-h-none"
-                            style={{
-                                width: size * symbolScale,
-                                height: size * symbolScale,
-                                objectFit: 'contain',
-                                maxWidth: 'none',
-                                maxHeight: 'none'
-                            }}
-                            onError={() => setImageError(true)}
-                        />
+                    ((aacData.emoji.startsWith('http') || aacData.emoji.startsWith('data:image'))) ? (
+                        !imageError ? (
+                            <img
+                                src={aacData.emoji}
+                                alt={aacData.label || ''}
+                                crossOrigin="anonymous"
+                                className="shrink-0 !max-w-none !max-h-none"
+                                style={{
+                                    width: size * symbolScale,
+                                    height: size * symbolScale,
+                                    objectFit: 'contain',
+                                    maxWidth: 'none',
+                                    maxHeight: 'none'
+                                }}
+                                onError={() => setImageError(true)}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center text-gray-300">
+                                <span style={{ fontSize: size * 0.3 }}>🖼️</span>
+                            </div>
+                        )
                     ) : (
                         <span style={{ fontSize: size * symbolScale }}>
                             {aacData.emoji}
