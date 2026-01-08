@@ -105,7 +105,14 @@ export const useProject = (initialData?: ProjectData) => {
 
     updateElements([...elements, newEl]);
     setSelectedIds([id]);
-    setEditingId(null);
+
+    // 텍스트 추가 시 바로 편집 모드 진입 (UX 개선)
+    if (type === 'text') {
+      setEditingId(id);
+    } else {
+      setEditingId(null);
+    }
+
     return newEl;
   };
 

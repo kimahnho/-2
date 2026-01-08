@@ -73,7 +73,8 @@ export const EditorPage: React.FC<Props> = ({ projectId, initialData, initialTit
     elements: project.elements,
     activePageId: project.activePageId,
     updateElements: project.updateElements,
-    setSelectedIds: project.setSelectedIds
+    setSelectedIds: project.setSelectedIds,
+    selectedIds: project.selectedIds
   });
 
   const aac = useAAC({
