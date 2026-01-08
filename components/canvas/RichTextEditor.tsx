@@ -42,15 +42,8 @@ const serialize = (node: Descendant): string => {
         if (node.italic) string = `<em>${string}</em>`;
         if (node.underline) string = `<u>${string}</u>`;
         if (node.strikethrough) string = `<s>${string}</s>`;
-        // Span with styles for color/font
-        const styles: string[] = [];
-        if (node.color) styles.push(`color:${node.color}`);
-        if (node.fontFamily) styles.push(`font-family:${node.fontFamily}`);
-        if (node.fontSize) styles.push(`font-size:${node.fontSize}px`);
-
-        if (styles.length > 0) {
-            string = `<span style="${styles.join(';')}">${string}</span>`;
-        }
+        // Do NOT add inline styles for color/font-family/font-size
+        // These are controlled at the container level for consistency between Edit and View modes
         return string;
     }
 
@@ -350,14 +343,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             children = <s>{children}</s>;
         }
 
-        const style: React.CSSProperties = {
-            color: leaf.color,
-            fontFamily: leaf.fontFamily,
-            fontSize: leaf.fontSize ? `${leaf.fontSize}px` : undefined,
-            // Fallback to default if not set? Slate leaf inherits.
-        };
-
-        return <span {...attributes} style={style}>{children}</span>;
+        // Do NOT apply inline styles - inherit from container for Edit/View mode consistency
+        return <span {...attributes}>{children}</span>;
     }, []);
 
     const renderElement = useCallback((props: RenderElementProps) => {

@@ -2,7 +2,6 @@
 import React from 'react';
 import { DesignElement, TextCommand, TextStyle } from '../../../types/editor.types';
 import { RichTextEditor } from '../RichTextEditor';
-import { resetStylesInHtml } from '../../../utils/textUtils';
 
 interface TextRendererProps {
     element: DesignElement;
@@ -157,13 +156,9 @@ export const TextRenderer: React.FC<TextRendererProps> = (props) => {
     }
 
     // View Mode
-    // Strip inline styles that should be controlled at element level
-    // This ensures PropertiesPanel changes are always reflected
-    const cleanedRichTextHtml = element.richTextHtml
-        ? resetStylesInHtml(element.richTextHtml, ['color', 'font-family', 'font-size', 'font-weight'])
-        : null;
-    const htmlContent = cleanedRichTextHtml || (element.content ? element.content.replace(/\n/g, '<br/>') : '더블 클릭하여 편집');
-    const isHtml = cleanedRichTextHtml || (element.content && /<[a-z][\s\S]*>/i.test(element.content));
+    // No need to strip inline styles - richTextHtml no longer contains them
+    const htmlContent = element.richTextHtml || (element.content ? element.content.replace(/\n/g, '<br/>') : '더블 클릭하여 편집');
+    const isHtml = element.richTextHtml || (element.content && /<[a-z][\s\S]*>/i.test(element.content));
 
     return (
         <div
