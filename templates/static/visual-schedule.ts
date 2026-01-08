@@ -1,3 +1,5 @@
+// @ts-ignore
+import thumbnailImg from '../../src/assets/images/visual-schedule-thumb.svg';
 import { DesignElement } from '../../types';
 import { TemplateDefinition } from '../types';
 
@@ -5,7 +7,7 @@ export const VISUAL_SCHEDULE_TEMPLATE: TemplateDefinition = {
     id: 't3',
     name: '시각적 스케줄표',
     category: 'cognitive',
-    thumbnail: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=100&h=140&fit=crop',
+    thumbnail: thumbnailImg,
     elements: [
         // 1. Background Shapes & Frames
         // 테두리 프레임

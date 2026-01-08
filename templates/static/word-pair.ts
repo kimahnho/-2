@@ -1,3 +1,5 @@
+// @ts-ignore
+import thumbnailImg from '../../src/assets/images/word-pair-thumb.svg';
 import { DesignElement } from '../../types';
 import { TemplateDefinition } from '../types';
 
@@ -57,7 +59,7 @@ export const WORD_PAIR_TEMPLATE: TemplateDefinition = {
     id: 't5',
     name: '낱말 짝꿍 (단어+그림)',
     category: 'cognitive',
-    thumbnail: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=100&h=140&fit=crop', // Placeholder thumb
+    thumbnail: thumbnailImg, // Placeholder thumb
     elements: [
         // Header Background
         {

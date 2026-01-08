@@ -1,10 +1,12 @@
+// @ts-ignore
+import thumbnailImg from '../../src/assets/images/emotion-inference-thumb.svg';
 import { DesignElement } from '../../types';
 import { TemplateDefinition } from '../types';
 
 export const EMOTION_INFERENCE_TEMPLATE: TemplateDefinition = {
     id: 't1',
     name: '감정 추론 활동',
-    thumbnail: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=100&h=140&fit=crop',
+    thumbnail: thumbnailImg,
     category: 'emotion',
     elements: [
         // 1. Background Shapes
