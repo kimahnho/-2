@@ -198,13 +198,9 @@ export const useAAC = ({
         const originalEmoji = card.emoji || '❓';
 
         // ★ 이미지 결정 로직:
-        // 1. base64 변환 시도 (PDF 내보내기용)
-        // 2. 실패 시 원본 Cloudinary URL 사용 (화면 표시는 됨)
-        // 3. URL도 없으면 이모지 사용
         let imageToUse: string;
         if (card.cloudinaryUrl) {
             const base64Result = await convertCloudinaryToBase64(card.cloudinaryUrl, undefined);
-            // base64 변환 성공하면 사용, 실패하면 원본 URL 사용
             imageToUse = base64Result || card.cloudinaryUrl;
         } else {
             imageToUse = originalEmoji;
@@ -215,125 +211,88 @@ export const useAAC = ({
             const sentenceArea = elements.find(el => el.id === sentenceBuilderId);
             if (sentenceArea?.metadata?.isAACSentenceArea) {
                 addSentenceItem(sentenceBuilderId, imageToUse, card.label || '');
-                // Track AAC card selection
                 trackAACCardSelected(card.id, card.category);
                 return;
             }
         }
 
-        // 헬퍼: 새 AAC 카드 생성 함수
-        const createNewAACCard = () => {
-            const cardId = `aac-card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        // 선택된 요소 확인 (첫 번째 요소)
+        const selectedId = selectedIds.length === 1 ? selectedIds[0] : null;
+        const selectedEl = selectedId ? elements.find(el => el.id === selectedId) : null;
+
+        // 문장 구성 영역 선택 시: 카드 추가 (prioritize builder behavior)
+        if (selectedEl?.metadata?.isAACSentenceArea) {
+            addSentenceItem(selectedId!, imageToUse, card.label || '');
+            return;
+        }
+
+        const cardId = `aac-card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        let x, y, width, height, zIndex;
+
+        if (selectedEl) {
+            // 선택된 요소 있으면 위치/크기/zIndex 계승 (교체)
+            x = selectedEl.x;
+            y = selectedEl.y;
+            width = selectedEl.width;
+            height = selectedEl.height;
+            zIndex = selectedEl.zIndex;
+        } else {
+            // 없으면 새 위치 계산
             const existingCards = elements.filter(
                 el => el.pageId === activePageId && el.metadata?.isAACCard
             ).length;
             const offset = existingCards * 30;
+            x = 100 + offset;
+            y = 100 + offset;
+            width = 120;
+            height = 144;
+            zIndex = 100 + existingCards;
+        }
 
-            const newCard = {
-                id: cardId,
-                type: 'card' as const,
-                x: 100 + offset,
-                y: 100 + offset,
-                width: 120,
-                height: 144,
-                backgroundColor: '#ffffff',
-                borderRadius: 12,
-                borderWidth: 2,
-                borderColor: '#E5E7EB',
-                rotation: 0,
-                zIndex: 100 + existingCards,
-                pageId: activePageId,
-                metadata: {
-                    isAACCard: true,
-                    aacRow: 0,
-                    aacCol: 0,
-                    aacIndex: existingCards,
-                    aacData: {
-                        emoji: imageToUse,  // ★ base64 이미지 또는 이모지 사용
-                        label: card.label,
-                        isFilled: true,
-                        isCloudinaryImage: !!card.cloudinaryUrl,
-                        fontSize: 20,
-                        fontWeight: 400,
-                        color: '#000000',
-                        symbolScale: 0.7,
-                        labelPosition: 'below' as 'above' | 'below' | 'none'
-                    }
+        const newCard = {
+            id: cardId,
+            type: 'card' as const,
+            x,
+            y,
+            width,
+            height,
+            backgroundColor: '#ffffff',
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: '#E5E7EB',
+            rotation: 0,
+            zIndex: zIndex || (100 + elements.length),
+            pageId: activePageId,
+            metadata: {
+                isAACCard: true,
+                aacRow: 0,
+                aacCol: 0,
+                aacIndex: 0, // 인덱스 관리는 복잡하므로 0으로 초기화하거나 재계산 필요하지만 일단 0
+                aacData: {
+                    emoji: imageToUse,
+                    label: card.label,
+                    isFilled: true,
+                    isCloudinaryImage: !!card.cloudinaryUrl,
+                    fontSize: 20,
+                    fontWeight: 400,
+                    color: '#000000',
+                    symbolScale: 0.7,
+                    labelPosition: 'below' as 'above' | 'below' | 'none'
                 }
-            };
-            updateElements([...elements, newCard as any]);
-            setSelectedIds([cardId]);
-            // Track AAC card selection
-            trackAACCardSelected(card.id, card.category);
+            }
         };
 
-        // 선택된 요소가 없거나 1개가 아닌 경우: 새 AAC 카드 생성
-        if (selectedIds.length !== 1) {
-            createNewAACCard();
-            return;
+        let nextElements = [...elements];
+        // 선택된 요소가 있으면 제거하고 그 자리에 새 카드 넣음 (교체)
+        if (selectedEl) {
+            nextElements = nextElements.filter(el => el.id !== selectedId);
         }
+        nextElements.push(newCard as any);
 
-        const selectedId = selectedIds[0];
-        const selectedEl = elements.find(el => el.id === selectedId);
+        updateElements(nextElements);
+        setSelectedIds([cardId]);
+        trackAACCardSelected(card.id, card.category);
 
-        if (!selectedEl) return;
-
-        // 문장 구성 영역 선택 시: 카드 추가
-        if (selectedEl.metadata?.isAACSentenceArea) {
-            addSentenceItem(selectedId, imageToUse, card.label || '');  // ★ base64 이미지 또는 이모지 사용
-            return;
-        }
-
-        // 일반 AAC 카드 선택 시
-        if (selectedEl.metadata?.isAACCard && selectedEl.type === 'card') {
-            const isPlaceholder = !selectedEl.metadata.aacData?.isFilled;
-
-            // 이미 채워진 카드라면 새 카드 생성
-            if (!isPlaceholder) {
-                createNewAACCard();
-                return;
-            }
-
-            // 빈 카드(Placeholder)라면 내용을 업데이트
-            const newElements = elements.map(el => {
-                if (el.id === selectedId) {
-                    return {
-                        ...el,
-                        metadata: {
-                            ...el.metadata,
-                            aacData: {
-                                ...el.metadata?.aacData,
-                                emoji: imageToUse,  // ★ base64 이미지 또는 이모지 사용
-                                label: card.label,
-                                isFilled: true,
-                                isCloudinaryImage: !!card.cloudinaryUrl
-                            }
-                        }
-                    };
-                }
-                return el;
-            });
-
-            updateElements(newElements);
-
-            // 다음 카드로 자동 이동
-            const aacCards = newElements
-                .filter(el => el.pageId === activePageId && el.metadata?.isAACCard && el.type === 'card' && el.metadata.aacIndex !== undefined)
-                .sort((a, b) => {
-                    const xDiff = a.x - b.x;
-                    if (Math.abs(xDiff) > 10) return xDiff;
-                    return a.y - b.y;
-                });
-
-            const currentArrayIdx = aacCards.findIndex(el => el.id === selectedId);
-
-            if (currentArrayIdx !== -1 && currentArrayIdx < aacCards.length - 1) {
-                const nextCard = aacCards[currentArrayIdx + 1];
-                setTimeout(() => {
-                    setSelectedIds([nextCard.id]);
-                }, 100);
-            }
-        }
     }, [sentenceBuilderId, elements, selectedIds, activePageId, updateElements, setSelectedIds]);
 
     return {

@@ -18,7 +18,7 @@ interface ProjectActions {
 }
 
 export const useAppActions = (
-  project: ProjectActions, 
+  project: ProjectActions,
   title: string,
   onSaveAsset: (url: string) => void
 ) => {
@@ -33,9 +33,9 @@ export const useAppActions = (
       const height = (img.height / img.width) * width;
       const x = (CANVAS_WIDTH - width) / 2;
       const y = (CANVAS_HEIGHT - height) / 2;
-      
-      const imgEl = { 
-        id: generateId(), type: 'image', x, y, width, height, content: url, rotation: 0, zIndex: project.elements.length + 1, pageId: project.activePageId, borderRadius: 0 
+
+      const imgEl = {
+        id: generateId(), type: 'image', x, y, width, height, content: url, rotation: 0, zIndex: project.elements.length + 1, pageId: project.activePageId, borderRadius: 0
       } as DesignElement;
 
       // Create Text
@@ -49,64 +49,97 @@ export const useAppActions = (
   };
 
   const handleApplyEmotion = (imageUrl: string, label: string) => {
-      const selected = project.elements.find(el => project.selectedIds.includes(el.id));
-      
-      if (selected && ['shape','card','circle'].includes(selected.type)) {
-          // Find text below to update label automatically
-          const bottomY = selected.y + selected.height;
-          const labelText = project.elements.find(el => 
-             el.type === 'text' && 
-             el.pageId === selected.pageId &&
-             el.y >= bottomY - 10 && el.y <= bottomY + 100 &&
-             Math.abs((el.x + el.width/2) - (selected.x + selected.width/2)) < 60
-          );
-          
-          let newElements = project.elements.map(el => {
-              // Apply image to shape
-              if (el.id === selected.id) return { ...el, backgroundImage: imageUrl, borderColor: '#000000', borderWidth: 1, borderStyle: 'solid', backgroundColor: '#ffffff' };
-              // Update text label if found
-              if (labelText && el.id === labelText.id) return { ...el, content: label, color: '#000000' };
-              return el;
-          });
-          
-          // Remove placeholder text if present
-          newElements = newElements.filter(el => !el.content?.includes('클릭하여'));
-          project.updateElements(newElements as DesignElement[]);
-      } else {
-          // Default behavior: Add new image and caption
-          handleAddImageWithCaption(imageUrl, label);
+    const selectedId = project.selectedIds.length === 1 ? project.selectedIds[0] : null;
+    const selected = selectedId ? project.elements.find(el => el.id === selectedId) : null;
+
+    const cardId = selected ? selected.id : generateId(); // Reuse ID if replacing (though replacing with new ID is safer, let's try new ID to avoid stale render issues, or reuse to keep connections?) 
+    // Reuse ID might be confusing if type changes. Let's use new ID for safety, or keep ID if we are sure?
+    // Actually replacing element completely is cleaner.
+
+    const newId = generateId();
+
+    let x, y, width, height, zIndex;
+
+    if (selected) {
+      x = selected.x;
+      y = selected.y;
+      width = selected.width;
+      height = selected.height;
+      zIndex = selected.zIndex;
+    } else {
+      // Default position
+      const widthVal = 150;
+      const heightVal = 180;
+      x = (CANVAS_WIDTH - widthVal) / 2;
+      y = (CANVAS_HEIGHT - heightVal) / 2;
+      width = widthVal;
+      height = heightVal;
+      zIndex = project.elements.length + 1;
+    }
+
+    const emotionCard: DesignElement = {
+      id: newId,
+      type: 'card',
+      x, y, width, height,
+      backgroundColor: '#FFF0F5',
+      borderRadius: 16,
+      borderWidth: 2,
+      borderColor: '#F472B6',
+      borderStyle: 'solid',
+      rotation: 0,
+      zIndex,
+      pageId: project.activePageId,
+      metadata: {
+        isEmotionCard: true,
+        emotionData: {
+          imageUrl: imageUrl,
+          label: label,
+          isFilled: true
+        }
       }
+    } as DesignElement;
+
+    if (selected) {
+      // Replace
+      const nextElements = project.elements.map(el => el.id === selected.id ? emotionCard : el);
+      project.updateElements(nextElements);
+      project.setSelectedIds([newId]);
+    } else {
+      // Add new
+      project.updateElements([...project.elements, emotionCard]);
+      project.setSelectedIds([newId]);
+    }
   };
 
   const handleAiImageFill = async (id: string, prompt: string, style: 'character' | 'realistic' | 'emoji') => {
-      try {
-          const imageUrl = await generateTherapyImage(prompt, style);
-          project.updateElement(id, { backgroundImage: imageUrl }, true);
-          onSaveAsset(imageUrl);
-      } catch (e) { 
-          alert("이미지 생성 실패"); 
-      }
+    try {
+      const imageUrl = await generateTherapyImage(prompt, style);
+      project.updateElement(id, { backgroundImage: imageUrl }, true);
+      onSaveAsset(imageUrl);
+    } catch (e) {
+      alert("이미지 생성 실패");
+    }
   };
 
   const handleExport = async () => {
-      setIsExporting(true);
-      project.setSelectedIds([]); // Clear selection for clean screenshot
-      await new Promise(r => setTimeout(r, 100)); // Wait for render
-      try {
-          await downloadPageAsImage(project.activePageId, title);
-      } catch (e) {
-          console.error(e);
-          alert("저장 실패");
-      } finally {
-          setIsExporting(false);
-      }
+    setIsExporting(true);
+    project.setSelectedIds([]); // Clear selection for clean screenshot
+    await new Promise(r => setTimeout(r, 100)); // Wait for render
+    try {
+      await downloadPageAsImage(project.activePageId, title);
+    } catch (e) {
+      console.error(e);
+      alert("저장 실패");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return {
-      isExporting,
-      handleAddImageWithCaption,
-      handleApplyEmotion,
-      handleAiImageFill,
-      handleExport
+    isExporting,
+    handleAddImageWithCaption,
+    handleApplyEmotion,
+    handleAiImageFill,
+    handleExport
   };
 };
