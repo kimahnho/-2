@@ -299,17 +299,13 @@ export const CanvasArea: React.FC<Props> = (props) => {
                         }}
                         onBlur={readOnly ? () => { } : (val) => {
                           if (typeof val === 'string') {
-                            if (isHtmlEmpty(val)) {
-                              const updated = elementsRef.current.filter(e => e.id !== el.id);
-                              onCommitElements(updated);
-                              onSetEditingId(null);
-                            } else {
-                              const updated = elementsRef.current.map(e => e.id === el.id ? { ...e, richTextHtml: val } : e);
-                              onCommitElements(updated);
-                            }
+                            // Always save, even if empty - no auto-delete
+                            const updated = elementsRef.current.map(e => e.id === el.id ? { ...e, richTextHtml: val } : e);
+                            onCommitElements(updated);
                           } else {
                             onCommitElements(elementsRef.current);
                           }
+                          onSetEditingId(null);
                         }}
                         textCommand={editingId === el.id ? activeTextCommand : null}
                         onTextStyleChange={onStyleChange}
